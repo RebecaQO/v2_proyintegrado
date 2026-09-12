@@ -6,20 +6,20 @@ import {
   Scale, 
   Users, 
   Activity, 
-  Database,
   CheckCircle2,
-  AlertTriangle
+  AlertTriangle,
+  ShieldCheck
 } from 'lucide-react';
 
 export default function Navbar({ activeTab, setActiveTab, healthStatus }) {
   const isHealthy = healthStatus?.status === 'healthy';
 
   const navItems = [
-    { id: 'mesa', label: 'Mesa de Partes', icon: FileText },
-    { id: 'expedientes', label: 'Expedientes y Auditoría', icon: FolderArchive },
-    { id: 'consistencia', label: 'Consistencia Normativa', icon: Scale },
-    { id: 'ciudadana', label: 'Atención Ciudadana', icon: Users },
-    { id: 'monitoreo', label: 'Monitoreo y Agentes', icon: Activity },
+    { id: 'mesa',        label: 'Mesa de Partes',          icon: FileText },
+    { id: 'expedientes', label: 'Expedientes y Auditoria', icon: FolderArchive },
+    { id: 'consistencia',label: 'Consistencia Normativa',  icon: Scale },
+    { id: 'ciudadana',   label: 'Atencion Ciudadana',      icon: Users },
+    { id: 'monitoreo',   label: 'Monitoreo de Agentes',    icon: Activity },
   ];
 
   return (
@@ -27,11 +27,11 @@ export default function Navbar({ activeTab, setActiveTab, healthStatus }) {
       position: 'sticky',
       top: 0,
       zIndex: 50,
-      background: 'linear-gradient(180deg, #09111e 0%, #0d1728 100%)',
+      background: 'linear-gradient(180deg, #071a35 0%, #0B2545 100%)',
       backdropFilter: 'blur(16px)',
-      borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
-      boxShadow: '0 4px 20px rgba(0, 0, 0, 0.15)',
-      padding: '0 24px',
+      borderBottom: '1px solid rgba(0, 180, 216, 0.15)',
+      boxShadow: '0 4px 24px rgba(0, 0, 0, 0.35)',
+      padding: '0 28px',
     }}>
       <div style={{
         maxWidth: '1440px',
@@ -44,29 +44,33 @@ export default function Navbar({ activeTab, setActiveTab, healthStatus }) {
         {/* Brand & Emblem */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '14px', cursor: 'pointer' }} onClick={() => setActiveTab('mesa')}>
           <div style={{
-            width: '42px',
-            height: '42px',
+            width: '44px',
+            height: '44px',
             borderRadius: '12px',
-            background: 'linear-gradient(135deg, #10b981 0%, #047857 100%)',
+            background: 'linear-gradient(135deg, #0284C7 0%, #00B4D8 100%)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            boxShadow: '0 4px 14px rgba(16, 185, 129, 0.4)',
-            border: '1px solid rgba(255, 255, 255, 0.2)'
+            boxShadow: '0 4px 16px rgba(0, 180, 216, 0.4)',
+            border: '1px solid rgba(255, 255, 255, 0.15)'
           }}>
             <Building2 size={24} color="#ffffff" />
           </div>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span style={{ fontFamily: 'Outfit', fontWeight: 800, fontSize: '1.25rem', color: '#ffffff', letterSpacing: '-0.01em' }}>
+              <span style={{ fontFamily: 'Outfit', fontWeight: 800, fontSize: '1.22rem', color: '#ffffff', letterSpacing: '-0.01em' }}>
                 SMA CONGRESO
               </span>
-              <span className="badge badge-gold" style={{ fontSize: '0.68rem', padding: '2px 8px' }}>
-                v2.0 FastAPI + React
+              <span style={{
+                fontSize: '0.66rem', fontWeight: 700, padding: '2px 8px', borderRadius: '5px',
+                background: 'rgba(0, 180, 216, 0.18)', border: '1px solid rgba(0, 180, 216, 0.35)',
+                color: '#00B4D8', letterSpacing: '0.04em'
+              }}>
+                v2.0
               </span>
             </div>
-            <span style={{ fontSize: '0.75rem', color: '#6ee7b7', fontWeight: 500 }}>
-              Sistema Multi-Agente de Registro y Auditoría Legislativa
+            <span style={{ fontSize: '0.73rem', color: '#94A3B8', fontWeight: 500 }}>
+              Sistema Multi-Agente de Registro y Auditoria Legislativa
             </span>
           </div>
         </div>
@@ -83,23 +87,30 @@ export default function Navbar({ activeTab, setActiveTab, healthStatus }) {
                 style={{
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '8px',
-                  padding: '9px 16px',
+                  gap: '7px',
+                  padding: '8px 14px',
                   borderRadius: '10px',
-                  border: isActive ? '1px solid rgba(52, 211, 153, 0.5)' : '1px solid transparent',
-                  background: isActive ? 'rgba(16, 185, 129, 0.18)' : 'transparent',
-                  color: isActive ? '#34d399' : '#a7f3d0',
+                  border: isActive ? '1px solid rgba(0, 180, 216, 0.5)' : '1px solid transparent',
+                  background: isActive ? 'rgba(0, 180, 216, 0.14)' : 'transparent',
+                  color: isActive ? '#00B4D8' : '#94A3B8',
                   fontFamily: 'Outfit',
                   fontWeight: isActive ? 700 : 500,
-                  fontSize: '0.9rem',
+                  fontSize: '0.88rem',
                   cursor: 'pointer',
                   transition: 'all 0.2s ease',
+                  whiteSpace: 'nowrap'
                 }}
                 onMouseEnter={(e) => {
-                  if (!isActive) e.currentTarget.style.background = 'rgba(16, 185, 129, 0.08)';
+                  if (!isActive) {
+                    e.currentTarget.style.background = 'rgba(0, 180, 216, 0.07)';
+                    e.currentTarget.style.color = '#CBD5E1';
+                  }
                 }}
                 onMouseLeave={(e) => {
-                  if (!isActive) e.currentTarget.style.background = 'transparent';
+                  if (!isActive) {
+                    e.currentTarget.style.background = 'transparent';
+                    e.currentTarget.style.color = '#94A3B8';
+                  }
                 }}
               >
                 <Icon size={18} />
@@ -109,25 +120,25 @@ export default function Navbar({ activeTab, setActiveTab, healthStatus }) {
           })}
         </nav>
 
-        {/* Health & DB Status */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+        {/* Estado del sistema */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px',
-            background: 'rgba(6, 40, 32, 0.6)',
-            padding: '6px 12px',
-            borderRadius: '9999px',
-            border: '1px solid rgba(16, 185, 129, 0.25)',
-            fontSize: '0.8rem',
+            display: 'flex', alignItems: 'center', gap: '7px',
+            background: 'rgba(11, 37, 69, 0.7)',
+            padding: '6px 14px', borderRadius: '9999px',
+            border: isHealthy ? '1px solid rgba(138, 201, 38, 0.3)' : '1px solid rgba(244, 162, 97, 0.3)',
+            fontSize: '0.78rem',
           }}>
-            <Database size={14} color="#34d399" />
-            <span style={{ color: '#a7f3d0', fontSize: '0.78rem' }}>Mongo + Neon</span>
+            <ShieldCheck size={14} color={isHealthy ? '#8AC926' : '#F4A261'} />
+            <span style={{ color: '#94A3B8', fontWeight: 500 }}>Sistema</span>
             {isHealthy ? (
-              <CheckCircle2 size={15} color="#34d399" />
+              <CheckCircle2 size={14} color="#8AC926" />
             ) : (
-              <AlertTriangle size={15} color="#f59e0b" />
+              <AlertTriangle size={14} color="#F4A261" />
             )}
+            <span style={{ color: isHealthy ? '#8AC926' : '#F4A261', fontWeight: 700, fontSize: '0.75rem' }}>
+              {isHealthy ? 'Operativo' : 'Verificando'}
+            </span>
           </div>
         </div>
       </div>

@@ -29,112 +29,112 @@ export default function AgentResultCard({
 }) {
   const themeStyles = {
     cyan: {
-      border: 'rgba(6, 182, 212, 0.55)',
-      bg: 'linear-gradient(135deg, rgba(8, 51, 68, 0.95) 0%, rgba(14, 78, 108, 0.85) 100%)',
-      titleColor: '#22d3ee',
-      glow: '0 12px 35px rgba(6, 182, 212, 0.35)',
+      border: 'rgba(0, 180, 216, 0.45)',
+      bg: 'linear-gradient(135deg, rgba(11, 37, 69, 0.95) 0%, rgba(19, 64, 116, 0.85) 100%)',
+      titleColor: '#00B4D8',
+      glow: '0 12px 35px rgba(0, 180, 216, 0.25)',
       badgeClass: 'badge-blue',
-      accent: '#06b6d4',
-      glowShadow: '0 0 25px rgba(6, 182, 212, 0.6)'
+      accent: '#00B4D8',
+      glowShadow: '0 0 25px rgba(0, 180, 216, 0.5)'
     },
     blue: {
-      border: 'rgba(59, 130, 246, 0.55)',
-      bg: 'linear-gradient(135deg, rgba(23, 37, 84, 0.95) 0%, rgba(30, 58, 138, 0.85) 100%)',
-      titleColor: '#60a5fa',
-      glow: '0 12px 35px rgba(59, 130, 246, 0.35)',
+      border: 'rgba(2, 132, 199, 0.45)',
+      bg: 'linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(30, 41, 59, 0.9) 100%)',
+      titleColor: '#38BDF8',
+      glow: '0 12px 35px rgba(2, 132, 199, 0.25)',
       badgeClass: 'badge-blue',
-      accent: '#3b82f6',
-      glowShadow: '0 0 25px rgba(59, 130, 246, 0.6)'
+      accent: '#0284C7',
+      glowShadow: '0 0 25px rgba(2, 132, 199, 0.5)'
     },
     green: {
-      border: 'rgba(16, 185, 129, 0.55)',
-      bg: 'linear-gradient(135deg, rgba(2, 44, 34, 0.95) 0%, rgba(6, 78, 59, 0.85) 100%)',
-      titleColor: '#34d399',
-      glow: '0 12px 35px rgba(16, 185, 129, 0.35)',
+      border: 'rgba(138, 201, 38, 0.45)',
+      bg: 'linear-gradient(135deg, rgba(11, 37, 69, 0.95) 0%, rgba(15, 23, 42, 0.9) 100%)',
+      titleColor: '#8AC926',
+      glow: '0 12px 35px rgba(138, 201, 38, 0.25)',
       badgeClass: 'badge-green',
-      accent: '#10b981',
-      glowShadow: '0 0 25px rgba(16, 185, 129, 0.6)'
+      accent: '#8AC926',
+      glowShadow: '0 0 25px rgba(138, 201, 38, 0.5)'
     },
     gold: {
-      border: 'rgba(245, 158, 11, 0.55)',
-      bg: 'linear-gradient(135deg, rgba(69, 26, 3, 0.95) 0%, rgba(120, 53, 15, 0.85) 100%)',
-      titleColor: '#fbbf24',
-      glow: '0 12px 35px rgba(245, 158, 11, 0.35)',
+      border: 'rgba(244, 162, 97, 0.45)',
+      bg: 'linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(30, 41, 59, 0.9) 100%)',
+      titleColor: '#F4A261',
+      glow: '0 12px 35px rgba(244, 162, 97, 0.25)',
       badgeClass: 'badge-gold',
-      accent: '#f59e0b',
-      glowShadow: '0 0 25px rgba(245, 158, 11, 0.6)'
+      accent: '#F4A261',
+      glowShadow: '0 0 25px rgba(244, 162, 97, 0.5)'
     },
     pink: {
-      border: 'rgba(236, 72, 153, 0.55)',
-      bg: 'linear-gradient(135deg, rgba(80, 7, 36, 0.95) 0%, rgba(131, 24, 67, 0.85) 100%)',
-      titleColor: '#f472b6',
-      glow: '0 12px 35px rgba(236, 72, 153, 0.35)',
+      border: 'rgba(231, 111, 81, 0.45)',
+      bg: 'linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(30, 41, 59, 0.9) 100%)',
+      titleColor: '#E76F51',
+      glow: '0 12px 35px rgba(231, 111, 81, 0.25)',
       badgeClass: 'badge-red',
-      accent: '#ec4899',
-      glowShadow: '0 0 25px rgba(236, 72, 153, 0.6)'
+      accent: '#E76F51',
+      glowShadow: '0 0 25px rgba(231, 111, 81, 0.5)'
     },
     violet: {
-      border: 'rgba(168, 85, 247, 0.55)',
-      bg: 'linear-gradient(135deg, rgba(46, 16, 101, 0.95) 0%, rgba(76, 29, 149, 0.85) 100%)',
+      border: 'rgba(168, 85, 247, 0.45)',
+      bg: 'linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(30, 41, 59, 0.9) 100%)',
       titleColor: '#a78bfa',
-      glow: '0 12px 35px rgba(168, 85, 247, 0.35)',
+      glow: '0 12px 35px rgba(168, 85, 247, 0.25)',
       badgeClass: 'badge-violet',
       accent: '#a855f7',
-      glowShadow: '0 0 25px rgba(168, 85, 247, 0.6)'
+      glowShadow: '0 0 25px rgba(168, 85, 247, 0.5)'
     },
     purple: {
-      border: 'rgba(168, 85, 247, 0.6)',
-      bg: 'linear-gradient(135deg, rgba(59, 7, 100, 0.95) 0%, rgba(88, 28, 135, 0.85) 100%)',
+      border: 'rgba(168, 85, 247, 0.45)',
+      bg: 'linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(30, 41, 59, 0.9) 100%)',
       titleColor: '#c084fc',
-      glow: '0 12px 35px rgba(168, 85, 247, 0.4)',
+      glow: '0 12px 35px rgba(168, 85, 247, 0.25)',
       badgeClass: 'badge-violet',
       accent: '#a855f7',
-      glowShadow: '0 0 25px rgba(168, 85, 247, 0.6)'
+      glowShadow: '0 0 25px rgba(168, 85, 247, 0.5)'
     },
     emerald: {
-      border: 'rgba(16, 185, 129, 0.6)',
-      bg: 'linear-gradient(135deg, rgba(6, 78, 59, 0.95) 0%, rgba(4, 120, 87, 0.85) 100%)',
-      titleColor: '#34d399',
-      glow: '0 12px 35px rgba(16, 185, 129, 0.4)',
+      border: 'rgba(138, 201, 38, 0.45)',
+      bg: 'linear-gradient(135deg, rgba(11, 37, 69, 0.95) 0%, rgba(15, 23, 42, 0.9) 100%)',
+      titleColor: '#8AC926',
+      glow: '0 12px 35px rgba(138, 201, 38, 0.25)',
       badgeClass: 'badge-green',
-      accent: '#10b981',
-      glowShadow: '0 0 25px rgba(16, 185, 129, 0.6)'
+      accent: '#8AC926',
+      glowShadow: '0 0 25px rgba(138, 201, 38, 0.5)'
     },
     amber: {
-      border: 'rgba(245, 158, 11, 0.6)',
-      bg: 'linear-gradient(135deg, rgba(69, 26, 3, 0.95) 0%, rgba(180, 83, 9, 0.85) 100%)',
-      titleColor: '#fbbf24',
-      glow: '0 12px 35px rgba(245, 158, 11, 0.4)',
+      border: 'rgba(244, 162, 97, 0.45)',
+      bg: 'linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(30, 41, 59, 0.9) 100%)',
+      titleColor: '#F4A261',
+      glow: '0 12px 35px rgba(244, 162, 97, 0.25)',
       badgeClass: 'badge-gold',
-      accent: '#f59e0b',
-      glowShadow: '0 0 25px rgba(245, 158, 11, 0.6)'
+      accent: '#F4A261',
+      glowShadow: '0 0 25px rgba(244, 162, 97, 0.5)'
     },
     sky: {
-      border: 'rgba(14, 165, 233, 0.6)',
-      bg: 'linear-gradient(135deg, rgba(12, 74, 110, 0.95) 0%, rgba(3, 105, 161, 0.85) 100%)',
-      titleColor: '#38bdf8',
-      glow: '0 12px 35px rgba(14, 165, 233, 0.4)',
+      border: 'rgba(0, 180, 216, 0.45)',
+      bg: 'linear-gradient(135deg, rgba(11, 37, 69, 0.95) 0%, rgba(19, 64, 116, 0.85) 100%)',
+      titleColor: '#00B4D8',
+      glow: '0 12px 35px rgba(0, 180, 216, 0.25)',
       badgeClass: 'badge-blue',
-      accent: '#0ea5e9',
-      glowShadow: '0 0 25px rgba(14, 165, 233, 0.6)'
+      accent: '#00B4D8',
+      glowShadow: '0 0 25px rgba(0, 180, 216, 0.5)'
     },
     rose: {
-      border: 'rgba(244, 63, 94, 0.6)',
-      bg: 'linear-gradient(135deg, rgba(76, 5, 25, 0.95) 0%, rgba(159, 18, 57, 0.85) 100%)',
-      titleColor: '#fb7185',
-      glow: '0 12px 35px rgba(244, 63, 94, 0.4)',
+      border: 'rgba(231, 111, 81, 0.45)',
+      bg: 'linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(30, 41, 59, 0.9) 100%)',
+      titleColor: '#E76F51',
+      glow: '0 12px 35px rgba(231, 111, 81, 0.25)',
       badgeClass: 'badge-red',
-      accent: '#f43f5e',
-      glowShadow: '0 0 25px rgba(244, 63, 94, 0.6)'
+      accent: '#E76F51',
+      glowShadow: '0 0 25px rgba(231, 111, 81, 0.5)'
     },
     indigo: {
-      border: 'rgba(99, 102, 241, 0.6)',
-      bg: 'linear-gradient(135deg, rgba(30, 27, 75, 0.95) 0%, rgba(67, 56, 202, 0.85) 100%)',
-      titleColor: '#818cf8',
-      glow: '0 12px 35px rgba(99, 102, 241, 0.4)',
+      border: 'rgba(2, 132, 199, 0.45)',
+      bg: 'linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(30, 41, 59, 0.9) 100%)',
+      titleColor: '#38BDF8',
+      glow: '0 12px 35px rgba(2, 132, 199, 0.25)',
       badgeClass: 'badge-blue',
-      accent: '#6366f1',
-      glowShadow: '0 0 25px rgba(99, 102, 241, 0.6)'
+      accent: '#0284C7',
+      glowShadow: '0 0 25px rgba(2, 132, 199, 0.5)'
     }
   };
 

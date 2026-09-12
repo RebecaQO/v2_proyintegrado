@@ -1,4 +1,4 @@
-// MesaPartes v2.2 — Human-in-the-Loop Multi-Agent Pipeline with Multi-Session Tabs & Interactive Agent Inspection
+// MesaPartes v3.0 — Paleta Institucional GobernIA + Flujo Paralelo + Panel Lateral Deslizante
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   UploadCloud, 
@@ -32,12 +32,46 @@ import {
   ShieldCheck,
   Database,
   Server,
-  Terminal
+  Terminal,
+  Zap,
+  Shield
 } from 'lucide-react';
 import { api } from '../services/api';
 import HorizontalAgentFlow, { AGENTS_DEFINITION } from '../components/HorizontalAgentFlow';
 import LateralAgentHero from '../components/LateralAgentHero';
 import AgentResultCard from '../components/AgentResultCard';
+import AgentDetailPanel from '../components/AgentDetailPanel';
+
+// Mapeo de logos institucionales y colores de acento por agente
+const AGENT_LOGO_MAP = {
+  distribuidor:       '/robots/logos/distribuidor.jpg',
+  comision:           '/robots/logos/verificadorconstitucional.jpg',
+  constitucional:     '/robots/logos/verificadorconstitucional.jpg',
+  consistencia:       '/robots/logos/consistencianormativa.jpg',
+  emisor:             '/robots/logos/distribuidor.jpg',
+  notificador:        '/robots/logos/consistencianormativa.jpg',
+  constitucion_fondo: '/robots/logos/verificadorconstitucional.jpg',
+  concentrador_crew:  '/robots/logos/distribuidor.jpg',
+  secretario:         '/robots/logos/verificadorconstitucional.jpg',
+  bicameral:          '/robots/logos/consistencianormativa.jpg',
+  veto_promulgacion:  '/robots/logos/distribuidor.jpg',
+  publicacion:        '/robots/logos/verificadorconstitucional.jpg',
+};
+
+const AGENT_ACCENT_MAP = {
+  distribuidor:       '#00B4D8',
+  comision:           '#38BDF8',
+  constitucional:     '#8AC926',
+  consistencia:       '#F4A261',
+  emisor:             '#A78BFA',
+  notificador:        '#38BDF8',
+  constitucion_fondo: '#8AC926',
+  concentrador_crew:  '#00B4D8',
+  secretario:         '#F4A261',
+  bicameral:          '#38BDF8',
+  veto_promulgacion:  '#E76F51',
+  publicacion:        '#8AC926',
+};
 
 const STORAGE_SESSIONS_KEY = 'sma_mesapartes_sessions_v2';
 const STORAGE_ACTIVE_KEY = 'sma_mesapartes_active_session_id';
@@ -588,13 +622,68 @@ export default function MesaPartes({ onNavigateExpedientes }) {
     });
   };
 
-  // Agent Selection / History Inspection
+  // ── Estado del panel lateral deslizante ──
+  const [detailPanelAgent, setDetailPanelAgent] = useState(null);
+
+  // Obtener resultado del agente para mostrarlo en el panel
+  const getAgentResultData = (agentId) => {
+    const map = {
+      distribuidor: fase1Data,
+      comision: comisionData,
+      constitucional: dictamenData,
+      consistencia: consistenciaData,
+      emisor: pdfResult,
+      notificador: notificadorData,
+      constitucion_fondo: constitucionFondoData,
+      concentrador_crew: concentradorData,
+      secretario: secretarioData,
+      bicameral: bicameralData,
+      veto_promulgacion: vetoPromulgacionData,
+      publicacion: publicacionData,
+    };
+    return map[agentId] || null;
+  };
+
+  // Agent Selection — abre el panel lateral Y también actualiza inspección
   const handleSelectAgent = (agent) => {
-    // Toggle inspection: if already inspecting this agent, exit inspection; otherwise inspect
+    setDetailPanelAgent(agent);
     if (inspectedAgentId === agent.id) {
       updateActiveSession({ inspectedAgentId: null });
     } else {
       updateActiveSession({ inspectedAgentId: agent.id });
+    }
+  };
+
+  const handleCloseDetailPanel = () => {
+    setDetailPanelAgent(null);
+  };
+
+  // ── EJECUCIÓN PARALELA: Constitucional + Consistencia simultáneamente ──
+  const handleEjecutarAuditoriaParalela = async () => {
+    if (!fase1Data) return;
+    updateActiveSession({ isProcessing: true, errorMessage: '', pipelineStep: 4, inspectedAgentId: null });
+    appendLog('Auditoria_Paralela', 'EN_PROCESO', 'Iniciando Verificador Constitucional y Consistencia Normativa en paralelo...');
+    try {
+      const payload = buildPayload();
+      const [resConstitucional, resConsistencia] = await Promise.all([
+        api.runAgentConstitucional(payload),
+        api.runAgentConsistencia(payload)
+      ]);
+      updateActiveSession({
+        dictamenData: resConstitucional.data,
+        consistenciaData: resConsistencia.data,
+        pipelineStep: 6,
+        isProcessing: false
+      });
+      appendLog('Constitucional', 'COMPLETADO', `Resultado constitucional: ${resConstitucional.data?.valido ? 'VÁLIDO' : 'CON OBSERVACIONES'}`);
+      appendLog('Consistencia', 'COMPLETADO', `Hallazgos: ${(resConsistencia.data?.hallazgos || []).length} detectados`);
+    } catch (err) {
+      updateActiveSession({
+        errorMessage: err.message || 'Error en auditoría paralela',
+        pipelineStep: 4,
+        isProcessing: false
+      });
+      appendLog('Auditoria_Paralela', 'ERROR', err.message);
     }
   };
 
@@ -615,6 +704,121 @@ export default function MesaPartes({ onNavigateExpedientes }) {
     return AGENTS_DEFINITION.find(a => a.id === 'publicacion') || AGENTS_DEFINITION[11];
   };
   const activeAgentDef = getActiveAgentDef();
+  const activeLogoUrl = AGENT_LOGO_MAP[activeAgentDef?.id] || '/robots/logos/distribuidor.jpg';
+  const activeAccent = AGENT_ACCENT_MAP[activeAgentDef?.id] || '#00B4D8';
+
+  // ── Renderiza el contenedor superior dedicado (RECUADRO ROJO): Logo más grande (104px) + Nombre del agente destacado ──
+  const renderAgentHeaderContainer = () => (
+    <div style={{
+      background: 'linear-gradient(135deg, rgba(11, 37, 69, 0.94) 0%, rgba(19, 64, 116, 0.75) 50%, rgba(15, 23, 42, 0.94) 100%)',
+      border: `1.5px solid ${activeAccent}66`,
+      borderRadius: '20px',
+      padding: '20px 28px',
+      boxShadow: `0 10px 32px rgba(0,0,0,0.45), 0 0 28px ${activeAccent}33`,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: '24px',
+      position: 'relative',
+      overflow: 'hidden',
+      backdropFilter: 'blur(16px)',
+      flexWrap: 'wrap'
+    }}>
+      {/* Línea superior iluminada */}
+      <div style={{
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        height: '3px',
+        background: `linear-gradient(90deg, transparent 0%, ${activeAccent} 50%, transparent 100%)`
+      }} />
+
+      {/* Lado izquierdo: Fase, Nombre en grande, Rol */}
+      <div style={{ flex: 1, minWidth: '240px' }}>
+        <div style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: '6px',
+          background: `${activeAccent}22`,
+          border: `1px solid ${activeAccent}66`,
+          borderRadius: '6px',
+          padding: '4px 12px',
+          fontSize: '0.72rem',
+          fontWeight: 800,
+          color: activeAccent,
+          letterSpacing: '0.09em',
+          textTransform: 'uppercase',
+          marginBottom: '8px'
+        }}>
+          <Shield size={12} />
+          <span>{activeAgentDef.phaseName || 'Fase 1: Admisión'}</span>
+        </div>
+
+        <h2 style={{
+          fontSize: '2.1rem',
+          fontWeight: 900,
+          color: '#FFFFFF',
+          fontFamily: 'Outfit, sans-serif',
+          lineHeight: 1.15,
+          margin: '0 0 6px 0',
+          letterSpacing: '0.01em',
+          textShadow: `0 2px 18px ${activeAccent}55`
+        }}>
+          {activeAgentDef.name}
+        </h2>
+
+        <div style={{
+          fontSize: '0.9rem',
+          color: '#CBD5E1',
+          fontWeight: 500,
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px'
+        }}>
+          <span style={{ color: activeAccent, fontWeight: 800 }}>•</span>
+          <span>{activeAgentDef.role}</span>
+        </div>
+      </div>
+
+      {/* Lado derecho: Logo circular MÁS GRANDE (104px) con aro institucional */}
+      <div style={{ position: 'relative', flexShrink: 0 }}>
+        {/* Anillo de resplandor orbital */}
+        <div style={{
+          position: 'absolute',
+          inset: '-7px',
+          borderRadius: '50%',
+          border: `2px dashed ${activeAccent}77`,
+          animation: isProcessing ? 'spin 4s linear infinite' : 'none',
+          pointerEvents: 'none'
+        }} />
+
+        <div style={{
+          width: '104px',
+          height: '104px',
+          borderRadius: '50%',
+          border: `3.5px solid ${activeAccent}`,
+          boxShadow: `0 0 32px ${activeAccent}77, 0 8px 26px rgba(0,0,0,0.65)`,
+          overflow: 'hidden',
+          background: '#0B2545',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center'
+        }}>
+          <img
+            src={activeLogoUrl}
+            alt={activeAgentDef.name}
+            style={{
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover',
+              filter: 'brightness(1.05)'
+            }}
+          />
+        </div>
+      </div>
+    </div>
+  );
 
   // Inspection step map (extended)
   const inspectStepMap = {
@@ -625,19 +829,51 @@ export default function MesaPartes({ onNavigateExpedientes }) {
 
   return (
     <div style={{ maxWidth: '1440px', margin: '0 auto', padding: '24px 24px 48px 24px' }}>
+
+      {/* ── PANEL LATERAL DESLIZANTE ── */}
+      {detailPanelAgent && (
+        <AgentDetailPanel
+          agent={detailPanelAgent}
+          pipelineStep={pipelineStep}
+          resultData={getAgentResultData(detailPanelAgent.id)}
+          pipelineLog={pipelineLog || []}
+          onClose={handleCloseDetailPanel}
+        />
+      )}
       
-      {/* ── HEADER BANNER ── */}
-      <div style={{ marginBottom: '20px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
-          <span className="badge badge-green">Mesa de Partes Virtual</span>
-          <span className="badge badge-gold">Flujo Multi-Agente con Control Humano</span>
-          <span className="badge badge-blue">Persistencia Automática</span>
+      {/* ── HEADER INSTITUCIONAL ── */}
+      <div style={{
+        marginBottom: '20px',
+        background: 'rgba(11,37,69,0.7)',
+        border: '1px solid rgba(0,180,216,0.2)',
+        borderRadius: '18px',
+        padding: '22px 28px',
+        backdropFilter: 'blur(12px)',
+        position: 'relative',
+        overflow: 'hidden'
+      }}>
+        {/* Ambient glow */}
+        <div style={{ position: 'absolute', top: '-40px', right: '-40px', width: '200px', height: '200px',
+          borderRadius: '50%', background: 'rgba(0,180,216,0.08)', filter: 'blur(60px)', pointerEvents: 'none' }} />
+        
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px', flexWrap: 'wrap' }}>
+          <span className="badge badge-blue" style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+            <Shield size={12} /> Mesa de Partes Virtual
+          </span>
+          <span className="badge badge-gold" style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+            <Zap size={12} /> Flujo Multi-Agente · Paralelo
+          </span>
+          <span className="badge badge-green" style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+            <CheckCircle2 size={12} /> Persistencia Automática
+          </span>
         </div>
-        <h1 style={{ fontSize: '2.1rem', fontWeight: 800, color: '#0f172a', marginBottom: '6px', letterSpacing: '-0.02em' }}>
-          Ingreso y Auditoría Automática de Documentos
+        <h1 style={{ fontSize: '1.9rem', fontWeight: 800, color: '#FFFFFF', marginBottom: '6px',
+          letterSpacing: '-0.02em', fontFamily: 'Outfit, sans-serif',
+          textShadow: '0 2px 12px rgba(0,180,216,0.3)' }}>
+          Auditoría Automática de Documentos Legislativos
         </h1>
-        <p style={{ color: '#475569', fontSize: '0.98rem', maxWidth: '850px', lineHeight: 1.5, margin: 0 }}>
-          Procese múltiples expedientes en simultáneo. Cada consulta conserva su estado en segundo plano y le permite inspeccionar el trabajo de cada agente en cualquier momento.
+        <p style={{ color: '#94A3B8', fontSize: '0.92rem', maxWidth: '800px', lineHeight: 1.55, margin: 0 }}>
+          Procese múltiples expedientes en simultáneo con flujo paralelo. Los agentes de Verificación Constitucional y Consistencia Normativa ejecutan de forma simultánea. Haga clic en cualquier agente para ver su detalle.
         </p>
       </div>
 
@@ -645,11 +881,11 @@ export default function MesaPartes({ onNavigateExpedientes }) {
       <div style={{
         display: 'flex',
         alignItems: 'center',
-        gap: '8px',
+        gap: '6px',
         marginBottom: '20px',
         overflowX: 'auto',
         paddingBottom: '4px',
-        borderBottom: '1px solid #e2e8f0'
+        borderBottom: '1px solid rgba(0,180,216,0.2)'
       }}>
         {sessions.map((ses, idx) => {
           const isCurrent = ses.id === activeSession.id;
@@ -660,43 +896,26 @@ export default function MesaPartes({ onNavigateExpedientes }) {
             <div
               key={ses.id}
               onClick={() => setActiveSessionId(ses.id)}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                padding: '8px 14px',
-                borderRadius: '12px 12px 0 0',
-                background: isCurrent ? '#ffffff' : '#f1f5f9',
-                border: isCurrent ? '1.5px solid #cbd5e1' : '1px solid transparent',
-                borderBottom: isCurrent ? '2px solid #059669' : 'none',
-                cursor: 'pointer',
-                transition: 'all 0.2s ease',
-                fontWeight: isCurrent ? 700 : 500,
-                color: isCurrent ? '#0f172a' : '#64748b',
-                boxShadow: isCurrent ? '0 -2px 8px rgba(0,0,0,0.04)' : 'none',
-                userSelect: 'none'
-              }}
+              className={`session-tab ${isCurrent ? 'active' : 'inactive'}`}
             >
               {/* Status indicator dot */}
               <span style={{
-                width: '8px',
-                height: '8px',
-                borderRadius: '50%',
-                background: isDone ? '#10b981' : isWorking ? '#f59e0b' : '#94a3b8',
-                boxShadow: isWorking ? '0 0 6px #f59e0b' : 'none'
+                width: '7px', height: '7px', borderRadius: '50%', flexShrink: 0,
+                background: isDone ? '#8AC926' : isWorking ? '#F4A261' : 'rgba(100,116,139,0.5)',
+                boxShadow: isWorking ? '0 0 6px #F4A261' : isDone ? '0 0 6px #8AC926' : 'none'
               }} />
 
-              <span style={{ fontSize: '0.86rem', whiteSpace: 'nowrap' }}>
+              <span style={{ fontSize: '0.84rem', whiteSpace: 'nowrap' }}>
                 {ses.title || `Consulta #${idx + 1}`}
               </span>
 
               {/* Step indicator pill */}
               <span style={{
-                fontSize: '0.68rem',
+                fontSize: '0.66rem',
                 padding: '2px 6px',
-                borderRadius: '6px',
-                background: isCurrent ? 'rgba(5, 150, 105, 0.1)' : 'rgba(148, 163, 184, 0.15)',
-                color: isCurrent ? '#059669' : '#64748b',
+                borderRadius: '5px',
+                background: isCurrent ? 'rgba(0,180,216,0.15)' : 'rgba(100,116,139,0.1)',
+                color: isCurrent ? '#00B4D8' : '#64748B',
                 fontWeight: 700
               }}>
                 {ses.pipelineStep === 0 ? 'Inicio' : `Paso ${ses.pipelineStep}`}
@@ -731,7 +950,7 @@ export default function MesaPartes({ onNavigateExpedientes }) {
           onClick={handleAddSession}
           className="btn-secondary"
           style={{
-            padding: '6px 12px',
+            padding: '6px 14px',
             fontSize: '0.82rem',
             display: 'flex',
             alignItems: 'center',
@@ -739,9 +958,14 @@ export default function MesaPartes({ onNavigateExpedientes }) {
             borderRadius: '10px',
             height: '34px',
             whiteSpace: 'nowrap',
-            background: '#ffffff',
-            border: '1px dashed #94a3b8'
+            background: 'rgba(19, 64, 116, 0.4)',
+            border: '1px dashed rgba(0, 180, 216, 0.6)',
+            color: '#00B4D8',
+            cursor: 'pointer',
+            transition: 'all 0.2s'
           }}
+          onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(0, 180, 216, 0.15)'; }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(19, 64, 116, 0.4)'; }}
         >
           <Plus size={15} />
           <span>Nueva Consulta</span>
@@ -755,11 +979,11 @@ export default function MesaPartes({ onNavigateExpedientes }) {
         onSelectAgent={handleSelectAgent}
       />
 
-      {/* ── INSPECTION BANNER (When viewing a previous agent's execution) ── */}
+      {/* ── INSPECTION BANNER ── */}
       {inspectedAgentId && (
         <div style={{
-          background: 'linear-gradient(90deg, #1e293b 0%, #0f172a 100%)',
-          border: '1.5px solid #38bdf8',
+          background: 'linear-gradient(90deg, rgba(11,37,69,0.9) 0%, rgba(15,23,42,0.95) 100%)',
+          border: '1.5px solid rgba(0,180,216,0.4)',
           borderRadius: '14px',
           padding: '12px 20px',
           marginBottom: '24px',
@@ -767,36 +991,40 @@ export default function MesaPartes({ onNavigateExpedientes }) {
           alignItems: 'center',
           justifyContent: 'space-between',
           gap: '12px',
-          boxShadow: '0 4px 18px rgba(56, 189, 248, 0.25)'
+          boxShadow: '0 4px 18px rgba(0,180,216,0.2)',
+          backdropFilter: 'blur(8px)'
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <Eye size={20} color="#38bdf8" />
+            <Eye size={18} color="#00B4D8" />
             <div>
-              <div style={{ fontSize: '0.88rem', fontWeight: 700, color: '#ffffff' }}>
-                Modo Inspección: Visualizando resultados de <strong style={{ color: '#38bdf8' }}>{activeAgentDef.name}</strong>
+              <div style={{ fontSize: '0.86rem', fontWeight: 700, color: '#F1F5F9' }}>
+                Modo Inspección: <strong style={{ color: '#00B4D8' }}>{activeAgentDef.name}</strong>
               </div>
-              <div style={{ fontSize: '0.76rem', color: '#94a3b8' }}>
-                El trámite actual se encuentra en el Paso {pipelineStep}. Puede revisar todos los dictámenes anteriores sin perder su progreso.
+              <div style={{ fontSize: '0.74rem', color: '#64748B' }}>
+                Paso actual: {pipelineStep}. Revise los resultados de agentes anteriores sin perder el progreso.
               </div>
             </div>
           </div>
-          <button
-            onClick={() => updateActiveSession({ inspectedAgentId: null })}
-            className="btn-primary"
-            style={{
-              padding: '7px 14px',
-              fontSize: '0.82rem',
-              background: '#0284c7',
-              border: 'none',
-              borderRadius: '8px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px'
-            }}
-          >
-            <EyeOff size={14} />
-            <span>Volver a la Fase Actual</span>
-          </button>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <button
+              onClick={() => setDetailPanelAgent(activeAgentDef)}
+              style={{ padding: '6px 12px', fontSize: '0.78rem', borderRadius: '8px',
+                background: 'rgba(0,180,216,0.15)', border: '1px solid rgba(0,180,216,0.35)',
+                color: '#00B4D8', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px',
+                fontFamily: 'Outfit, sans-serif', fontWeight: 600 }}
+            >
+              <Eye size={13} /> Ver Detalle
+            </button>
+            <button
+              onClick={() => updateActiveSession({ inspectedAgentId: null })}
+              style={{ padding: '6px 12px', fontSize: '0.78rem', borderRadius: '8px',
+                background: 'rgba(2,132,199,0.2)', border: '1px solid rgba(2,132,199,0.4)',
+                color: '#38BDF8', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px',
+                fontFamily: 'Outfit, sans-serif', fontWeight: 600 }}
+            >
+              <EyeOff size={13} /> Volver
+            </button>
+          </div>
         </div>
       )}
 
@@ -820,7 +1048,7 @@ export default function MesaPartes({ onNavigateExpedientes }) {
         </div>
       )}
 
-      {/* ── STEP 0: DOCUMENT UPLOAD & INPUT (With Lateral Agent Hero as in Screenshot 2) ── */}
+      {/* ── STEP 0: DOCUMENT UPLOAD & INPUT ── */}
       {effectiveViewStep === 0 && (
         <div style={{
           display: 'grid',
@@ -828,34 +1056,37 @@ export default function MesaPartes({ onNavigateExpedientes }) {
           gap: '24px',
           alignItems: 'start'
         }}>
-          {/* Columna Izquierda: Lateral Agent Hero (Screenshot 2 - Recuadro Rojo) */}
+          {/* Columna Izquierda: Banner Nítido sin recuadros */}
           <div style={{ position: 'sticky', top: '20px' }}>
             <LateralAgentHero
-              agent={AGENTS_DEFINITION[0]}
+              agent={activeAgentDef}
               isProcessing={isProcessing}
-              statusLabel="Listo para clasificar"
-              phaseBadge="Fase 1: Distribuidor"
             />
           </div>
 
-          {/* Columna Derecha: Formulario de Carga y Entrada de Texto */}
-          <div className="glass-card" style={{ padding: '32px' }}>
-            <div style={{ display: 'flex', gap: '12px', marginBottom: '24px', borderBottom: '1px solid #e2e8f0', paddingBottom: '16px' }}>
-              <button
-                onClick={() => updateActiveSession({ inputMode: 'file' })}
-                className={inputMode === 'file' ? 'btn-primary' : 'btn-secondary'}
-              >
-                <UploadCloud size={18} />
-                <span>Subir Archivo (PDF / DOCX)</span>
-              </button>
-              <button
-                onClick={() => updateActiveSession({ inputMode: 'text' })}
-                className={inputMode === 'text' ? 'btn-primary' : 'btn-secondary'}
-              >
-                <FileText size={18} />
-                <span>Pegar Texto Directo</span>
-              </button>
-            </div>
+          {/* Columna Derecha */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            {/* ── CONTENEDOR SUPERIOR DEDICADO: LOGO MÁS GRANDE (104px) Y NOMBRE EN GRANDE ── */}
+            {renderAgentHeaderContainer()}
+
+            {/* Formulario de Carga y Entrada de Texto */}
+            <div className="glass-card" style={{ padding: '32px' }}>
+              <div style={{ display: 'flex', gap: '12px', marginBottom: '24px', borderBottom: '1px solid rgba(0, 180, 216, 0.2)', paddingBottom: '16px' }}>
+                <button
+                  onClick={() => updateActiveSession({ inputMode: 'file' })}
+                  className={inputMode === 'file' ? 'btn-primary' : 'btn-secondary'}
+                >
+                  <UploadCloud size={18} />
+                  <span>Subir Archivo (PDF / DOCX)</span>
+                </button>
+                <button
+                  onClick={() => updateActiveSession({ inputMode: 'text' })}
+                  className={inputMode === 'text' ? 'btn-primary' : 'btn-secondary'}
+                >
+                  <FileText size={18} />
+                  <span>Pegar Texto Directo</span>
+                </button>
+              </div>
 
             {inputMode === 'file' ? (
               <div>
@@ -869,29 +1100,29 @@ export default function MesaPartes({ onNavigateExpedientes }) {
                 <div
                   onClick={() => fileInputRef.current?.click()}
                   style={{
-                    border: '2px dashed #94a3b8',
+                    border: '2px dashed rgba(0, 180, 216, 0.4)',
                     borderRadius: '16px',
                     padding: '44px 24px',
                     textAlign: 'center',
                     cursor: 'pointer',
-                    background: '#f8fafc',
-                    transition: 'all 0.2s',
+                    background: 'rgba(11, 37, 69, 0.6)',
+                    transition: 'all 0.25s ease',
                     marginBottom: '20px',
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.borderColor = '#10b981';
-                    e.currentTarget.style.background = '#f0fdf4';
+                    e.currentTarget.style.borderColor = '#00B4D8';
+                    e.currentTarget.style.background = 'rgba(19, 64, 116, 0.5)';
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.borderColor = '#94a3b8';
-                    e.currentTarget.style.background = '#f8fafc';
+                    e.currentTarget.style.borderColor = 'rgba(0, 180, 216, 0.4)';
+                    e.currentTarget.style.background = 'rgba(11, 37, 69, 0.6)';
                   }}
                 >
-                  <UploadCloud size={46} color="#059669" style={{ margin: '0 auto 14px' }} />
-                  <h3 style={{ color: '#0f172a', fontSize: '1.2rem', fontWeight: 700, marginBottom: '6px' }}>
+                  <UploadCloud size={46} color="#00B4D8" style={{ margin: '0 auto 14px' }} />
+                  <h3 style={{ color: '#F1F5F9', fontSize: '1.2rem', fontWeight: 700, marginBottom: '6px' }}>
                     {documentName || 'Haz clic aquí para seleccionar tu archivo'}
                   </h3>
-                  <p style={{ color: '#64748b', fontSize: '0.88rem' }}>
+                  <p style={{ color: '#94A3B8', fontSize: '0.88rem' }}>
                     Soporta formatos PDF, DOCX o archivos de texto plano (.txt)
                   </p>
                 </div>
@@ -900,35 +1131,35 @@ export default function MesaPartes({ onNavigateExpedientes }) {
                   <div style={{
                     display: 'flex',
                     gap: '20px',
-                    background: '#f8fafc',
+                    background: 'rgba(15, 23, 42, 0.7)',
                     padding: '16px 20px',
                     borderRadius: '12px',
-                    border: '1px solid #e2e8f0',
+                    border: '1px solid rgba(0, 180, 216, 0.25)',
                     marginBottom: '24px',
                     flexWrap: 'wrap'
                   }}>
                     <div>
-                      <span style={{ fontSize: '0.75rem', color: '#64748b', textTransform: 'uppercase', fontWeight: 600 }}>Páginas:</span>
-                      <strong style={{ display: 'block', color: '#0f172a', fontSize: '1.15rem' }}>{uploadStats.paginas}</strong>
+                      <span style={{ fontSize: '0.75rem', color: '#94A3B8', textTransform: 'uppercase', fontWeight: 600 }}>Páginas:</span>
+                      <strong style={{ display: 'block', color: '#F8FAFC', fontSize: '1.15rem' }}>{uploadStats.paginas}</strong>
                     </div>
                     <div>
-                      <span style={{ fontSize: '0.75rem', color: '#64748b', textTransform: 'uppercase', fontWeight: 600 }}>Palabras:</span>
-                      <strong style={{ display: 'block', color: '#0f172a', fontSize: '1.15rem' }}>{uploadStats.palabras.toLocaleString()}</strong>
+                      <span style={{ fontSize: '0.75rem', color: '#94A3B8', textTransform: 'uppercase', fontWeight: 600 }}>Palabras:</span>
+                      <strong style={{ display: 'block', color: '#F8FAFC', fontSize: '1.15rem' }}>{uploadStats.palabras.toLocaleString()}</strong>
                     </div>
                     <div>
-                      <span style={{ fontSize: '0.75rem', color: '#64748b', textTransform: 'uppercase', fontWeight: 600 }}>Caracteres:</span>
-                      <strong style={{ display: 'block', color: '#0f172a', fontSize: '1.15rem' }}>{uploadStats.caracteres.toLocaleString()}</strong>
+                      <span style={{ fontSize: '0.75rem', color: '#94A3B8', textTransform: 'uppercase', fontWeight: 600 }}>Caracteres:</span>
+                      <strong style={{ display: 'block', color: '#F8FAFC', fontSize: '1.15rem' }}>{uploadStats.caracteres.toLocaleString()}</strong>
                     </div>
                     <div>
-                      <span style={{ fontSize: '0.75rem', color: '#64748b', textTransform: 'uppercase', fontWeight: 600 }}>Motor:</span>
-                      <strong style={{ display: 'block', color: '#059669', fontSize: '1.15rem' }}>{uploadStats.motor}</strong>
+                      <span style={{ fontSize: '0.75rem', color: '#94A3B8', textTransform: 'uppercase', fontWeight: 600 }}>Motor:</span>
+                      <strong style={{ display: 'block', color: '#8AC926', fontSize: '1.15rem' }}>{uploadStats.motor}</strong>
                     </div>
                   </div>
                 )}
               </div>
             ) : (
               <div style={{ marginBottom: '24px' }}>
-                <label style={{ display: 'block', marginBottom: '8px', color: '#334155', fontSize: '0.92rem', fontWeight: 600 }}>
+                <label style={{ display: 'block', marginBottom: '8px', color: '#94A3B8', fontSize: '0.92rem', fontWeight: 600 }}>
                   Contenido del Documento o Proyecto:
                 </label>
                 <textarea
@@ -938,11 +1169,11 @@ export default function MesaPartes({ onNavigateExpedientes }) {
                   rows={9}
                   style={{
                     width: '100%',
-                    background: '#ffffff',
-                    border: '1px solid #cbd5e1',
+                    background: 'rgba(15, 23, 42, 0.8)',
+                    border: '1px solid rgba(0, 180, 216, 0.3)',
                     borderRadius: '12px',
                     padding: '16px',
-                    color: '#0f172a',
+                    color: '#F1F5F9',
                     fontFamily: 'monospace',
                     fontSize: '0.9rem',
                     lineHeight: 1.5,
@@ -975,9 +1206,10 @@ export default function MesaPartes({ onNavigateExpedientes }) {
             </div>
           </div>
         </div>
+      </div>
       )}
 
-      {/* ── STEP 1: FASE 1 EN EJECUCIÓN (With Lateral Hero) ── */}
+      {/* ── STEP 1: FASE 1 EN EJECUCIÓN ── */}
       {effectiveViewStep === 1 && (
         <div style={{
           display: 'grid',
@@ -985,20 +1217,23 @@ export default function MesaPartes({ onNavigateExpedientes }) {
           gap: '24px',
           alignItems: 'start'
         }}>
-          <LateralAgentHero
-            agent={AGENTS_DEFINITION[0]}
-            isProcessing={true}
-            customThinkingText="Clasificando materia y petitorio..."
-            phaseBadge="Fase 1: En Ejecución"
-          />
-          <div className="glass-card" style={{ padding: '48px', textAlign: 'center' }}>
-            <Cpu size={56} color="#00f0ff" className="pulse-active" style={{ margin: '0 auto 20px' }} />
-            <h2 style={{ fontSize: '1.5rem', color: '#ffffff', marginBottom: '8px' }}>
-              Fase 1: Agente Distribuidor en Ejecución
-            </h2>
-            <p style={{ color: '#a7f3d0', fontSize: '0.95rem', maxWidth: '600px', margin: '0 auto' }}>
-              Analizando la materia institucional, el petitorio y la estructura del documento para determinar la categoría correspondiente...
-            </p>
+          <div style={{ position: 'sticky', top: '20px' }}>
+            <LateralAgentHero
+              agent={activeAgentDef}
+              isProcessing={true}
+            />
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            {renderAgentHeaderContainer()}
+            <div className="glass-card" style={{ padding: '48px', textAlign: 'center' }}>
+              <Cpu size={56} color="#00f0ff" className="pulse-active" style={{ margin: '0 auto 20px' }} />
+              <h2 style={{ fontSize: '1.5rem', color: '#ffffff', marginBottom: '8px' }}>
+                Fase 1: Agente Distribuidor en Ejecución
+              </h2>
+              <p style={{ color: '#a7f3d0', fontSize: '0.95rem', maxWidth: '600px', margin: '0 auto' }}>
+                Analizando la materia institucional, el petitorio y la estructura del documento para determinar la categoría correspondiente...
+              </p>
+            </div>
           </div>
         </div>
       )}
@@ -1122,20 +1357,23 @@ export default function MesaPartes({ onNavigateExpedientes }) {
           gap: '24px',
           alignItems: 'start'
         }}>
-          <LateralAgentHero
-            agent={AGENTS_DEFINITION[1]}
-            isProcessing={true}
-            customThinkingText="Asignando comisión parlamentaria..."
-            phaseBadge="Fase 2: Asignación"
-          />
-          <div className="glass-card" style={{ padding: '48px', textAlign: 'center' }}>
-            <Sparkles size={56} color="#3b82f6" className="pulse-active" style={{ margin: '0 auto 20px' }} />
-            <h2 style={{ fontSize: '1.5rem', color: '#ffffff', marginBottom: '8px' }}>
-              Agente de Comisión en Ejecución
-            </h2>
-            <p style={{ color: '#bfdbfe', fontSize: '0.95rem', maxWidth: '650px', margin: '0 auto 20px' }}>
-              Asignando comisión parlamentaria según materia y distribuyendo a sus miembros legislativos...
-            </p>
+          <div style={{ position: 'sticky', top: '20px' }}>
+            <LateralAgentHero
+              agent={activeAgentDef}
+              isProcessing={true}
+            />
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            {renderAgentHeaderContainer()}
+            <div className="glass-card" style={{ padding: '48px', textAlign: 'center' }}>
+              <Sparkles size={56} color="#3b82f6" className="pulse-active" style={{ margin: '0 auto 20px' }} />
+              <h2 style={{ fontSize: '1.5rem', color: '#ffffff', marginBottom: '8px' }}>
+                Agente de Comisión en Ejecución
+              </h2>
+              <p style={{ color: '#bfdbfe', fontSize: '0.95rem', maxWidth: '650px', margin: '0 auto 20px' }}>
+                Asignando comisión parlamentaria según materia y distribuyendo a sus miembros legislativos...
+              </p>
+            </div>
           </div>
         </div>
       )}
@@ -1246,23 +1484,35 @@ export default function MesaPartes({ onNavigateExpedientes }) {
             )}
           </div>
 
-          <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '24px' }}>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '24px', gap: '14px', alignItems: 'center' }}>
+            <span style={{ fontSize: '0.85rem', color: '#94A3B8', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <Zap size={14} color="#00B4D8" /> Ejecución simultánea en paralelo
+            </span>
             <button
-              onClick={handleEjecutarConstitucional}
+              onClick={handleEjecutarAuditoriaParalela}
               disabled={isProcessing}
               className="btn-primary"
-              style={{ fontSize: '1.1rem', padding: '16px 32px', background: 'linear-gradient(135deg, #10b981, #059669)', boxShadow: '0 4px 14px rgba(16, 185, 129, 0.4)' }}
+              style={{
+                fontSize: '1.05rem',
+                padding: '14px 28px',
+                background: 'linear-gradient(135deg, #00B4D8 0%, #134074 100%)',
+                boxShadow: '0 4px 18px rgba(0, 180, 216, 0.4)',
+                border: '1px solid rgba(0, 180, 216, 0.6)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px'
+              }}
             >
               {isProcessing ? (
                 <>
                   <Cpu size={22} className="pulse-active" />
-                  <span>Ejecutando Agente Constitucional...</span>
+                  <span>Ejecutando Auditoría Paralela (CPE + Leyes)...</span>
                 </>
               ) : (
                 <>
-                  <Check size={22} />
-                  <span>Continuar: Verificación Constitucional</span>
-                  <ArrowRight size={20} />
+                  <Zap size={20} color="#8AC926" />
+                  <span>Iniciar Auditoría Paralela (CPE + Leyes)</span>
+                  <ArrowRight size={18} />
                 </>
               )}
             </button>
@@ -1933,20 +2183,23 @@ export default function MesaPartes({ onNavigateExpedientes }) {
           gap: '24px',
           alignItems: 'start'
         }}>
-          <LateralAgentHero
-            agent={AGENTS_DEFINITION.find(a => a.id === 'constitucion_fondo') || AGENTS_DEFINITION[6]}
-            isProcessing={true}
-            customThinkingText="Analizando hermenéutica constitucional de fondo..."
-            phaseBadge="Fase 4: Fondo Sustantivo"
-          />
-          <div className="glass-card" style={{ padding: '48px', textAlign: 'center' }}>
-            <Sparkles size={56} color="#a855f7" className="pulse-active" style={{ margin: '0 auto 20px' }} />
-            <h2 style={{ fontSize: '1.5rem', color: '#ffffff', marginBottom: '8px' }}>
-              Comisión de Constitución (Fondo) en Ejecución
-            </h2>
-            <p style={{ color: '#e9d5ff', fontSize: '0.95rem', maxWidth: '650px', margin: '0 auto 20px' }}>
-              Aplicando interpretación sistemática, ponderación de derechos y jurisprudencia del Tribunal Constitucional Plurinacional...
-            </p>
+          <div style={{ position: 'sticky', top: '20px' }}>
+            <LateralAgentHero
+              agent={activeAgentDef}
+              isProcessing={true}
+            />
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            {renderAgentHeaderContainer()}
+            <div className="glass-card" style={{ padding: '48px', textAlign: 'center' }}>
+              <Sparkles size={56} color="#a855f7" className="pulse-active" style={{ margin: '0 auto 20px' }} />
+              <h2 style={{ fontSize: '1.5rem', color: '#ffffff', marginBottom: '8px' }}>
+                Comisión de Constitución (Fondo) en Ejecución
+              </h2>
+              <p style={{ color: '#e9d5ff', fontSize: '0.95rem', maxWidth: '650px', margin: '0 auto 20px' }}>
+                Aplicando interpretación sistemática, ponderación de derechos y jurisprudencia del Tribunal Constitucional Plurinacional...
+              </p>
+            </div>
           </div>
         </div>
       )}
