@@ -42,20 +42,20 @@ const AGENT_LOGOS = {
   publicacion:        '/robots/logos/verificadorconstitucional.jpg',
 };
 
-// ── Paleta institucional por agente (Opción 6 — Tono Ejecutivo Moderno) ──
+// ── Paleta institucional por agente (Diferenciación cromática en espectro de azul) ──
 const INST_COLORS = {
-  distribuidor:       { primary: '#00B4D8', glow: 'rgba(0,180,216,0.55)',   ring: '#00B4D8', done: '#8AC926' },
-  comision:           { primary: '#38BDF8', glow: 'rgba(56,189,248,0.5)',   ring: '#38BDF8', done: '#8AC926' },
-  constitucional:     { primary: '#8AC926', glow: 'rgba(138,201,38,0.55)',  ring: '#8AC926', done: '#8AC926' },
-  consistencia:       { primary: '#F4A261', glow: 'rgba(244,162,97,0.55)',  ring: '#F4A261', done: '#8AC926' },
-  emisor:             { primary: '#A78BFA', glow: 'rgba(167,139,250,0.5)', ring: '#A78BFA', done: '#8AC926' },
-  notificador:        { primary: '#38BDF8', glow: 'rgba(56,189,248,0.5)',   ring: '#38BDF8', done: '#8AC926' },
-  constitucion_fondo: { primary: '#8AC926', glow: 'rgba(138,201,38,0.55)',  ring: '#8AC926', done: '#8AC926' },
-  concentrador_crew:  { primary: '#00B4D8', glow: 'rgba(0,180,216,0.5)',   ring: '#00B4D8', done: '#8AC926' },
-  secretario:         { primary: '#F4A261', glow: 'rgba(244,162,97,0.5)',   ring: '#F4A261', done: '#8AC926' },
-  bicameral:          { primary: '#38BDF8', glow: 'rgba(56,189,248,0.5)',   ring: '#38BDF8', done: '#8AC926' },
-  veto_promulgacion:  { primary: '#E76F51', glow: 'rgba(231,111,81,0.5)',   ring: '#E76F51', done: '#8AC926' },
-  publicacion:        { primary: '#8AC926', glow: 'rgba(138,201,38,0.55)',  ring: '#8AC926', done: '#8AC926' },
+  distribuidor:       { primary: '#00B4D8', glow: 'rgba(0,180,216,0.6)',    ring: '#00B4D8', done: '#8AC926' }, // Celeste Neón
+  comision:           { primary: '#38BDF8', glow: 'rgba(56,189,248,0.55)',  ring: '#38BDF8', done: '#8AC926' }, // Azul Cielo
+  constitucional:     { primary: '#2563EB', glow: 'rgba(37,99,235,0.6)',    ring: '#2563EB', done: '#8AC926' }, // Azul Zafiro Real
+  consistencia:       { primary: '#1D4ED8', glow: 'rgba(29,78,216,0.6)',    ring: '#1D4ED8', done: '#8AC926' }, // Azul Cobalto Profundo
+  emisor:             { primary: '#0284C7', glow: 'rgba(2,132,199,0.6)',    ring: '#0284C7', done: '#8AC926' }, // Azul Océano Cerúleo
+  notificador:        { primary: '#06B6D4', glow: 'rgba(6,182,212,0.55)',   ring: '#06B6D4', done: '#8AC926' }, // Turquesa Azulado
+  constitucion_fondo: { primary: '#4338CA', glow: 'rgba(67,56,202,0.6)',    ring: '#4338CA', done: '#8AC926' }, // Azul Índigo Parlamentario
+  concentrador_crew:  { primary: '#3B82F6', glow: 'rgba(59,130,246,0.55)',  ring: '#3B82F6', done: '#8AC926' }, // Azul Acero Técnico
+  secretario:         { primary: '#1E40AF', glow: 'rgba(30,64,175,0.6)',    ring: '#1E40AF', done: '#8AC926' }, // Azul Marino Clásico
+  bicameral:          { primary: '#7DD3FC', glow: 'rgba(125,211,252,0.55)', ring: '#7DD3FC', done: '#8AC926' }, // Azul Hielo Glaciar
+  veto_promulgacion:  { primary: '#1E3A8A', glow: 'rgba(30,58,138,0.65)',   ring: '#1E3A8A', done: '#8AC926' }, // Azul Medianoche Ultramar
+  publicacion:        { primary: '#00C2CB', glow: 'rgba(0,194,203,0.6)',    ring: '#00C2CB', done: '#8AC926' }, // Azul Lapislázuli Brillante
 };
 
 export const AGENTS_DEFINITION = [
@@ -236,17 +236,17 @@ function CircularAgentNode({ agent, pipelineStep, isInspected, onSelect, compact
   const borderColor = isInspected
     ? '#FFFFFF'
     : isDone
-    ? tc.done
+    ? '#8AC926'
     : isActive
     ? tc.primary
     : 'rgba(100,116,139,0.5)';
 
   const boxShadow = isActive
-    ? `0 0 0 3px ${tc.glow}, 0 0 20px ${tc.glow}`
+    ? `0 0 0 3px ${tc.glow}, 0 0 22px ${tc.glow}`
     : isInspected
-    ? `0 0 0 3px rgba(255,255,255,0.5)`
+    ? `0 0 0 3px rgba(255,255,255,0.7), 0 0 18px rgba(255,255,255,0.4)`
     : isDone
-    ? `0 0 10px rgba(138,201,38,0.35)`
+    ? `0 0 0 2px rgba(138,201,38,0.3), 0 0 16px rgba(138,201,38,0.45)`
     : 'none';
 
   return (
@@ -255,7 +255,7 @@ function CircularAgentNode({ agent, pipelineStep, isInspected, onSelect, compact
       onClick={() => onSelect(agent)}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
-      style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}
+      style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', position: 'relative' }}
     >
       {/* Tooltip */}
       {hovered && (
@@ -271,14 +271,14 @@ function CircularAgentNode({ agent, pipelineStep, isInspected, onSelect, compact
             {agent.name}
           </div>
           <div style={{ fontSize: '0.68rem', color: '#94A3B8', marginBottom: '5px' }}>{agent.role}</div>
-          <div style={{ display: 'flex', gap: '4px' }}>
+          <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
             <span style={{ fontSize: '0.62rem', padding: '2px 7px', borderRadius: '4px',
-              background: isDone ? 'rgba(138,201,38,0.15)' : isActive ? 'rgba(0,180,216,0.15)' : 'rgba(100,116,139,0.15)',
-              color: isDone ? '#8AC926' : isActive ? '#00B4D8' : '#64748B',
-              fontWeight: 700 }}>
-              {isDone ? 'Completado' : isActive ? 'En Proceso' : 'En Espera'}
+              background: isDone ? 'rgba(138,201,38,0.18)' : isActive ? 'rgba(0,180,216,0.18)' : 'rgba(100,116,139,0.15)',
+              color: isDone ? '#8AC926' : isActive ? tc.primary : '#64748B',
+              fontWeight: 800, display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+              {isDone ? '✓ Completado' : isActive ? '● En Proceso' : 'En Espera'}
             </span>
-            <span style={{ fontSize: '0.62rem', color: '#475569', padding: '2px 4px' }}>Clic para detalles</span>
+            <span style={{ fontSize: '0.62rem', color: '#64748B', padding: '2px 4px' }}>Clic para detalles</span>
           </div>
         </div>
       )}
@@ -286,7 +286,7 @@ function CircularAgentNode({ agent, pipelineStep, isInspected, onSelect, compact
       {/* Círculo principal */}
       <div style={{
         width: `${size}px`, height: `${size}px`, borderRadius: '50%',
-        border: `2.5px solid ${borderColor}`,
+        border: `2.8px solid ${borderColor}`,
         boxShadow,
         overflow: 'hidden',
         background: 'linear-gradient(145deg, #0F172A, #1E293B)',
@@ -305,7 +305,7 @@ function CircularAgentNode({ agent, pipelineStep, isInspected, onSelect, compact
               width: '100%',
               height: '100%',
               objectFit: 'cover',
-              filter: isDone ? 'brightness(0.95)' : isActive ? 'brightness(1.18)' : 'brightness(0.72)'
+              filter: isDone ? 'brightness(1.02)' : isActive ? 'brightness(1.18)' : 'brightness(0.72)'
             }}
           />
         ) : (
@@ -325,41 +325,62 @@ function CircularAgentNode({ agent, pipelineStep, isInspected, onSelect, compact
         {/* Anillo giratorio si activo */}
         {isActive && (
           <div style={{ position: 'absolute', inset: '-4px', borderRadius: '50%',
-            border: `2px dashed ${tc.primary}`, opacity: 0.85,
+            border: `2px dashed ${tc.primary}`, opacity: 0.9,
             animation: 'spin 3s linear infinite', pointerEvents: 'none' }} />
         )}
 
-        {/* Checkmark si completado */}
+        {/* Checkmark destacado si completado */}
         {isDone && (
-          <div style={{ position: 'absolute', bottom: '1px', right: '1px',
-            background: '#8AC926', borderRadius: '50%',
-            width: compact ? '16px' : '20px', height: compact ? '16px' : '20px',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            border: '2px solid #0B2545' }}>
-            <CheckCircle2 size={compact ? 9 : 12} color="#0B2545" />
+          <div style={{
+            position: 'absolute',
+            bottom: '-2px',
+            right: '-2px',
+            background: '#8AC926',
+            borderRadius: '50%',
+            width: compact ? '20px' : '24px',
+            height: compact ? '20px' : '24px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            border: '2.5px solid #0B2545',
+            boxShadow: '0 0 10px rgba(138,201,38,0.7)',
+            zIndex: 6
+          }}>
+            <CheckCircle2 size={compact ? 12 : 14} color="#0B2545" strokeWidth={3} />
           </div>
         )}
 
         {/* Indicador de inspección */}
         {isInspected && (
           <div style={{ position: 'absolute', inset: 0, borderRadius: '50%',
-            background: 'rgba(255,255,255,0.12)', display: 'flex',
+            background: 'rgba(255,255,255,0.18)', display: 'flex',
             alignItems: 'center', justifyContent: 'center' }}>
-            <Eye size={16} color="#FFFFFF" />
+            <Eye size={18} color="#FFFFFF" />
           </div>
         )}
       </div>
 
-      {/* Etiqueta + paso */}
-      <div style={{ marginTop: '6px', textAlign: 'center', maxWidth: `${size + 20}px` }}>
+      {/* Etiqueta + paso con check si completado */}
+      <div style={{ marginTop: '6px', textAlign: 'center', maxWidth: `${size + 24}px` }}>
         <div style={{ fontSize: compact ? '0.6rem' : '0.68rem', fontWeight: 700,
           color: isInspected ? '#FFFFFF' : isDone ? '#8AC926' : isActive ? tc.primary : '#64748B',
           overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
           fontFamily: 'Outfit, sans-serif', transition: 'color 0.2s' }}>
           {agent.shortName}
         </div>
-        <div style={{ fontSize: '0.56rem', color: '#475569', fontFamily: 'monospace', marginTop: '1px' }}>
-          P{agent.stepNumber}
+        <div style={{
+          fontSize: '0.58rem',
+          color: isDone ? '#8AC926' : '#475569',
+          fontFamily: 'monospace',
+          marginTop: '1px',
+          fontWeight: isDone ? 800 : 500,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '2px'
+        }}>
+          {isDone && <span>✓</span>}
+          <span>P{agent.stepNumber}</span>
         </div>
       </div>
     </div>
@@ -378,14 +399,14 @@ function CurvedFlowConnector({ isDone, isActive, compact = false }) {
       alignItems: 'center',
       justifyContent: 'center',
       flexShrink: 0,
-      width: compact ? '36px' : '48px',
-      height: '40px',
+      width: compact ? '38px' : '52px',
+      height: '42px',
       position: 'relative',
       userSelect: 'none'
     }}>
       <svg
-        width={compact ? "36" : "48"}
-        height="40"
+        width={compact ? "38" : "52"}
+        height="42"
         viewBox="0 0 48 40"
         fill="none"
         style={{ overflow: 'visible' }}
@@ -446,6 +467,29 @@ function CurvedFlowConnector({ isDone, isActive, compact = false }) {
           </circle>
         )}
       </svg>
+
+      {/* Indicador de Check centrado para flujos ya completados/ajustados */}
+      {isDone && (
+        <div style={{
+          position: 'absolute',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          width: compact ? '16px' : '19px',
+          height: compact ? '16px' : '19px',
+          borderRadius: '50%',
+          background: '#8AC926',
+          border: '2px solid #0B2545',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          boxShadow: '0 0 10px rgba(138,201,38,0.7)',
+          zIndex: 5,
+          pointerEvents: 'none'
+        }}>
+          <CheckCircle2 size={compact ? 10 : 12} color="#0B2545" strokeWidth={3} />
+        </div>
+      )}
     </div>
   );
 }
@@ -528,6 +572,29 @@ function SplitFlowConnector({ isDone, isActive, compact = false }) {
           </>
         )}
       </svg>
+
+      {/* Checkmark en bifurcación completada */}
+      {isDone && (
+        <div style={{
+          position: 'absolute',
+          top: '50%',
+          left: '10px',
+          transform: 'translateY(-50%)',
+          width: compact ? '16px' : '19px',
+          height: compact ? '16px' : '19px',
+          borderRadius: '50%',
+          background: '#8AC926',
+          border: '2px solid #0B2545',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          boxShadow: '0 0 10px rgba(138,201,38,0.7)',
+          zIndex: 5,
+          pointerEvents: 'none'
+        }}>
+          <CheckCircle2 size={compact ? 10 : 12} color="#0B2545" strokeWidth={3} />
+        </div>
+      )}
     </div>
   );
 }
@@ -611,6 +678,29 @@ function MergeFlowConnector({ isDone, isActive, compact = false }) {
           </>
         )}
       </svg>
+
+      {/* Checkmark en convergencia completada */}
+      {isDone && (
+        <div style={{
+          position: 'absolute',
+          top: '50%',
+          right: '8px',
+          transform: 'translateY(-50%)',
+          width: compact ? '16px' : '19px',
+          height: compact ? '16px' : '19px',
+          borderRadius: '50%',
+          background: '#8AC926',
+          border: '2px solid #0B2545',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          boxShadow: '0 0 10px rgba(138,201,38,0.7)',
+          zIndex: 5,
+          pointerEvents: 'none'
+        }}>
+          <CheckCircle2 size={compact ? 10 : 12} color="#0B2545" strokeWidth={3} />
+        </div>
+      )}
     </div>
   );
 }

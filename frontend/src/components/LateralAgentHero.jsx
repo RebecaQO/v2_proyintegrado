@@ -21,20 +21,20 @@ const AGENT_BANNER_MAP = {
   publicacion:        '/robots/banner/emisor.png',
 };
 
-// Colores de acento institucional para el marco según el agente activo
+// Colores de acento institucional (diferenciación cromática en espectro de azul por agente)
 const AGENT_ACCENT = {
-  distribuidor:       '#00B4D8',
-  comision:           '#38BDF8',
-  constitucional:     '#8AC926',
-  consistencia:       '#F4A261',
-  emisor:             '#A78BFA',
-  notificador:        '#38BDF8',
-  constitucion_fondo: '#8AC926',
-  concentrador_crew:  '#00B4D8',
-  secretario:         '#F4A261',
-  bicameral:          '#38BDF8',
-  veto_promulgacion:  '#E76F51',
-  publicacion:        '#8AC926',
+  distribuidor:       '#00B4D8', // Celeste Neón Eléctrico
+  comision:           '#38BDF8', // Azul Cielo Radiante
+  constitucional:     '#2563EB', // Azul Zafiro Real
+  consistencia:       '#1D4ED8', // Azul Cobalto Profundo
+  emisor:             '#0284C7', // Azul Océano Cerúleo
+  notificador:        '#06B6D4', // Turquesa Azulado
+  constitucion_fondo: '#4338CA', // Azul Índigo Parlamentario
+  concentrador_crew:  '#3B82F6', // Azul Acero Técnico
+  secretario:         '#1E40AF', // Azul Marino Clásico
+  bicameral:          '#7DD3FC', // Azul Hielo Glaciar
+  veto_promulgacion:  '#1E3A8A', // Azul Medianoche Ultramar
+  publicacion:        '#00C2CB', // Azul Lapislázuli Brillante
 };
 
 export default function LateralAgentHero({

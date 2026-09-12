@@ -50,20 +50,20 @@ const AGENT_BANNER_MAP = {
   publicacion:        '/robots/banner/emisor.png',
 };
 
-// Color institucional por agente (Opción 6 — Tono Ejecutivo Moderno)
+// Color institucional por agente (Diferenciación cromática en espectro de azul)
 const AGENT_THEME_COLORS = {
-  distribuidor:       { primary: '#00B4D8', glow: 'rgba(0, 180, 216, 0.4)',   bg: 'rgba(0, 180, 216, 0.08)' },
-  comision:           { primary: '#38BDF8', glow: 'rgba(56, 189, 248, 0.4)',  bg: 'rgba(56, 189, 248, 0.08)' },
-  constitucional:     { primary: '#8AC926', glow: 'rgba(138, 201, 38, 0.4)',  bg: 'rgba(138, 201, 38, 0.08)' },
-  consistencia:       { primary: '#F4A261', glow: 'rgba(244, 162, 97, 0.4)',  bg: 'rgba(244, 162, 97, 0.08)' },
-  emisor:             { primary: '#A78BFA', glow: 'rgba(167, 139, 250, 0.4)', bg: 'rgba(167, 139, 250, 0.08)' },
-  notificador:        { primary: '#38BDF8', glow: 'rgba(56, 189, 248, 0.4)',  bg: 'rgba(56, 189, 248, 0.08)' },
-  constitucion_fondo: { primary: '#8AC926', glow: 'rgba(138, 201, 38, 0.4)',  bg: 'rgba(138, 201, 38, 0.08)' },
-  concentrador_crew:  { primary: '#00B4D8', glow: 'rgba(0, 180, 216, 0.4)',   bg: 'rgba(0, 180, 216, 0.08)' },
-  secretario:         { primary: '#F4A261', glow: 'rgba(244, 162, 97, 0.4)',  bg: 'rgba(244, 162, 97, 0.08)' },
-  bicameral:          { primary: '#38BDF8', glow: 'rgba(56, 189, 248, 0.4)',  bg: 'rgba(56, 189, 248, 0.08)' },
-  veto_promulgacion:  { primary: '#E76F51', glow: 'rgba(231, 111, 81, 0.4)',  bg: 'rgba(231, 111, 81, 0.08)' },
-  publicacion:        { primary: '#8AC926', glow: 'rgba(138, 201, 38, 0.4)',  bg: 'rgba(138, 201, 38, 0.08)' },
+  distribuidor:       { primary: '#00B4D8', glow: 'rgba(0, 180, 216, 0.45)',  bg: 'rgba(0, 180, 216, 0.1)' },
+  comision:           { primary: '#38BDF8', glow: 'rgba(56, 189, 248, 0.45)', bg: 'rgba(56, 189, 248, 0.1)' },
+  constitucional:     { primary: '#2563EB', glow: 'rgba(37, 99, 235, 0.45)',  bg: 'rgba(37, 99, 235, 0.1)' },
+  consistencia:       { primary: '#1D4ED8', glow: 'rgba(29, 78, 216, 0.45)',  bg: 'rgba(29, 78, 216, 0.1)' },
+  emisor:             { primary: '#0284C7', glow: 'rgba(2, 132, 199, 0.45)',  bg: 'rgba(2, 132, 199, 0.1)' },
+  notificador:        { primary: '#06B6D4', glow: 'rgba(6, 182, 212, 0.45)',  bg: 'rgba(6, 182, 212, 0.1)' },
+  constitucion_fondo: { primary: '#4338CA', glow: 'rgba(67, 56, 202, 0.45)', bg: 'rgba(67, 56, 202, 0.1)' },
+  concentrador_crew:  { primary: '#3B82F6', glow: 'rgba(59, 130, 246, 0.45)', bg: 'rgba(59, 130, 246, 0.1)' },
+  secretario:         { primary: '#1E40AF', glow: 'rgba(30, 64, 175, 0.45)',  bg: 'rgba(30, 64, 175, 0.1)' },
+  bicameral:          { primary: '#7DD3FC', glow: 'rgba(125, 211, 252, 0.45)',bg: 'rgba(125, 211, 252, 0.1)' },
+  veto_promulgacion:  { primary: '#1E3A8A', glow: 'rgba(30, 58, 138, 0.5)',   bg: 'rgba(30, 58, 138, 0.1)' },
+  publicacion:        { primary: '#00C2CB', glow: 'rgba(0, 194, 203, 0.45)',  bg: 'rgba(0, 194, 203, 0.1)' },
 };
 
 function StatusBadge({ isActive, isDone, isError }) {

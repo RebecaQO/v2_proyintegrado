@@ -197,102 +197,154 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 /* ── Buttons ─────────────────────────────────────────────────── */
+/* ── Buttons (Paleta Institucional GobernIA) ───────────────────────── */
 .btn-primary {
-  background: linear-gradient(135deg, #0284C7 0%, #0B2545 100%);
-  color: #ffffff;
+  background: linear-gradient(135deg, #0284C7 0%, #00B4D8 100%);
+  color: #FFFFFF;
   font-family: 'Outfit', sans-serif;
   font-weight: 700;
   padding: 12px 24px;
   border-radius: 12px;
-  border: 1px solid rgba(0, 180, 216, 0.4);
+  border: 1px solid rgba(0, 180, 216, 0.45);
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  transition: all 0.22s ease;
-  box-shadow: 0 4px 14px rgba(2, 132, 199, 0.35);
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 4px 16px rgba(2, 132, 199, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.2);
   letter-spacing: 0.01em;
+  text-decoration: none;
 }
 
 .btn-primary:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(0, 180, 216, 0.45);
-  background: linear-gradient(135deg, #00B4D8 0%, #0284C7 100%);
+  box-shadow: 0 8px 24px rgba(0, 180, 216, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  background: linear-gradient(135deg, #00B4D8 0%, #38BDF8 100%);
+  color: #FFFFFF;
+}
+
+.btn-primary:active:not(:disabled) {
+  transform: translateY(0);
 }
 
 .btn-primary:disabled {
-  opacity: 0.5;
+  opacity: 0.45;
   cursor: not-allowed;
   transform: none;
+  box-shadow: none;
 }
 
 .btn-secondary {
-  background: rgba(30, 41, 59, 0.8);
-  color: #CBD5E1;
+  background: rgba(19, 64, 116, 0.45);
+  color: #E2E8F0;
   font-family: 'Outfit', sans-serif;
   font-weight: 600;
   padding: 10px 20px;
   border-radius: 12px;
-  border: 1px solid rgba(100, 116, 139, 0.4);
+  border: 1px solid rgba(0, 180, 216, 0.35);
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   gap: 8px;
   transition: all 0.2s ease;
+  backdrop-filter: blur(8px);
+  text-decoration: none;
 }
 
-.btn-secondary:hover {
-  background: rgba(51, 65, 85, 0.9);
-  border-color: rgba(0, 180, 216, 0.35);
-  color: #F1F5F9;
+.btn-secondary:hover:not(:disabled) {
+  background: rgba(0, 180, 216, 0.2);
+  border-color: #00B4D8;
+  color: #FFFFFF;
+  box-shadow: 0 4px 16px rgba(0, 180, 216, 0.25);
+  transform: translateY(-1px);
+}
+
+.btn-secondary:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none;
 }
 
 .btn-success {
-  background: linear-gradient(135deg, #8AC926 0%, #5f8a1b 100%);
+  background: linear-gradient(135deg, #8AC926 0%, #689E1A 100%);
   color: #0B2545;
   font-family: 'Outfit', sans-serif;
-  font-weight: 700;
+  font-weight: 800;
   padding: 12px 24px;
   border-radius: 12px;
-  border: 1px solid rgba(138, 201, 38, 0.4);
+  border: 1px solid rgba(138, 201, 38, 0.6);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 4px 16px rgba(138, 201, 38, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  letter-spacing: 0.01em;
+  text-decoration: none;
+}
+
+.btn-success:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(138, 201, 38, 0.55);
+  filter: brightness(1.1);
+  color: #0B2545;
+}
+
+.btn-success:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.btn-success:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.btn-amber, .btn-warning {
+  background: linear-gradient(135deg, #F4A261 0%, #E07A38 100%);
+  color: #0B2545;
+  font-family: 'Outfit', sans-serif;
+  font-weight: 800;
+  padding: 12px 24px;
+  border-radius: 12px;
+  border: 1px solid rgba(244, 162, 97, 0.6);
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   gap: 8px;
   transition: all 0.22s ease;
-  box-shadow: 0 4px 14px rgba(138, 201, 38, 0.3);
+  box-shadow: 0 4px 16px rgba(244, 162, 97, 0.35);
+  text-decoration: none;
 }
 
-.btn-success:hover:not(:disabled) {
+.btn-amber:hover:not(:disabled), .btn-warning:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(138, 201, 38, 0.45);
-  filter: brightness(1.1);
-}
-
-.btn-success:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  transform: none;
+  box-shadow: 0 8px 24px rgba(244, 162, 97, 0.5);
+  filter: brightness(1.08);
 }
 
 .btn-danger {
-  background: rgba(231, 111, 81, 0.15);
-  color: #E76F51;
+  background: rgba(231, 111, 81, 0.18);
+  color: #FFAAA6;
   font-family: 'Outfit', sans-serif;
-  font-weight: 600;
+  font-weight: 700;
   padding: 10px 20px;
   border-radius: 12px;
-  border: 1px solid rgba(231, 111, 81, 0.35);
+  border: 1px solid rgba(231, 111, 81, 0.45);
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   gap: 8px;
   transition: all 0.2s ease;
+  text-decoration: none;
 }
 
-.btn-danger:hover {
-  background: rgba(231, 111, 81, 0.25);
-  border-color: rgba(231, 111, 81, 0.6);
+.btn-danger:hover:not(:disabled) {
+  background: rgba(231, 111, 81, 0.3);
+  border-color: #E76F51;
+  color: #FFFFFF;
+  box-shadow: 0 4px 16px rgba(231, 111, 81, 0.35);
 }
 
 /* ── Badges ──────────────────────────────────────────────────── */
