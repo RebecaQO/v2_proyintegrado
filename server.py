@@ -370,30 +370,55 @@ def run_agent_comision(req: Phase2Request):
         comisiones = obtener_comisiones_activas()
         comisiones_str = "\n".join(f"- {c}" for c in comisiones)
 
-        agente = _get_asignador_agent(comisiones)
+        # Heurística temática basada en comisiones reales de Neon
+        def _determinar_comision_heuristica(texto: str, lista_comisiones: List[str]) -> str:
+            t = texto.lower()
+            if any(k in t for k in ["agua", "medio ambiente", "tierra", "bosque", "biodiversidad", "recursos naturales"]):
+                for c in lista_comisiones:
+                    if "medio ambiente" in c.lower() or "tierra" in c.lower(): return c
+            if any(k in t for k in ["economía", "tribut", "financ", "presupuesto", "banco", "fiscal", "inversión"]):
+                for c in lista_comisiones:
+                    if "planificación" in c.lower() or "economía" in c.lower() or "finanzas" in c.lower(): return c
+            if any(k in t for k in ["salud", "educación", "deporte", "escuela", "hospital", "médic"]):
+                for c in lista_comisiones:
+                    if "educación" in c.lower() or "salud" in c.lower(): return c
+            if any(k in t for k in ["justicia", "penal", "civil", "derechos humanos", "constituc"]):
+                for c in lista_comisiones:
+                    if "constitución" in c.lower() or "justicia" in c.lower(): return c
+            for c in lista_comisiones:
+                if "constitución" in c.lower(): return c
+            return lista_comisiones[0] if lista_comisiones else "Comisión de Constitución, Legislación y Sistema Electoral"
 
-        # Usar la descripción del tasks.yaml que ya tiene el mapa materia→comisión
-        tasks_cfg = load_tasks_yaml().get("tarea_clasificacion_comision", {})
-        desc = tasks_cfg.get("description", "Determina la comisión:\n{texto_documento}")
-        desc = desc.replace("{texto_documento}", muestrear_texto(req.texto_documento, 4000))\
-                   .replace("{comisiones_info}", comisiones_str)
-
-        tarea = Task(
-            description=desc,
-            expected_output=tasks_cfg.get("expected_output",
-                'JSON: {"comision_principal": "...", "prioridad": "Normal", "resumen": "..."}'),
-            agent=agente,
-        )
-        crew = Crew(agents=[agente], tasks=[tarea], verbose=False)
-        raw_out = str(crew.kickoff()).strip()
-
+        # Intento con LLM resiliente
+        data = None
         try:
-            data = json.loads(_strip_json(raw_out))
-        except Exception:
+            from sma_unified.agents.llm_client import chat_completion_resiliente, extraer_json_de_llm
+            prompt_com = f"""Eres el Asignador de Comisiones de la Asamblea Legislativa de Bolivia.
+Comisiones disponibles en la base de datos:
+{comisiones_str}
+
+Texto del documento:
+{muestrear_texto(req.texto_documento, 3000)}
+
+Determina la comisión competente según la materia. Responde ÚNICAMENTE con JSON:
+{{"comision_principal": "<nombre exacto de una comisión de la lista>", "prioridad": "Alta|Media|Normal", "resumen": "<breve resumen>", "complejidad": "Baja|Media|Alta"}}
+"""
+            raw_out, mod = chat_completion_resiliente(
+                messages=[{"role": "user", "content": prompt_com}],
+                temperature=0.1,
+                max_tokens=250,
+                timeout=8
+            )
+            data = extraer_json_de_llm(raw_out)
+        except Exception as _llm_e:
+            logger.warning(f"Fallback heurístico comisiones por error LLM: {_llm_e}")
+
+        if not data or not isinstance(data, dict) or not data.get("comision_principal"):
+            com_elegida = _determinar_comision_heuristica(req.texto_documento, comisiones)
             data = {
-                "comision_principal": comisiones[0] if comisiones else "COMISION_DE_CONSTITUCION",
-                "prioridad": "Normal",
-                "resumen": "Proyecto legislativo en análisis.",
+                "comision_principal": com_elegida,
+                "prioridad": "Alta" if "urgente" in req.texto_documento.lower() else "Normal",
+                "resumen": req.texto_documento.strip().split("\n")[0][:180] or "Proyecto legislativo canalizado por especialidad temática.",
                 "complejidad": "Media",
             }
 

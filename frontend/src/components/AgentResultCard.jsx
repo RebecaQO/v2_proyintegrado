@@ -6,7 +6,8 @@ import {
   AlertCircle, 
   ShieldCheck, 
   Target, 
-  Zap
+  Zap,
+  Eye
 } from 'lucide-react';
 import CssRobotAvatar from './CssRobotAvatar';
 
@@ -26,6 +27,8 @@ export default function AgentResultCard({
   image = '',
   justificacion = '',
   garantiaEtica = '',
+  onViewPrev = null,   // callback → muestra resultado previo del agente
+  prevLabel = 'Ver Ejecución Anterior',
 }) {
   const themeStyles = {
     cyan: {
@@ -308,22 +311,22 @@ export default function AgentResultCard({
             {role}
           </div>
 
-          {/* Status Badge con Check Prominente */}
+          {/* Status Badge con Check Prominente — paleta institucional */}
           <div style={{
             width: '100%',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             gap: '8px',
-            background: isWorking ? 'rgba(245, 158, 11, 0.25)' : 'rgba(16, 185, 129, 0.25)',
-            border: `1.5px solid ${isWorking ? '#f59e0b' : '#10b981'}`,
+            background: isWorking ? 'rgba(244, 162, 97, 0.2)' : 'rgba(138, 201, 38, 0.15)',
+            border: `1.5px solid ${isWorking ? '#F4A261' : '#8AC926'}`,
             borderRadius: '12px',
             padding: '8px 12px',
             fontSize: '0.82rem',
             fontWeight: 800,
-            color: isWorking ? '#fbbf24' : '#34d399',
+            color: isWorking ? '#F4A261' : '#8AC926',
             marginBottom: '16px',
-            boxShadow: isDone ? '0 0 15px rgba(16, 185, 129, 0.3)' : 'none'
+            boxShadow: isDone ? '0 0 15px rgba(138,201,38,0.3)' : 'none'
           }}>
             {isWorking ? (
               <>
@@ -332,11 +335,44 @@ export default function AgentResultCard({
               </>
             ) : (
               <>
-                <CheckCircle2 size={18} color="#34d399" />
-                <span>✓ Fase Ejecutada</span>
+                <CheckCircle2 size={18} color="#8AC926" />
+                <span>Fase Ejecutada</span>
               </>
             )}
           </div>
+
+          {/* Boton: Ver Ejecucion Anterior (siempre visible si hay callback configurado) */}
+          {onViewPrev && (
+            <button
+              onClick={onViewPrev}
+              style={{
+                width: '100%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '6px',
+                padding: '8px 12px',
+                borderRadius: '10px',
+                background: 'rgba(0,180,216,0.12)',
+                border: '1px solid rgba(0,180,216,0.5)',
+                color: '#38BDF8',
+                fontSize: '0.78rem',
+                fontWeight: 700,
+                cursor: 'pointer',
+                marginBottom: '12px',
+                transition: 'all 0.2s',
+                fontFamily: 'Outfit, sans-serif',
+                letterSpacing: '0.02em',
+                boxShadow: '0 2px 8px rgba(0,180,216,0.15)'
+              }}
+              onMouseEnter={e => { e.currentTarget.style.background='rgba(0,180,216,0.25)'; e.currentTarget.style.borderColor='#00B4D8'; e.currentTarget.style.color='#FFFFFF'; }}
+              onMouseLeave={e => { e.currentTarget.style.background='rgba(0,180,216,0.12)'; e.currentTarget.style.borderColor='rgba(0,180,216,0.5)'; e.currentTarget.style.color='#38BDF8'; }}
+              title="Volver a visualizar los resultados de la ejecución"
+            >
+              <Eye size={14} />
+              <span>{prevLabel}</span>
+            </button>
+          )}
 
           {/* ¿Por qué se realiza este paso? */}
           {justificacion && (
@@ -370,20 +406,6 @@ export default function AgentResultCard({
             </div>
           )}
 
-          {/* LLM Model Info */}
-          {model && (
-            <div style={{
-              fontSize: '0.68rem',
-              color: '#94a3b8',
-              fontFamily: 'monospace',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '4px',
-              marginTop: 'auto'
-            }}>
-              <Cpu size={12} color="#fbbf24" /> {model}
-            </div>
-          )}
         </div>
 
         {/* ── COLUMNA DERECHA: RESULTADOS Y DICTAMEN ESTRUCTURADO ── */}

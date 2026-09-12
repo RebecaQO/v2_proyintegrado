@@ -361,26 +361,59 @@ function CircularAgentNode({ agent, pipelineStep, isInspected, onSelect, compact
       </div>
 
       {/* Etiqueta + paso con check si completado */}
-      <div style={{ marginTop: '6px', textAlign: 'center', maxWidth: `${size + 24}px` }}>
-        <div style={{ fontSize: compact ? '0.6rem' : '0.68rem', fontWeight: 700,
-          color: isInspected ? '#FFFFFF' : isDone ? '#8AC926' : isActive ? tc.primary : '#64748B',
-          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-          fontFamily: 'Outfit, sans-serif', transition: 'color 0.2s' }}>
+      <div style={{ marginTop: '8px', textAlign: 'center', maxWidth: `${compact ? size + 28 : size + 38}px` }}>
+        <div style={{
+          fontSize: compact ? '0.76rem' : '0.86rem',
+          fontWeight: 800,
+          color: isInspected
+            ? '#FFFFFF'
+            : isDone
+            ? '#8AC926'
+            : isActive
+            ? tc.primary
+            : '#E2E8F0',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          whiteSpace: 'normal',
+          lineHeight: 1.25,
+          fontFamily: 'Outfit, sans-serif',
+          textShadow: isInspected
+            ? '0 0 10px rgba(0,180,216,0.8)'
+            : isActive
+            ? `0 0 10px ${tc.glow}`
+            : 'none',
+          transition: 'all 0.25s ease',
+          minHeight: compact ? '18px' : '22px'
+        }}>
           {agent.shortName}
         </div>
         <div style={{
-          fontSize: '0.58rem',
-          color: isDone ? '#8AC926' : '#475569',
-          fontFamily: 'monospace',
-          marginTop: '1px',
-          fontWeight: isDone ? 800 : 500,
+          marginTop: '4px',
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'center',
-          gap: '2px'
+          justifyContent: 'center'
         }}>
-          {isDone && <span>✓</span>}
-          <span>P{agent.stepNumber}</span>
+          <span style={{
+            fontSize: compact ? '0.62rem' : '0.68rem',
+            color: isDone ? '#8AC926' : isActive ? tc.primary : '#94A3B8',
+            fontFamily: 'monospace',
+            fontWeight: 800,
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '3px',
+            padding: '2px 7px',
+            borderRadius: '6px',
+            background: isDone
+              ? 'rgba(138,201,38,0.18)'
+              : isActive
+              ? 'rgba(0,180,216,0.18)'
+              : 'rgba(255,255,255,0.06)',
+            border: `1px solid ${isDone ? 'rgba(138,201,38,0.45)' : isActive ? 'rgba(0,180,216,0.45)' : 'rgba(255,255,255,0.12)'}`
+          }}>
+            {isDone && <span>✓</span>}
+            <span>P{agent.stepNumber}</span>
+          </span>
         </div>
       </div>
     </div>
@@ -746,7 +779,8 @@ function ParallelBlock({ agents, pipelineStep, inspectedAgentId, onSelectAgent, 
 export default function HorizontalAgentFlow({
   pipelineStep = 0,
   inspectedAgentId = null,
-  onSelectAgent = () => {}
+  onSelectAgent = () => {},
+  onOpenAllResults = null
 }) {
   const scrollContainerRef = useRef(null);
   const [activeFilter, setActiveFilter] = useState('all');
@@ -842,8 +876,42 @@ export default function HorizontalAgentFlow({
           </div>
         </div>
 
-        {/* Derecha: toggle + progreso + scroll */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+        {/* Derecha: botón todos los resultados + toggle + progreso + scroll */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+          {/* Botón rápido Ver Resultados Ejecutados */}
+          {onOpenAllResults && (
+            <button
+              onClick={onOpenAllResults}
+              style={{
+                border: '1px solid rgba(0, 180, 216, 0.5)',
+                background: 'linear-gradient(135deg, rgba(2, 132, 199, 0.35) 0%, rgba(0, 180, 216, 0.25) 100%)',
+                color: '#38BDF8',
+                padding: '5px 12px',
+                borderRadius: '8px',
+                fontSize: '0.74rem',
+                fontWeight: 800,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+                boxShadow: '0 2px 10px rgba(0, 180, 216, 0.25)'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'linear-gradient(135deg, rgba(2, 132, 199, 0.55) 0%, rgba(0, 180, 216, 0.45) 100%)';
+                e.currentTarget.style.color = '#FFFFFF';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'linear-gradient(135deg, rgba(2, 132, 199, 0.35) 0%, rgba(0, 180, 216, 0.25) 100%)';
+                e.currentTarget.style.color = '#38BDF8';
+              }}
+              title="Ver resultados ejecutados de todos los agentes en cualquier momento"
+            >
+              <Eye size={13} color="#38BDF8" />
+              <span>Ver Resultados ({completedCount})</span>
+            </button>
+          )}
+
           {/* Toggle tamaño */}
           <button onClick={() => setCompact(c => !c)}
             style={{ border: '1px solid rgba(0,180,216,0.25)',

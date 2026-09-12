@@ -17,6 +17,7 @@ import {
   Activity,
   Database,
   BookOpen,
+  Eye,
 } from 'lucide-react';
 
 // Mapeo de logos y banners institucionales

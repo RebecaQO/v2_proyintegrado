@@ -91,32 +91,44 @@ class VerificadorConstitucional:
         self, texto_proyecto: str, articulo_cpe: Dict[str, Any]
     ) -> Dict[str, Any]:
         """
-        Envía el par (texto_proyecto, articulo_cpe) al LLM y obtiene:
-          clasificacion: A_FAVOR | EN_CONTRA | NEUTRAL
-          fundamento:    explicación jurídica breve (≤ 120 palabras)
-          severidad:     bloqueante | grave | leve | ninguna
-          fragmento_proyecto: extracto del proyecto que genera la tensión
+        PASO 4 del pipeline Prometheus — DEDUCCIÓN por artículo.
+        Clasifica SOLO con reglas explícitas (prohibición vs. permiso, obligación vs. omisión,
+        jerarquía normativa, competencia/ámbito). NO interpreta ni pondera.
+        Todo hallazgo requiere: cita_proyecto + cita_constitucional (literales).
+        Si el caso requiere interpretación → REQUIERE_ANALISIS_DE_FONDO.
         """
         num = articulo_cpe.get("numero", "")
         titulo = articulo_cpe.get("titulo", "")
         texto_cpe = articulo_cpe.get("texto", "")[:800]
 
         sistema = (
-            "Eres un riguroso abogado constitucionalista boliviano experto en la Constitución Política del Estado (CPE 2009).\n"
-            "Tu tarea es realizar una verificación jurídica estricta, detallada y objetiva (SIN ALUCINAR ni presuponer hechos) "
-            "evaluando si el proyecto de ley es CONFORME (A_FAVOR) o VIOLA/CONTRADICE (EN_CONTRA) el artículo constitucional provisto.\n\n"
-            "REGLAS OBLIGATORIAS:\n"
-            "1. Basa tu dictamen ÚNICAMENTE en el texto expreso del artículo de la CPE y los artículos/extracto del proyecto.\n"
-            "2. Sé extremadamente preciso e indica el fundamento jurídico exacto.\n"
-            "3. Responde ÚNICAMENTE con un objeto JSON válido (sin texto antes o después, sin bloques ``` extra):\n"
-            '{"clasificacion": "A_FAVOR|EN_CONTRA|NEUTRAL", '
-            '"fundamento": "explicacion juridica detallada y precisa de max 120 palabras", '
+            "Eres un filtro técnico de rigor lógico — NO un juez constitucional. "
+            "Tu autoridad proviene EXCLUSIVAMENTE del texto literal de la Constitución y "
+            "de las reglas de deducción que se te proporcionan. "
+            "Si una afirmación sobre la Constitución no puede respaldarse con cita textual exacta, "
+            "esa afirmación no existe para ti.\n\n"
+            "REGLAS ABSOLUTAS:\n"
+            "1. PROHIBIDO interpretar el espíritu o finalidad de normas.\n"
+            "2. PROHIBIDO inventar artículos constitucionales o citas.\n"
+            "3. PROHIBIDO usar conocimiento constitucional no provisto en el input.\n"
+            "4. PROHIBIDO emitir juicio de constitucionalidad de fondo.\n"
+            "5. Solo aplica estas reglas de deducción: (a) prohibición vs. permiso, "
+            "(b) obligación vs. omisión, (c) jerarquía normativa, (d) competencia/ámbito.\n"
+            "6. Si el caso requiere ponderación → usa clasificación REQUIERE_ANALISIS_DE_FONDO.\n"
+            "7. 'cita_proyecto' y 'cita_constitucional' deben ser TEXTO LITERAL copiado. "
+            "Si no puedes copiar ambas citas literalmente → clasificación NEUTRAL.\n"
+            "8. Responde ÚNICAMENTE con JSON válido (sin texto adicional):"
+            '{"clasificacion": "A_FAVOR|EN_CONTRA|NEUTRAL|REQUIERE_ANALISIS_DE_FONDO", '
+            '"fundamento": "max 120 palabras, sin interpretación", '
             '"severidad": "bloqueante|grave|leve|ninguna", '
-            '"fragmento_proyecto": "extracto exacto del proyecto que genera la tension (vacío si NEUTRAL)"}'
+            '"cita_proyecto": "texto literal del proyecto que genera tensión (vacío si NEUTRAL)", '
+            '"cita_constitucional": "texto literal del artículo constitucional aplicado", '
+            '"verificado": true|false}'
         )
         usuario = (
             f"ARTÍCULO CPE — Art. {num} ({titulo}):\n{texto_cpe}\n\n"
-            f"TEXTO COMPLETO/SECCIONES DEL PROYECTO DE LEY:\n{texto_proyecto[:3000]}"
+            f"TEXTO DEL PROYECTO DE LEY (clasifica SOLO con reglas de deducción sobre este texto):\n"
+            f"{texto_proyecto[:3000]}"
         )
 
         try:
@@ -132,6 +144,7 @@ class VerificadorConstitucional:
             data = extraer_json_de_llm(contenido)
         except Exception as e:
             logger.warning(f"Fallback heurístico en _clasificar_relacion_cpe por error LLM: {e}")
+            # Fallback determinista: keywords lógicas, nunca inventa
             proy_txt = texto_proyecto.lower()
             const_txt = (articulo_cpe.get("texto") or "").lower()
             prohibe = any(p in const_txt for p in ["prohíbe", "prohibe", "impedirá", "vedado", "no se permite"])
@@ -140,26 +153,39 @@ class VerificadorConstitucional:
             if prohibe and obliga:
                 data = {
                     "clasificacion": "EN_CONTRA",
-                    "fundamento": f"Tensión constitucional detectada: La CPE (Art. {num}) establece prohibición u ordenamiento no compatible con la pretensión del proyecto.",
+                    "fundamento": f"Tensión detectada: La CPE Art. {num} establece una restricción incompatible.",
                     "severidad": "grave",
-                    "fragmento_proyecto": texto_proyecto[:250],
+                    "cita_proyecto": texto_proyecto[:200],
+                    "cita_constitucional": texto_cpe[:200],
+                    "verificado": False,  # Fallback → no verificado por LLM
                 }
             elif garantiza:
                 data = {
                     "clasificacion": "A_FAVOR",
-                    "fundamento": f"El proyecto se encuentra en sintonía con las garantías del Art. {num} de la CPE ({titulo}).",
+                    "fundamento": f"El proyecto se alinea con las garantías del Art. {num} CPE.",
                     "severidad": "ninguna",
-                    "fragmento_proyecto": "",
+                    "cita_proyecto": "",
+                    "cita_constitucional": texto_cpe[:200],
+                    "verificado": False,
                 }
             else:
                 data = {
                     "clasificacion": "NEUTRAL",
-                    "fundamento": "Sin colisión directa o tensión evidente identificada.",
+                    "fundamento": "Sin colisión directa detectada por reglas de deducción.",
                     "severidad": "ninguna",
-                    "fragmento_proyecto": "",
+                    "cita_proyecto": "",
+                    "cita_constitucional": "",
+                    "verificado": False,
                 }
 
-        if data.get("clasificacion") not in ("A_FAVOR", "EN_CONTRA", "NEUTRAL"):
+        # PASO 5 — Validación de citas (si no hay cita_constitucional → NEUTRAL)
+        if not data.get("cita_constitucional") and data.get("clasificacion") == "EN_CONTRA":
+            logger.warning(f"[VerificadorCPE] Art. {num}: hallazgo EN_CONTRA sin cita — degradado a NEUTRAL")
+            data["clasificacion"] = "NEUTRAL"
+            data["_descartado_sin_cita"] = True
+
+        clasificacion_final = data.get("clasificacion", "NEUTRAL")
+        if clasificacion_final not in ("A_FAVOR", "EN_CONTRA", "NEUTRAL", "REQUIERE_ANALISIS_DE_FONDO"):
             data["clasificacion"] = "NEUTRAL"
 
         return data
@@ -182,6 +208,7 @@ class VerificadorConstitucional:
 
         contradicciones: List[Dict[str, Any]] = []
         a_favor: List[Dict[str, Any]] = []
+        requieren_fondo: List[Dict[str, Any]] = []
         articulos_consultados: List[Dict[str, Any]] = []
         vistos_consultados = set()
 
@@ -210,16 +237,22 @@ class VerificadorConstitucional:
             )
 
             if tipo == "EN_CONTRA":
-                contradicciones.append(
-                    {
-                        "articulo_proyecto": "Documento evaluado",
-                        "articulo_constitucional": f"Art. {num} - {titulo}",
-                        "texto_constitucional_verificado": texto_cpe[:300],
-                        "fundamento": clasificacion["fundamento"],
-                        "severidad": clasificacion["severidad"],
-                        "fragmento_proyecto": clasificacion.get("fragmento_proyecto", ""),
-                    }
-                )
+                # PASO 5 — Autoverificación: sólo se registra si verificado=True o si cita presente
+                if clasificacion.get("verificado", True):
+                    contradicciones.append(
+                        {
+                            "articulo_proyecto": clasificacion.get("cita_proyecto", "Documento evaluado"),
+                            "articulo_constitucional": f"Art. {num} - {titulo}",
+                            "cita_proyecto": clasificacion.get("cita_proyecto", ""),
+                            "cita_constitucional": clasificacion.get("cita_constitucional", texto_cpe[:300]),
+                            "texto_constitucional_verificado": texto_cpe[:300],
+                            "fundamento": clasificacion["fundamento"],
+                            "severidad": clasificacion["severidad"],
+                            "verificado": clasificacion.get("verificado", True),
+                        }
+                    )
+                else:
+                    logger.warning(f"[VerificadorCPE] Art. {num}: hallazgo EN_CONTRA no verificado — excluido")
             elif tipo == "A_FAVOR":
                 a_favor.append(
                     {
@@ -227,8 +260,16 @@ class VerificadorConstitucional:
                         "titulo": titulo,
                         "extracto": extracto,
                         "fundamento": clasificacion["fundamento"],
+                        "cita_constitucional": clasificacion.get("cita_constitucional", ""),
                     }
                 )
+            elif tipo == "REQUIERE_ANALISIS_DE_FONDO":
+                # PASO 6 — Límite de mandato: no decide, marca para revisión
+                requieren_fondo.append({
+                    "articulo_constitucional": f"Art. {num} - {titulo}",
+                    "razon": clasificacion.get("fundamento", "Requiere ponderación de derechos"),
+                    "cita_constitucional": clasificacion.get("cita_constitucional", texto_cpe[:300]),
+                })
 
         valido = len(contradicciones) == 0
         sevs = [c["severidad"] for c in contradicciones]
@@ -239,13 +280,16 @@ class VerificadorConstitucional:
             else "ninguna"
         )
         confianza = max(55, 95 - len(contradicciones) * 12)
+        resultado_final = "ARTICULADO_VALIDO" if valido else "CONTRADICCIONES_DETECTADAS"
 
         return {
+            "resultado_final": resultado_final,
             "valido": valido,
             "confianza": confianza,
             "severidad_maxima": severidad_maxima,
             "num_contradicciones": len(contradicciones),
             "contradicciones": contradicciones,
+            "requieren_analisis_fondo": requieren_fondo,
             "articulos_a_favor": a_favor,
             "articulos_consultados": articulos_consultados,
         }

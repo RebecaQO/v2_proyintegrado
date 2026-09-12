@@ -41,6 +41,7 @@ import HorizontalAgentFlow, { AGENTS_DEFINITION } from '../components/Horizontal
 import LateralAgentHero from '../components/LateralAgentHero';
 import AgentResultCard from '../components/AgentResultCard';
 import AgentDetailPanel from '../components/AgentDetailPanel';
+import AllAgentsResultsModal from '../components/AllAgentsResultsModal';
 
 // Mapeo de logos institucionales y colores de acento por agente
 const AGENT_LOGO_MAP = {
@@ -622,8 +623,9 @@ export default function MesaPartes({ onNavigateExpedientes }) {
     });
   };
 
-  // ── Estado del panel lateral deslizante ──
+  // ── Estado del panel lateral deslizante y modal de todos los resultados ──
   const [detailPanelAgent, setDetailPanelAgent] = useState(null);
+  const [showAllResultsModal, setShowAllResultsModal] = useState(false);
 
   // Obtener resultado del agente para mostrarlo en el panel
   const getAgentResultData = (agentId) => {
@@ -883,6 +885,20 @@ export default function MesaPartes({ onNavigateExpedientes }) {
   return (
     <div style={{ maxWidth: '1440px', margin: '0 auto', padding: '24px 24px 48px 24px' }}>
 
+      {/* ── MODAL GLOBAL DE TODOS LOS RESULTADOS DE AGENTES ── */}
+      <AllAgentsResultsModal
+        isOpen={showAllResultsModal}
+        onClose={() => setShowAllResultsModal(false)}
+        pipelineStep={pipelineStep}
+        isProcessing={isProcessing}
+        activeAgentDef={activeAgentDef}
+        getAgentResultData={getAgentResultData}
+        onInspectAgent={(agent) => {
+          handleSelectAgent(agent);
+          setShowAllResultsModal(false);
+        }}
+      />
+
       {/* ── PANEL LATERAL DESLIZANTE ── */}
       {detailPanelAgent && (
         <AgentDetailPanel
@@ -919,6 +935,32 @@ export default function MesaPartes({ onNavigateExpedientes }) {
           <span className="badge badge-green" style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
             <CheckCircle2 size={12} /> Persistencia Automática
           </span>
+
+          {/* Botón destacado en el header para ver todos los resultados */}
+          <button
+            onClick={() => setShowAllResultsModal(true)}
+            style={{
+              marginLeft: 'auto',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '6px 14px',
+              borderRadius: '10px',
+              background: 'linear-gradient(135deg, #0284C7 0%, #00B4D8 100%)',
+              border: '1px solid rgba(0, 180, 216, 0.6)',
+              color: '#FFFFFF',
+              fontWeight: 800,
+              fontSize: '0.78rem',
+              cursor: 'pointer',
+              boxShadow: '0 2px 12px rgba(0, 180, 216, 0.4)',
+              transition: 'all 0.2s ease',
+              fontFamily: 'Outfit, sans-serif'
+            }}
+            title="Visualizar en cualquier momento los resultados de todos los agentes ejecutados"
+          >
+            <Eye size={15} />
+            <span>Ver Todos los Resultados ({AGENTS_DEFINITION.filter(a => pipelineStep >= a.doneAtStep).length})</span>
+          </button>
         </div>
         <h1 style={{ fontSize: '1.9rem', fontWeight: 800, color: '#FFFFFF', marginBottom: '6px',
           letterSpacing: '-0.02em', fontFamily: 'Outfit, sans-serif',
@@ -1030,6 +1072,7 @@ export default function MesaPartes({ onNavigateExpedientes }) {
         pipelineStep={pipelineStep}
         inspectedAgentId={inspectedAgentId}
         onSelectAgent={handleSelectAgent}
+        onOpenAllResults={() => setShowAllResultsModal(true)}
       />
 
       {/* ── INSPECTION BANNER ── */}
@@ -1300,15 +1343,16 @@ export default function MesaPartes({ onNavigateExpedientes }) {
           status="completed"
           phaseLabel="Fase 1: Clasificación"
           badgeText="Control Humano Requerido"
-          model="nvidia/nemotron-3-nano-omni-30b-a3b-reasoning"
           thinkingText="Clasificación inicial completada con éxito"
-          image="/robots/robot_distribuidor_hi.jpg"
+          image="/robots/banner/disribuidor.png"
           justificacion="Principio de orden y debido proceso parlamentario: cada expediente debe canalizarse por su vía procedimental correcta (Registro Legislativo, Atención Ciudadana o Correspondencia Oficial)."
+          onViewPrev={() => updateActiveSession({ pipelineStep: 2, inspectedAgentId: 'distribuidor' })}
+          prevLabel="Ver Clasificación del Distribuidor"
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
             <div style={{
-              background: 'rgba(251, 191, 36, 0.2)',
-              border: '1px solid #fbbf24',
+              background: 'rgba(244, 162, 97, 0.15)',
+              border: '1px solid rgba(244,162,97,0.5)',
               borderRadius: '50%',
               width: '40px',
               height: '40px',
@@ -1316,36 +1360,37 @@ export default function MesaPartes({ onNavigateExpedientes }) {
               alignItems: 'center',
               justifyContent: 'center',
             }}>
-              <AlertTriangle size={22} color="#fbbf24" />
+              <AlertTriangle size={22} color="#F4A261" />
             </div>
             <div>
-              <h4 style={{ fontSize: '1.25rem', color: '#fbbf24', fontWeight: 800, margin: 0 }}>
-                🛑 PUNTO DE CONTROL HUMANO (Alto del Pipeline)
+              <h4 style={{ fontSize: '1.25rem', color: '#F4A261', fontWeight: 800, margin: 0 }}>
+                PUNTO DE CONTROL HUMANO
               </h4>
-              <p style={{ color: '#fef3c7', fontSize: '0.85rem', margin: 0 }}>
+              <p style={{ color: '#CBD5E1', fontSize: '0.85rem', margin: 0 }}>
                 El Agente Distribuidor ha emitido su recomendación. Puede confirmar la categoría sugerida o reasignarla manualmente antes de activar la Fase 2.
               </p>
             </div>
           </div>
 
+
           <div style={{
-            background: 'rgba(6, 40, 32, 0.8)',
+            background: 'rgba(11, 37, 69, 0.75)',
             padding: '24px',
             borderRadius: '14px',
-            border: '1px solid rgba(16, 185, 129, 0.3)',
+            border: '1.5px solid rgba(0, 180, 216, 0.35)',
             marginBottom: '24px',
           }}>
-            <div style={{ fontSize: '0.85rem', color: '#a7f3d0', marginBottom: '8px' }}>Categoría Sugerida por el Bot:</div>
+            <div style={{ fontSize: '0.85rem', color: '#38BDF8', marginBottom: '8px' }}>Categoría Sugerida por el Agente:</div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
-              <span className="badge badge-green" style={{ fontSize: '1rem', padding: '6px 14px' }}>
+              <span className="badge badge-blue" style={{ fontSize: '1rem', padding: '6px 14px' }}>
                 {fase1Data.categoria}
               </span>
-              <span style={{ fontSize: '0.85rem', color: '#6ee7b7' }}>
-                → Agente Destino: <strong>{fase1Data.agente_destino_nombre}</strong>
+              <span style={{ fontSize: '0.85rem', color: '#CBD5E1' }}>
+                Agente Destino: <strong style={{ color: '#00B4D8' }}>{fase1Data.agente_destino_nombre}</strong>
               </span>
             </div>
 
-            <div style={{ fontSize: '0.85rem', color: '#a7f3d0', marginBottom: '8px' }}>
+            <div style={{ fontSize: '0.85rem', color: '#38BDF8', marginBottom: '8px' }}>
               Ajustar Categoría si es necesario:
             </div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px' }}>
@@ -1440,10 +1485,11 @@ export default function MesaPartes({ onNavigateExpedientes }) {
           theme="blue"
           status="completed"
           phaseLabel="Fase 2: Asignación"
-          model="nvidia/nemotron-3-nano-omni-30b-a3b-reasoning"
           thinkingText="Dictamen de comisión parlamentaria emitido"
-          image="/robots/robot_ciudadano_hi.jpg"
+          image="/robots/logos/verificadorconstitucional.jpg"
           justificacion="Art. 158 CPE y Reglamento Camaral: Distribución por competencia y especialidad temática a las comisiones parlamentarias y a sus autoridades para su tratamiento de mérito."
+          onViewPrev={() => updateActiveSession({ inspectedAgentId: 'distribuidor' })}
+          prevLabel="Ver Clasificación (Distribuidor)"
         >
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
@@ -1582,11 +1628,12 @@ export default function MesaPartes({ onNavigateExpedientes }) {
           theme="green"
           status="completed"
           phaseLabel="Fase 2: CPE Bolivia"
-          model="nvidia/nemotron-3-nano-omni-30b-a3b-reasoning"
           thinkingText="Dictamen Constitucional emitido"
-          badgeText={dictamenData.valido ? '✅ CPE Conforme' : '⚠️ CPE Observado'}
-          image="/robots/robot_constitucional_hi.jpg"
+          badgeText={dictamenData.valido ? 'CPE Conforme' : 'CPE Observado'}
+          image="/robots/logos/verificadorconstitucional.jpg"
           justificacion="Art. 410 CPE: Principio de Supremacía Constitucional. El proyecto debe cotejarse exhaustivamente con los mandatos de la CPE 2009 para impedir normas contrarias a los derechos y garantías constitucionales."
+          onViewPrev={() => updateActiveSession({ inspectedAgentId: 'comision' })}
+          prevLabel="Ver Asignación de Comisión"
         >
           <div style={{
             background: dictamenData.valido
@@ -1820,14 +1867,15 @@ export default function MesaPartes({ onNavigateExpedientes }) {
       {effectiveViewStep === 6 && (
         <AgentResultCard
           agentName="Agente de Consistencia Normativa"
-          role="Auditoría Semántica Vectorial pgvector (2048 dims)"
+          role="Auditoría Semántica Vectorial (pgvector)"
           theme="gold"
           status="completed"
           phaseLabel="Fase 2: Consistencia Vectorial"
-          model="nvidia/nemotron-3-embed-1b"
-          thinkingText="Auditoría semántica de leyes vigente emitida"
-          image="/robots/robot_consistencia_hi.jpg"
+          thinkingText="Auditoría semántica de leyes vigentes emitida"
+          image="/robots/logos/consistencianormativa.jpg"
           justificacion="Seguridad Jurídica y Principio de No Contradicción: Búsqueda vectorial semántica pgvector contra leyes y códigos vigentes para prevenir derogaciones tácitas y antinomias normativas."
+          onViewPrev={() => updateActiveSession({ inspectedAgentId: 'constitucional' })}
+          prevLabel="Ver Dictamen Constitucional"
         >
           <div>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px', marginBottom: '20px' }}>
@@ -1997,10 +2045,11 @@ export default function MesaPartes({ onNavigateExpedientes }) {
           theme="blue"
           status="completed"
           phaseLabel="Fase 3: Redacción & PDF"
-          model="nvidia/nemotron-3-nano-omni-30b-a3b-reasoning"
           thinkingText="Informe consolidado de auditoría generado en PDF"
-          image="/robots/robot_concentrador_hi.jpg"
+          image="/robots/banner/emisor.png"
           justificacion="Publicidad, transparencia y rigor técnico: Consolida y sintetiza todos los dictámenes en un informe oficial y formaliza el reporte PDF para el plenario de la Asamblea."
+          onViewPrev={() => updateActiveSession({ inspectedAgentId: 'consistencia' })}
+          prevLabel="Ver Consistencia Normativa"
         >
           <FileCheck size={56} color="#00B4D8" style={{ margin: '0 auto 16px', display: 'block' }} />
           <h3 style={{ fontSize: '1.6rem', color: '#ffffff', fontWeight: 800, marginBottom: '12px', textAlign: 'center' }}>
@@ -2073,10 +2122,11 @@ export default function MesaPartes({ onNavigateExpedientes }) {
           theme="violet"
           status="completed"
           phaseLabel="Fase 3: Notificación Oficial"
-          model="SMA/notificador-v1"
           thinkingText="Correo electrónico HTML despachado con éxito"
-          image="/robots/robot_notificador_hi.jpg"
+          image="/robots/banner/emisor.png"
           justificacion="Debida notificación y publicidad parlamentaria: Despacha la comunicación oficial en formato HTML formal a los correos electrónicos institucionales de los miembros asignados."
+          onViewPrev={() => updateActiveSession({ inspectedAgentId: 'emisor' })}
+          prevLabel="Ver PDF Generado (Emisor)"
         >
           <div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
@@ -2264,10 +2314,11 @@ export default function MesaPartes({ onNavigateExpedientes }) {
           theme="purple"
           status="completed"
           phaseLabel="Fase 4: Fondo CPE"
-          model="Nemotron-70B (CrewAI)"
           thinkingText="Dictamen sustantivo de constitucionalidad emitido"
-          image="/robots/robot_constitucional_hi.jpg"
+          image="/robots/logos/verificadorconstitucional.jpg"
           justificacion="Art. 196 CPE: Control de constitucionalidad de fondo, precedentes del TCP y ponderación proporcional de derechos fundamentales."
+          onViewPrev={() => updateActiveSession({ inspectedAgentId: 'notificador' })}
+          prevLabel="Ver Notificación de Comisión"
         >
           {(() => {
             const df = constitucionFondoData.dictamen_fondo || {};
@@ -2372,10 +2423,11 @@ export default function MesaPartes({ onNavigateExpedientes }) {
           theme="blue"
           status="completed"
           phaseLabel="Fase 4: Síntesis"
-          model="Nemotron-70B (CrewAI)"
           thinkingText="Expediente unificado consolidado con trazabilidad de origen"
-          image="/robots/robot_concentrador_hi.jpg"
+          image="/robots/banner/emisor.png"
           justificacion="Rigor y Trazabilidad Parlamentaria: Consolida todas las observaciones de auditoría constitucional, normativa y de comisión en un expediente único."
+          onViewPrev={() => updateActiveSession({ inspectedAgentId: 'constitucion_fondo' })}
+          prevLabel="Ver Dictamen de Fondo CPE"
         >
           {(() => {
             const exp = concentradorData.expediente_consolidado || {};
@@ -2473,10 +2525,11 @@ export default function MesaPartes({ onNavigateExpedientes }) {
           theme="blue"
           status="completed"
           phaseLabel="Fase 4: Debate Plenario"
-          model="Nemotron-70B (CrewAI)"
           thinkingText="Acta parlamentaria y votaciones nominales registradas"
-          image="/robots/robot_ciudadano_hi.jpg"
+          image="/robots/logos/verificadorconstitucional.jpg"
           justificacion="Transparencia y publicidad legislativa: Registro fidedigno de intervenciones de legisladores, votaciones en grande y detalle, y acuerdos tomados en plenario."
+          onViewPrev={() => updateActiveSession({ inspectedAgentId: 'concentrador_crew' })}
+          prevLabel="Ver Expediente Concentrador"
         >
           {(() => {
             const acta = secretarioData.acta_debate || {};
@@ -2575,10 +2628,11 @@ export default function MesaPartes({ onNavigateExpedientes }) {
           theme="sky"
           status="completed"
           phaseLabel="Fase 5: Bicameral"
-          model="Nemotron-70B (CrewAI)"
           thinkingText="Cotejo de versiones entre Cámaras completado"
-          image="/robots/robot_distribuidor_hi.jpg"
+          image="/robots/banner/normativa.png"
           justificacion="Art. 163 CPE: Reconciliación del trámite bicameral entre la Cámara de Origen y la Cámara Revisora para sanción legislativa."
+          onViewPrev={() => updateActiveSession({ inspectedAgentId: 'secretario' })}
+          prevLabel="Ver Acta de Debate (Secretario)"
         >
           {(() => {
             const ciclo = bicameralData.ciclo_bicameral || {};
@@ -2644,10 +2698,11 @@ export default function MesaPartes({ onNavigateExpedientes }) {
           theme="blue"
           status="completed"
           phaseLabel="Fase 5: Decisión Ejecutiva"
-          model="Nemotron-70B (CrewAI)"
           thinkingText="Evaluación estratégica multicriterio emitida"
-          image="/robots/robot_consistencia_hi.jpg"
+          image="/robots/banner/normativa.png"
           justificacion="Art. 163-167 CPE: Control político y constitucional previo a la promulgación presidencial. Dictamen sobre viabilidad política, legalidad, factibilidad y sostenibilidad."
+          onViewPrev={() => updateActiveSession({ inspectedAgentId: 'bicameral' })}
+          prevLabel="Ver Trámite Bicameral"
         >
           {(() => {
             const ev = vetoPromulgacionData.evaluacion_veto || {};
@@ -2744,10 +2799,11 @@ export default function MesaPartes({ onNavigateExpedientes }) {
           theme="blue"
           status="completed"
           phaseLabel="Fase 5: Promulgación & Vigencia"
-          model="Nemotron-70B (CrewAI)"
           thinkingText="Ley formalmente promulgada y registrada en el Boletín Oficial"
-          image="/robots/robot_concentrador_hi.jpg"
+          image="/robots/banner/disribuidor.png"
           justificacion="Art. 164 CPE: Las leyes serán de cumplimiento obligatorio desde el día de su publicación en la Gaceta Oficial del Estado Plurinacional."
+          onViewPrev={() => updateActiveSession({ inspectedAgentId: 'veto_promulgacion' })}
+          prevLabel="Ver Evaluación de Veto/Promulgación"
         >
           {(() => {
             const pub = publicacionData.publicacion_oficial || {};
@@ -2891,6 +2947,53 @@ export default function MesaPartes({ onNavigateExpedientes }) {
           </div>
         </div>
       )}
+
+      {/* ── BOTÓN FLOTANTE PERMANENTE: VER RESULTADOS DE AGENTES (ACCESIBLE EN TODO MOMENTO) ── */}
+      <button
+        onClick={() => setShowAllResultsModal(true)}
+        style={{
+          position: 'fixed',
+          bottom: '24px',
+          right: '24px',
+          zIndex: 999,
+          background: 'linear-gradient(135deg, #0284C7 0%, #00B4D8 100%)',
+          color: '#FFFFFF',
+          border: '1.5px solid rgba(255, 255, 255, 0.4)',
+          borderRadius: '50px',
+          padding: '11px 22px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '9px',
+          fontWeight: 800,
+          fontSize: '0.86rem',
+          fontFamily: 'Outfit, sans-serif',
+          cursor: 'pointer',
+          boxShadow: '0 8px 25px rgba(0, 180, 216, 0.5), 0 2px 10px rgba(0, 0, 0, 0.5)',
+          transition: 'all 0.25s ease'
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.transform = 'translateY(-3px) scale(1.04)';
+          e.currentTarget.style.boxShadow = '0 12px 32px rgba(0, 180, 216, 0.75)';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.transform = 'translateY(0) scale(1)';
+          e.currentTarget.style.boxShadow = '0 8px 25px rgba(0, 180, 216, 0.5), 0 2px 10px rgba(0, 0, 0, 0.5)';
+        }}
+        title="Ver resultados ejecutados de todos los agentes en cualquier momento, incluso mientras se ejecuta otro"
+      >
+        <Eye size={18} />
+        <span>Ver Resultados de Agentes</span>
+        <span style={{
+          background: '#8AC926',
+          color: '#0B2545',
+          borderRadius: '10px',
+          padding: '2px 8px',
+          fontSize: '0.74rem',
+          fontWeight: 900
+        }}>
+          {AGENTS_DEFINITION.filter(a => pipelineStep >= a.doneAtStep).length}
+        </span>
+      </button>
     </div>
   );
 }
