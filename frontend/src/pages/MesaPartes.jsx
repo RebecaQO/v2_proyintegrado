@@ -104,13 +104,14 @@ function createDefaultSession(index = 1) {
     concentradorData: null,
     secretarioData: null,
     bicameralData: null,
+    confirmacionBicameralData: null,
     vetoPromulgacionData: null,
     publicacionData: null,
     pipelineLog: []  // [{etapa, estado, msg, ts}]
   };
 }
 
-export default function MesaPartes({ onNavigateExpedientes }) {
+export default function MesaPartes({ onNavigateExpedientes, currentUser }) {
   // ── Multi-Session State Initialization ──
   const [sessions, setSessions] = useState(() => {
     try {
@@ -212,6 +213,7 @@ export default function MesaPartes({ onNavigateExpedientes }) {
     concentradorData,
     secretarioData,
     bicameralData,
+    confirmacionBicameralData,
     vetoPromulgacionData,
     publicacionData,
     pipelineLog
@@ -536,10 +538,15 @@ export default function MesaPartes({ onNavigateExpedientes }) {
     updateActiveSession({ isProcessing: true, errorMessage: '', pipelineStep: 12, inspectedAgentId: null });
     appendLog('Bicameral', 'EN_PROCESO', 'Comparando versiones entre camaras legislativas...');
     try {
+      const acta = secretarioData?.acta_debate || {};
       const res = await api.runAgentBicameral({
         proyecto_info: buildProyectoInfo(),
-        version_original: { articulos: ['Version original de la Camara de Origen'] },
-        version_retornada: { articulos: ['Version revisada por la Camara Revisora'] },
+        // Version real del proyecto tal como ingreso (Camara de Origen).
+        version_original: { articulos: [documentText], sesion_origen: acta.sesion_numero || 1 },
+        // Aun no existe una etapa de edicion real por la Camara Revisora en
+        // este sistema; se usa el mismo texto mas los acuerdos del debate,
+        // que es lo unico que refleja cambios sugeridos hasta ahora.
+        version_retornada: { articulos: [documentText], acuerdos_debate: acta.acuerdos || [], sesion_revision: (acta.sesion_numero || 1) + 1 },
         id_proyecto: fase1Data?.id_proyecto
       });
       updateActiveSession({ bicameralData: res.data, pipelineStep: 13, isProcessing: false });
@@ -548,6 +555,41 @@ export default function MesaPartes({ onNavigateExpedientes }) {
     } catch (err) {
       updateActiveSession({ errorMessage: err.message || 'Error en Bicameral', pipelineStep: 12, isProcessing: false });
       appendLog('Bicameral', 'ERROR', err.message);
+    }
+  };
+
+  /**
+   * Confirmación de Aprobación — Trámite Bicameral.
+   * La disponible solo para usuarios con rol 'Senador' o 'Diputado'. Al confirmar,
+   * se notifica por correo (con el PDF del proyecto y el informe de constitucionalidad
+   * y consistencia adjuntos) a todos los usuarios de la cámara opuesta.
+   */
+  const handleConfirmarAprobacionBicameral = async () => {
+    if (!fase1Data) return;
+    const rol = currentUser?.rol;
+    if (rol !== 'Senador' && rol !== 'Diputado') return;
+
+    updateActiveSession({ isProcessing: true, errorMessage: '', inspectedAgentId: null });
+    appendLog('Confirmacion_Bicameral', 'EN_PROCESO', `Confirmando aprobacion como ${rol} y notificando a la camara opuesta...`);
+    try {
+      const res = await api.confirmarAprobacionBicameral({
+        rol_remitente: rol,
+        titulo_proyecto: documentName || fase1Data?.nombre_archivo || 'Proyecto de Ley',
+        sesion_id: fase1Data.sesion_id,
+        id_proyecto: fase1Data?.id_proyecto || null,
+        nombre_remitente: currentUser?.nombre_completo || null,
+        datos_constitucionales: dictamenData || {},
+        datos_consistencia: consistenciaData || {},
+        pdf_proyecto_filename: uploadStats?.saved_as || null,
+        pdf_informe_filename: pdfResult?.filename || null,
+      });
+      updateActiveSession({ confirmacionBicameralData: res.data, isProcessing: false });
+      const destino = res.data?.camara_destino || 'la camara opuesta';
+      const total = res.data?.total_destinatarios ?? 0;
+      appendLog('Confirmacion_Bicameral', 'COMPLETADO', `Notificados ${total} usuario(s) de la Camara de ${destino}s`);
+    } catch (err) {
+      updateActiveSession({ errorMessage: err.message || 'Error al confirmar la aprobacion bicameral', isProcessing: false });
+      appendLog('Confirmacion_Bicameral', 'ERROR', err.message);
     }
   };
 
@@ -617,6 +659,7 @@ export default function MesaPartes({ onNavigateExpedientes }) {
       concentradorData: null,
       secretarioData: null,
       bicameralData: null,
+      confirmacionBicameralData: null,
       vetoPromulgacionData: null,
       publicacionData: null,
       pipelineLog: []
@@ -2636,6 +2679,7 @@ export default function MesaPartes({ onNavigateExpedientes }) {
         >
           {(() => {
             const ciclo = bicameralData.ciclo_bicameral || {};
+            const requiereConferencia = (ciclo.ruta_siguiente || 'SANCION_DIRECTA') !== 'SANCION_DIRECTA';
             return (
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px', marginBottom: '20px' }}>
@@ -2656,7 +2700,7 @@ export default function MesaPartes({ onNavigateExpedientes }) {
                     <span className="badge" style={{ background: 'rgba(14,165,233,0.2)', color: '#38bdf8', border: '1px solid #0ea5e9' }}>
                       Cambios: {ciclo.clasificacion_cambios || 'MENORES'}
                     </span>
-                    <span className="badge badge-green">
+                    <span className={requiereConferencia ? 'badge badge-gold' : 'badge badge-green'}>
                       Ruta: {ciclo.ruta_siguiente || 'SANCION_DIRECTA'}
                     </span>
                   </div>
@@ -2669,21 +2713,86 @@ export default function MesaPartes({ onNavigateExpedientes }) {
                   </p>
                 </div>
 
-                {/* Acción Siguiente */}
-                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '14px' }}>
-                  <button
-                    onClick={handleVetoPromulgacion}
-                    disabled={isProcessing}
-                    className="btn-primary"
-                    style={{ fontSize: '1.05rem', padding: '14px 30px' }}
-                  >
-                    {isProcessing ? (
-                      <><Cpu size={20} className="pulse-active" /><span>Evaluando veto...</span></>
+                {/* Confirmación de Aprobación — solo visible para Senador/Diputado */}
+                {(currentUser?.rol === 'Senador' || currentUser?.rol === 'Diputado') && (
+                  <div style={{ background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.35)', padding: '18px', borderRadius: '12px', marginBottom: '20px' }}>
+                    <h4 style={{ color: '#34d399', fontSize: '0.95rem', margin: '0 0 6px 0' }}>
+                      ✅ Confirmación de Aprobación — Cámara de {currentUser.rol}s
+                    </h4>
+                    <p style={{ color: '#d1fae5', fontSize: '0.85rem', lineHeight: 1.6, margin: '0 0 14px 0' }}>
+                      Al confirmar, se notificará por correo a todos los usuarios de la Cámara de{' '}
+                      {currentUser.rol === 'Senador' ? 'Diputados' : 'Senadores'}, adjuntando el PDF del
+                      proyecto de ley y el informe de constitucionalidad y consistencia normativa.
+                    </p>
+
+                    {!confirmacionBicameralData ? (
+                      <button
+                        onClick={handleConfirmarAprobacionBicameral}
+                        disabled={isProcessing}
+                        className="btn-primary"
+                        style={{ background: '#10B981', borderColor: '#10B981' }}
+                      >
+                        {isProcessing ? (
+                          <><Cpu size={18} className="pulse-active" /><span>Notificando...</span></>
+                        ) : (
+                          <><Mail size={18} /><span>Confirmamos la Aprobación</span></>
+                        )}
+                      </button>
                     ) : (
-                      <><Gavel size={20} /><span>Continuar: Evaluación Veto / Promulgación</span><ArrowRight size={18} /></>
+                      <div style={{
+                        background: confirmacionBicameralData.status === 'sin_destinatarios' ? 'rgba(244,162,97,0.15)' : 'rgba(16,185,129,0.15)',
+                        border: `1px solid ${confirmacionBicameralData.status === 'sin_destinatarios' ? 'rgba(244,162,97,0.4)' : 'rgba(16,185,129,0.4)'}`,
+                        borderRadius: '10px', padding: '14px 16px',
+                      }}>
+                        {confirmacionBicameralData.status === 'sin_destinatarios' ? (
+                          <p style={{ margin: 0, color: '#F4A261', fontSize: '0.85rem' }}>
+                            ⚠️ No hay usuarios con rol "{confirmacionBicameralData.camara_destino}" registrados para notificar.
+                          </p>
+                        ) : (
+                          <>
+                            <p style={{ margin: '0 0 6px 0', color: '#34d399', fontSize: '0.88rem', fontWeight: 700 }}>
+                              📧 Notificación enviada a la Cámara de {confirmacionBicameralData.camara_destino}s
+                            </p>
+                            <p style={{ margin: 0, color: '#d1fae5', fontSize: '0.82rem' }}>
+                              {confirmacionBicameralData.total_destinatarios} destinatario(s): {(confirmacionBicameralData.destinatarios || []).join(', ')}
+                            </p>
+                            {confirmacionBicameralData.envio?.metodo && (
+                              <p style={{ margin: '6px 0 0 0', color: '#a7f3d0', fontSize: '0.75rem' }}>
+                                Método de despacho: {confirmacionBicameralData.envio.metodo}
+                              </p>
+                            )}
+                          </>
+                        )}
+                      </div>
                     )}
-                  </button>
-                </div>
+                  </div>
+                )}
+
+                {/* Acción Siguiente: bloqueada si el trámite requiere Conferencia Bicameral */}
+                {requiereConferencia ? (
+                  <div style={{ background: 'rgba(244,162,97,0.12)', border: '1px solid rgba(244,162,97,0.4)', padding: '18px', borderRadius: '12px' }}>
+                    <h4 style={{ color: '#F4A261', fontSize: '0.95rem', margin: '0 0 6px 0' }}>⚠️ Conferencia Bicameral Requerida</h4>
+                    <p style={{ color: '#FDE9D8', fontSize: '0.88rem', lineHeight: 1.6, margin: 0 }}>
+                      Los cambios detectados son MAYORES. El proyecto no puede pasar a Veto/Promulgación
+                      hasta resolver la conferencia entre ambas cámaras (Art. 163 CPE).
+                    </p>
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '14px' }}>
+                    <button
+                      onClick={handleVetoPromulgacion}
+                      disabled={isProcessing}
+                      className="btn-primary"
+                      style={{ fontSize: '1.05rem', padding: '14px 30px' }}
+                    >
+                      {isProcessing ? (
+                        <><Cpu size={20} className="pulse-active" /><span>Evaluando veto...</span></>
+                      ) : (
+                        <><Gavel size={20} /><span>Continuar: Evaluación Veto / Promulgación</span><ArrowRight size={18} /></>
+                      )}
+                    </button>
+                  </div>
+                )}
               </div>
             );
           })()}

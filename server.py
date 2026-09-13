@@ -54,6 +54,8 @@ from sma_unified.db.neon_postgres import (
     obtener_stats_consistencia,
     listar_documentos_normativos,
     buscar_articulos_normativos_semantico,
+    autenticar_usuario,
+    crear_usuario_ciudadano,
 )
 from sma_unified.agents.embeddings_nvidia import generar_embeddings
 from sma_unified.db.mongo_atlas import get_db, obtener_documentos_recientes, obtener_kpis_mongo
@@ -124,6 +126,30 @@ class NotificadorComisionRequest(BaseModel):
     datos_consistencia: Optional[Dict[str, Any]] = None
     pdf_filename: Optional[str] = None
     destinatario_extra: Optional[str] = None
+
+
+class LoginRequest(BaseModel):
+    correo_electronico: str
+    contrasena: str
+
+
+class RegisterRequest(BaseModel):
+    nombre_completo: str
+    correo_electronico: str
+    contrasena: str
+    telefono: Optional[str] = None
+
+
+class ConfirmarAprobacionBicameralRequest(BaseModel):
+    rol_remitente: str                      # 'Senador' o 'Diputado'
+    titulo_proyecto: str
+    sesion_id: Optional[str] = None
+    id_proyecto: Optional[int] = None
+    nombre_remitente: Optional[str] = None
+    datos_constitucionales: Optional[Dict[str, Any]] = None
+    datos_consistencia: Optional[Dict[str, Any]] = None
+    pdf_proyecto_filename: Optional[str] = None   # PDF del proyecto de ley subido a Mesa de Partes
+    pdf_informe_filename: Optional[str] = None    # PDF del informe de constitucionalidad/consistencia
 
 
 class MiembroComisionRequest(BaseModel):
@@ -207,6 +233,36 @@ def get_health_status():
     }
 
     return status
+
+
+# ── Endpoints de Autenticación (Usuarios_Sistema) ─────────────────────────────
+# Nota: entorno de prueba — contraseña en texto plano, sin hashing ni JWT.
+
+@app.post("/api/auth/login")
+def login(req: LoginRequest):
+    """Valida credenciales contra public."Usuarios_Sistema" y retorna el usuario + rol."""
+    usuario = autenticar_usuario(req.correo_electronico.strip().lower(), req.contrasena)
+    if not usuario:
+        raise HTTPException(status_code=401, detail="Correo o contraseña incorrectos, o cuenta inactiva")
+    return {"success": True, "data": usuario}
+
+
+@app.post("/api/auth/register")
+def register(req: RegisterRequest):
+    """Auto-registro público de un Ciudadano (rol fijo 'Ciudadano')."""
+    try:
+        usuario = crear_usuario_ciudadano(
+            nombre_completo=req.nombre_completo.strip(),
+            correo_electronico=req.correo_electronico.strip().lower(),
+            contrasena=req.contrasena,
+            telefono=req.telefono,
+        )
+        return {"success": True, "data": usuario}
+    except ValueError as ve:
+        raise HTTPException(status_code=409, detail=str(ve))
+    except Exception as e:
+        logger.error(f"Error en registro de ciudadano: {e}")
+        raise HTTPException(status_code=500, detail="Error interno al registrar el usuario")
 
 
 @app.get("/api/dashboard/stats")
@@ -821,6 +877,37 @@ async def run_agent_bicameral_endpoint(payload: Dict[str, Any]):
         return {"success": True, "data": resultado}
     except Exception as e:
         logger.error(f"Error en endpoint Bicameral: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/pipeline/confirmar_aprobacion_bicameral")
+def confirmar_aprobacion_bicameral_endpoint(req: ConfirmarAprobacionBicameralRequest):
+    """
+    Confirmación de Aprobación — Trámite Bicameral.
+    Cuando un Senador confirma la aprobación de un proyecto de ley, notifica por
+    correo (con el PDF del proyecto y el informe de constitucionalidad/consistencia
+    adjuntos) a todos los Diputados registrados en Usuarios_Sistema — y viceversa
+    cuando quien confirma es un Diputado.
+    """
+    try:
+        from sma_unified.agents.notificador_camara_opuesta import notificar_camara_opuesta
+
+        resultado = notificar_camara_opuesta(
+            rol_remitente=req.rol_remitente,
+            titulo_proyecto=req.titulo_proyecto,
+            sesion_id=req.sesion_id,
+            id_proyecto=req.id_proyecto,
+            nombre_remitente=req.nombre_remitente,
+            datos_constitucionales=req.datos_constitucionales or {},
+            datos_consistencia=req.datos_consistencia or {},
+            pdf_proyecto_filename=req.pdf_proyecto_filename,
+            pdf_informe_filename=req.pdf_informe_filename,
+        )
+        return {"success": True, "data": resultado}
+    except ValueError as ve:
+        raise HTTPException(status_code=400, detail=str(ve))
+    except Exception as e:
+        logger.error(f"Error en endpoint Confirmar Aprobación Bicameral: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 

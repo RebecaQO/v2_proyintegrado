@@ -8,10 +8,12 @@ import {
   Activity, 
   CheckCircle2,
   AlertTriangle,
-  ShieldCheck
+  ShieldCheck,
+  LogOut,
+  UserCircle2
 } from 'lucide-react';
 
-export default function Navbar({ activeTab, setActiveTab, healthStatus }) {
+export default function Navbar({ activeTab, setActiveTab, healthStatus, user, onLogout, simplified = false }) {
   const isHealthy = healthStatus?.status === 'healthy';
 
   const navItems = [
@@ -42,7 +44,7 @@ export default function Navbar({ activeTab, setActiveTab, healthStatus }) {
         justifyContent: 'space-between',
       }}>
         {/* Brand & Emblem */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '14px', cursor: 'pointer' }} onClick={() => setActiveTab('mesa')}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '14px', cursor: simplified ? 'default' : 'pointer' }} onClick={() => !simplified && setActiveTab('mesa')}>
           <div style={{
             width: '44px',
             height: '44px',
@@ -77,7 +79,7 @@ export default function Navbar({ activeTab, setActiveTab, healthStatus }) {
 
         {/* Navigation Tabs */}
         <nav style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-          {navItems.map((item) => {
+          {!simplified && navItems.map((item) => {
             const Icon = item.icon;
             const isActive = activeTab === item.id;
             return (
@@ -120,7 +122,7 @@ export default function Navbar({ activeTab, setActiveTab, healthStatus }) {
           })}
         </nav>
 
-        {/* Estado del sistema */}
+        {/* Estado del sistema + Usuario */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <div style={{
             display: 'flex', alignItems: 'center', gap: '7px',
@@ -140,6 +142,34 @@ export default function Navbar({ activeTab, setActiveTab, healthStatus }) {
               {isHealthy ? 'Operativo' : 'Verificando'}
             </span>
           </div>
+
+          {user && (
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: '10px',
+              background: 'rgba(11, 37, 69, 0.7)',
+              padding: '6px 8px 6px 14px', borderRadius: '9999px',
+              border: '1px solid rgba(0, 180, 216, 0.25)',
+              fontSize: '0.78rem',
+            }}>
+              <UserCircle2 size={16} color="#00B4D8" />
+              <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.1 }}>
+                <span style={{ color: '#F1F5F9', fontWeight: 700, fontSize: '0.78rem' }}>{user.nombre_completo}</span>
+                <span style={{ color: '#00B4D8', fontWeight: 600, fontSize: '0.68rem' }}>{user.rol}</span>
+              </div>
+              <button
+                onClick={onLogout}
+                title="Cerrar sesión"
+                style={{
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  width: '28px', height: '28px', borderRadius: '50%',
+                  background: 'rgba(231, 111, 81, 0.15)', border: '1px solid rgba(231, 111, 81, 0.35)',
+                  color: '#E76F51', cursor: 'pointer',
+                }}
+              >
+                <LogOut size={14} />
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </header>

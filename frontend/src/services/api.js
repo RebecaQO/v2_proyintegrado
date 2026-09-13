@@ -34,6 +34,27 @@ export const api = {
   getHealth: () => request('/health'),
   getDashboardStats: () => request('/dashboard/stats'),
 
+  login: (correo_electronico, contrasena) =>
+    request('/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ correo_electronico, contrasena }),
+    }),
+
+  register: (data) =>
+    request('/auth/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    }),
+
+  confirmarAprobacionBicameral: (data) =>
+    request('/pipeline/confirmar_aprobacion_bicameral', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    }),
+
   uploadDocument: async (file) => {
     const formData = new FormData();
     formData.append('file', file);

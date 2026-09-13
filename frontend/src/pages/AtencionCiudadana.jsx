@@ -8,22 +8,31 @@ import {
   Clock, 
   CheckCircle2, 
   Sparkles,
-  MessageSquare
+  MessageSquare,
+  Lock,
+  LogIn,
+  UploadCloud,
+  Paperclip,
+  FileText
 } from 'lucide-react';
 import { api } from '../services/api';
 
 import CssRobotAvatar from '../components/CssRobotAvatar';
 
-export default function AtencionCiudadana() {
+export default function AtencionCiudadana({ isAuthenticated = false, currentUser = null, onNavigateLogin }) {
   const [solicitudes, setSolicitudes] = useState([]);
   const [loading, setLoading] = useState(true);
   
   // Formulario de nueva atención
-  const [nombre, setNombre] = useState('');
+  const [nombre, setNombre] = useState(currentUser?.nombre_completo || '');
   const [motivo, setMotivo] = useState('');
   const [medio, setMedio] = useState('Presencial');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
+
+  // Adjunto opcional (solo disponible logeado)
+  const [adjunto, setAdjunto] = useState(null); // { nombre, texto, paginas, palabras }
+  const [isUploadingFile, setIsUploadingFile] = useState(false);
 
   useEffect(() => {
     cargarSolicitudes();
@@ -41,6 +50,25 @@ export default function AtencionCiudadana() {
     }
   };
 
+  const handleFileUpload = async (e) => {
+    const selectedFile = e.target.files?.[0];
+    if (!selectedFile) return;
+    setIsUploadingFile(true);
+    try {
+      const res = await api.uploadDocument(selectedFile);
+      setAdjunto({
+        nombre: selectedFile.name,
+        texto: res.texto_completo,
+        paginas: res.paginas,
+        palabras: res.palabras,
+      });
+    } catch (err) {
+      console.error('Error subiendo adjunto ciudadano:', err);
+    } finally {
+      setIsUploadingFile(false);
+    }
+  };
+
   const handleRegistrarAtencion = async (e) => {
     e.preventDefault();
     if (!nombre.trim() || !motivo.trim()) return;
@@ -48,10 +76,14 @@ export default function AtencionCiudadana() {
     setIsSubmitting(true);
     try {
       // Registrar mediante el pipeline de Atención Ciudadana
-      const texto = `Ciudadano: ${nombre}\nMedio: ${medio}\nMotivo / Petitorio:\n${motivo}`;
+      const partesTexto = [`Ciudadano: ${nombre}`, `Medio: ${medio}`, `Motivo / Petitorio:\n${motivo}`];
+      if (adjunto?.texto) {
+        partesTexto.push(`\n--- Documento adjunto: ${adjunto.nombre} ---\n${adjunto.texto}`);
+      }
+      const texto = partesTexto.join('\n');
       const resFase1 = await api.runPhase1({
         texto: texto,
-        nombre_archivo: `atencion_${nombre.toLowerCase().replace(/\s+/g, '_')}.txt`,
+        nombre_archivo: adjunto?.nombre || `atencion_${nombre.toLowerCase().replace(/\s+/g, '_')}.txt`,
         tipo_entrada: `Atención Ciudadana (${medio})`,
       });
 
@@ -69,8 +101,9 @@ export default function AtencionCiudadana() {
         });
 
         setSubmitSuccess(true);
-        setNombre('');
+        setNombre(currentUser?.nombre_completo || '');
         setMotivo('');
+        setAdjunto(null);
         cargarSolicitudes();
         setTimeout(() => setSubmitSuccess(false), 5000);
       }
@@ -127,118 +160,187 @@ export default function AtencionCiudadana() {
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.3fr', gap: '24px' }}>
-        {/* Formulario de Registro Rápido */}
+        {/* Formulario de Registro Rápido (solo autenticado) / Panel informativo (público) */}
         <div className="glass-card" style={{ padding: '28px' }}>
-          <h2 style={{ fontSize: '1.2rem', color: '#ffffff', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <MessageSquare size={20} color="#34d399" />
-            Registrar Nueva Solicitud o Petición
-          </h2>
-
-          {submitSuccess && (
-            <div style={{
-              background: 'rgba(16, 185, 129, 0.2)',
-              border: '1px solid #10b981',
-              borderRadius: '10px',
-              padding: '12px 16px',
-              marginBottom: '16px',
-              color: '#6ee7b7',
-              fontSize: '0.88rem',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-            }}>
-              <CheckCircle2 size={18} />
-              <span>Solicitud registrada y procesada exitosamente por el Agente.</span>
-            </div>
-          )}
-
-          <form onSubmit={handleRegistrarAtencion}>
-            <div style={{ marginBottom: '16px' }}>
-              <label style={{ display: 'block', fontSize: '0.85rem', color: '#a7f3d0', marginBottom: '6px', fontWeight: 600 }}>
-                Nombre del Ciudadano / Remitente:
-              </label>
-              <input
-                type="text"
-                value={nombre}
-                onChange={(e) => setNombre(e.target.value)}
-                placeholder="Ej: Juan Carlos Pérez..."
-                style={{
-                  width: '100%',
-                  padding: '12px',
-                  borderRadius: '10px',
-                  background: 'rgba(3, 20, 16, 0.7)',
-                  border: '1px solid rgba(16, 185, 129, 0.3)',
-                  color: '#ffffff',
-                  outline: 'none',
-                }}
-              />
-            </div>
-
-            <div style={{ marginBottom: '16px' }}>
-              <label style={{ display: 'block', fontSize: '0.85rem', color: '#a7f3d0', marginBottom: '6px', fontWeight: 600 }}>
-                Canal de Ingreso:
-              </label>
-              <select
-                value={medio}
-                onChange={(e) => setMedio(e.target.value)}
-                style={{
-                  width: '100%',
-                  padding: '12px',
-                  borderRadius: '10px',
-                  background: '#041f1a',
-                  border: '1px solid rgba(16, 185, 129, 0.3)',
-                  color: '#ffffff',
-                  outline: 'none',
-                }}
-              >
-                <option value="Presencial">Mesa de Partes Presencial</option>
-                <option value="Correo Electrónico">Correo Electrónico</option>
-                <option value="Portal Web">Portal Web de Transparencia</option>
-                <option value="Oficio Directo">Oficio Institucional</option>
-              </select>
-            </div>
-
-            <div style={{ marginBottom: '20px' }}>
-              <label style={{ display: 'block', fontSize: '0.85rem', color: '#a7f3d0', marginBottom: '6px', fontWeight: 600 }}>
-                Motivo de la Solicitud o Petición:
-              </label>
-              <textarea
-                value={motivo}
-                onChange={(e) => setMotivo(e.target.value)}
-                placeholder="Describa el requerimiento, petición o consulta legal..."
-                rows={5}
-                style={{
-                  width: '100%',
-                  padding: '12px',
-                  borderRadius: '10px',
-                  background: 'rgba(3, 20, 16, 0.7)',
-                  border: '1px solid rgba(16, 185, 129, 0.3)',
-                  color: '#ffffff',
-                  outline: 'none',
-                  resize: 'vertical',
-                }}
-              />
-            </div>
-
-            <button
-              type="submit"
-              disabled={isSubmitting || !nombre.trim() || !motivo.trim()}
-              className="btn-primary"
-              style={{ width: '100%', justifyContent: 'center' }}
-            >
-              {isSubmitting ? (
-                <>
-                  <Sparkles size={18} className="pulse-active" />
-                  <span>Canalizando con Agente...</span>
-                </>
-              ) : (
-                <>
-                  <Send size={18} />
-                  <span>Registrar y Canalizar</span>
-                </>
+          {!isAuthenticated ? (
+            <div style={{ textAlign: 'center', padding: '12px 4px' }}>
+              <div style={{
+                width: '56px', height: '56px', borderRadius: '50%', margin: '0 auto 16px',
+                background: 'rgba(0, 180, 216, 0.15)', border: '1px solid rgba(0, 180, 216, 0.4)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}>
+                <Lock size={24} color="#00B4D8" />
+              </div>
+              <h2 style={{ fontSize: '1.2rem', color: '#ffffff', marginBottom: '10px' }}>
+                Vista Informativa
+              </h2>
+              <p style={{ color: '#94A3B8', fontSize: '0.9rem', lineHeight: 1.6, marginBottom: '20px' }}>
+                Esta sección explica cómo funciona el módulo de Atención Ciudadana. Para registrar
+                una solicitud, adjuntar documentos o interactuar directamente con el Agente de
+                Interacción Ciudadana, necesitas iniciar sesión (o crear una cuenta de Ciudadano si
+                aún no tienes una).
+              </p>
+              <ul style={{ textAlign: 'left', color: '#CBD5E1', fontSize: '0.85rem', lineHeight: 1.9, marginBottom: '22px', paddingLeft: '20px' }}>
+                <li>El Agente clasifica automáticamente tu petición, queja o denuncia.</li>
+                <li>Puedes adjuntar un documento (PDF/DOCX) o describir tu caso en texto.</li>
+                <li>Tu solicitud queda registrada con seguimiento en PostgreSQL Neon.</li>
+              </ul>
+              {onNavigateLogin && (
+                <button onClick={onNavigateLogin} className="btn-primary" style={{ width: '100%', justifyContent: 'center' }}>
+                  <LogIn size={18} />
+                  <span>Iniciar sesión / Registrarme</span>
+                </button>
               )}
-            </button>
-          </form>
+            </div>
+          ) : (
+            <>
+              <h2 style={{ fontSize: '1.2rem', color: '#ffffff', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <MessageSquare size={20} color="#34d399" />
+                Registrar Nueva Solicitud o Petición
+              </h2>
+
+              {submitSuccess && (
+                <div style={{
+                  background: 'rgba(16, 185, 129, 0.2)',
+                  border: '1px solid #10b981',
+                  borderRadius: '10px',
+                  padding: '12px 16px',
+                  marginBottom: '16px',
+                  color: '#6ee7b7',
+                  fontSize: '0.88rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                }}>
+                  <CheckCircle2 size={18} />
+                  <span>Solicitud registrada y procesada exitosamente por el Agente.</span>
+                </div>
+              )}
+
+              <form onSubmit={handleRegistrarAtencion}>
+                <div style={{ marginBottom: '16px' }}>
+                  <label style={{ display: 'block', fontSize: '0.85rem', color: '#a7f3d0', marginBottom: '6px', fontWeight: 600 }}>
+                    Nombre del Ciudadano / Remitente:
+                  </label>
+                  <input
+                    type="text"
+                    value={nombre}
+                    onChange={(e) => setNombre(e.target.value)}
+                    placeholder="Ej: Juan Carlos Pérez..."
+                    readOnly={!!currentUser?.nombre_completo}
+                    style={{
+                      width: '100%',
+                      padding: '12px',
+                      borderRadius: '10px',
+                      background: currentUser?.nombre_completo ? 'rgba(3, 20, 16, 0.4)' : 'rgba(3, 20, 16, 0.7)',
+                      border: '1px solid rgba(16, 185, 129, 0.3)',
+                      color: currentUser?.nombre_completo ? '#a7f3d0' : '#ffffff',
+                      outline: 'none',
+                      cursor: currentUser?.nombre_completo ? 'not-allowed' : 'text',
+                    }}
+                  />
+                </div>
+
+                <div style={{ marginBottom: '16px' }}>
+                  <label style={{ display: 'block', fontSize: '0.85rem', color: '#a7f3d0', marginBottom: '6px', fontWeight: 600 }}>
+                    Canal de Ingreso:
+                  </label>
+                  <select
+                    value={medio}
+                    onChange={(e) => setMedio(e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '12px',
+                      borderRadius: '10px',
+                      background: '#041f1a',
+                      border: '1px solid rgba(16, 185, 129, 0.3)',
+                      color: '#ffffff',
+                      outline: 'none',
+                    }}
+                  >
+                    <option value="Presencial">Mesa de Partes Presencial</option>
+                    <option value="Correo Electrónico">Correo Electrónico</option>
+                    <option value="Portal Web">Portal Web de Transparencia</option>
+                    <option value="Oficio Directo">Oficio Institucional</option>
+                  </select>
+                </div>
+
+                <div style={{ marginBottom: '16px' }}>
+                  <label style={{ display: 'block', fontSize: '0.85rem', color: '#a7f3d0', marginBottom: '6px', fontWeight: 600 }}>
+                    Motivo de la Solicitud o Petición:
+                  </label>
+                  <textarea
+                    value={motivo}
+                    onChange={(e) => setMotivo(e.target.value)}
+                    placeholder="Describa el requerimiento, petición o consulta legal..."
+                    rows={5}
+                    style={{
+                      width: '100%',
+                      padding: '12px',
+                      borderRadius: '10px',
+                      background: 'rgba(3, 20, 16, 0.7)',
+                      border: '1px solid rgba(16, 185, 129, 0.3)',
+                      color: '#ffffff',
+                      outline: 'none',
+                      resize: 'vertical',
+                    }}
+                  />
+                </div>
+
+                <div style={{ marginBottom: '20px' }}>
+                  <label style={{ display: 'block', fontSize: '0.85rem', color: '#a7f3d0', marginBottom: '6px', fontWeight: 600 }}>
+                    Adjuntar Documento (opcional):
+                  </label>
+                  {!adjunto ? (
+                    <label style={{
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+                      padding: '14px', borderRadius: '10px', border: '1.5px dashed rgba(16, 185, 129, 0.4)',
+                      background: 'rgba(3, 20, 16, 0.5)', color: '#a7f3d0', fontSize: '0.85rem', cursor: 'pointer',
+                    }}>
+                      <input type="file" accept=".pdf,.docx,.doc,.txt" onChange={handleFileUpload} style={{ display: 'none' }} />
+                      {isUploadingFile ? (
+                        <><Sparkles size={16} className="pulse-active" /> <span>Procesando archivo...</span></>
+                      ) : (
+                        <><UploadCloud size={16} /> <span>Subir PDF / DOCX (opcional)</span></>
+                      )}
+                    </label>
+                  ) : (
+                    <div style={{
+                      display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px',
+                      padding: '10px 14px', borderRadius: '10px', border: '1px solid rgba(16, 185, 129, 0.3)',
+                      background: 'rgba(3, 20, 16, 0.7)', color: '#a7f3d0', fontSize: '0.82rem',
+                    }}>
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <Paperclip size={14} /> {adjunto.nombre} ({adjunto.palabras} palabras)
+                      </span>
+                      <button type="button" onClick={() => setAdjunto(null)} style={{ background: 'transparent', border: 'none', color: '#f87171', cursor: 'pointer', fontSize: '0.78rem' }}>
+                        Quitar
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={isSubmitting || !nombre.trim() || !motivo.trim()}
+                  className="btn-primary"
+                  style={{ width: '100%', justifyContent: 'center' }}
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Sparkles size={18} className="pulse-active" />
+                      <span>Canalizando con Agente...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Send size={18} />
+                      <span>Registrar y Canalizar</span>
+                    </>
+                  )}
+                </button>
+              </form>
+            </>
+          )}
         </div>
 
         {/* Listado de Solicitudes Recientes */}
