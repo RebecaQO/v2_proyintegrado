@@ -30,11 +30,14 @@ frontend/
 │   │   ├── Navbar.jsx                # Navegación global, branding e indicador de salud backend
 │   │   ├── RobotCard.jsx             # Tarjeta interactiva del estado y justificación del agente
 │   │   └── CssRobotAvatar.jsx        # Avatar robot animado renderizado por CSS
+│   ├── hooks/                        # 🪝 Hooks personalizados reutilizables
+│   │   └── useLatinSpeech.js         # Hook de voz (STT es-419 + TTS filtrado latino neutro)
 │   ├── pages/                        # Vistas principales (Tabs)
 │   │   ├── MesaPartes.jsx            # Pipeline principal: Carga, Fase 1, Human-in-the-loop, Fase 2, PDF y Email
 │   │   ├── Expedientes.jsx           # Listado de proyectos de ley, filtrado y modal de detalle integral
 │   │   ├── ConsistenciaNormativa.jsx # Buscador semántico pgvector y catálogo del ordenamiento jurídico
 │   │   ├── AtencionCiudadana.jsx     # Solicitudes de la ciudadanía y correspondencia oficial
+│   │   ├── VoiceAssistantPage.jsx    # Asistente de Voz multimodal (TTS & STT nativo en Español Latino)
 │   │   └── Monitoreo.jsx             # Bus de eventos de agentes (MongoDB Atlas) e indicadores KPI
 │   ├── services/
 │   │   └── api.js                    # Cliente HTTP (fetch wrapper) para consumir FastAPI Backend
@@ -122,4 +125,5 @@ graph LR
 - **`Expedientes`**: Repositorio centralizado de proyectos de ley. Permite buscar por número o palabras clave, filtrar por estado y abrir un modal modal detallado con la historia clínica del proyecto, bitácora de auditoría, dictamen constitucional y hallazgos de consistencia.
 - **`ConsistenciaNormativa`**: Herramienta de consulta semántica del ordenamiento legal vigente. Permite probar consultas en lenguaje natural usando embeddings de NVIDIA y recuperar artículos mediante vector similarity en PostgreSQL Neon.
 - **`AtencionCiudadana`**: Bandeja de solicitudes de la población y notas oficiales con resumen por IA y grado de confianza.
+- **`VoiceAssistantPage`**: Asistente de Voz multimodal con reconocimiento de voz nativo (STT en `es-419`) y síntesis vocal (TTS) con filtro estricto anti-peninsular, selección de operadores robóticos parlamentarios, control de pitch/rate y transcripción editable en tiempo real.
 - **`Monitoreo`**: Consola de supervisión del bus de eventos de MongoDB Atlas (`agent_messages`), mostrando la actividad en tiempo real de los agentes del SMA.

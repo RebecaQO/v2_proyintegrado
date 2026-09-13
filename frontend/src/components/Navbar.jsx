@@ -8,7 +8,8 @@ import {
   Activity, 
   Database,
   CheckCircle2,
-  AlertTriangle
+  AlertTriangle,
+  Mic
 } from 'lucide-react';
 
 export default function Navbar({ activeTab, setActiveTab, healthStatus }) {
@@ -19,6 +20,7 @@ export default function Navbar({ activeTab, setActiveTab, healthStatus }) {
     { id: 'expedientes', label: 'Expedientes y Auditoría', icon: FolderArchive },
     { id: 'consistencia', label: 'Consistencia Normativa', icon: Scale },
     { id: 'ciudadana', label: 'Atención Ciudadana', icon: Users },
+    { id: 'voz', label: 'Asistente de Voz', icon: Mic },
     { id: 'monitoreo', label: 'Monitoreo y Agentes', icon: Activity },
   ];
 

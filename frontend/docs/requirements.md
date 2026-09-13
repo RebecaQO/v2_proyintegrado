@@ -72,6 +72,21 @@ El frontend debe proporcionar una interfaz web fluida, interactiva e intuitiva p
 
 ---
 
+### RF-07: Módulo Asistente de Voz Parlamentario (`VoiceAssistantPage.jsx`)
+- **RF-07.1: Reconocimiento de Voz Nativo (STT)**:
+  - Utilizar Web Speech API (`SpeechRecognition` / `webkitSpeechRecognition`) configurado estrictamente en español latino (`es-419` / `es-MX`).
+  - Mostrar transcripción continua y resultados intermedios (*interim transcript*) con feedback visual dinámico (onda/halo pulsante).
+  - Permitir la edición manual y corrección del texto transcrito en un área `<textarea>` limpia.
+- **RF-07.2: Síntesis de Voz (TTS) con Filtro Anti-Peninsular**:
+  - Utilizar `window.speechSynthesis` excluyendo expresamente voces con código `es-ES` o modismos peninsulares.
+  - Listar y priorizar variantes de español latinoamericano (`es-419`, `es-MX`, `es-US`, `es-CO`, `es-AR`, etc.).
+  - Permitir ajuste de velocidad (`rate` de 0.8x a 1.4x) y tono (`pitch` de 0.8 a 1.2).
+- **RF-07.3: Operadores Robóticos y Consultas Parlamentarias**:
+  - Intercambiar operadores robóticos activos con sus correspondientes temas y saludos audibles.
+  - Cargar consultas parlamentarias de ejemplo con un solo clic y derivar textos a la Mesa de Partes.
+
+---
+
 ## 🔒 3. Requerimientos No Funcionales (RNF)
 
 - **RNF-01: Rendimiento y Responsividad**:

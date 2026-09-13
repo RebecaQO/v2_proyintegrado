@@ -5,6 +5,7 @@ import Expedientes from './pages/Expedientes';
 import ConsistenciaNormativa from './pages/ConsistenciaNormativa';
 import AtencionCiudadana from './pages/AtencionCiudadana';
 import Monitoreo from './pages/Monitoreo';
+import VoiceAssistantPage from './pages/VoiceAssistantPage';
 import { api } from './services/api';
 
 export default function App() {
@@ -40,6 +41,7 @@ export default function App() {
         {activeTab === 'expedientes' && <Expedientes />}
         {activeTab === 'consistencia' && <ConsistenciaNormativa />}
         {activeTab === 'ciudadana' && <AtencionCiudadana />}
+        {activeTab === 'voz' && <VoiceAssistantPage onNavigateTab={setActiveTab} />}
         {activeTab === 'monitoreo' && <Monitoreo />}
       </main>
 
