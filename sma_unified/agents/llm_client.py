@@ -235,15 +235,14 @@ def _lista_modelos_razonamiento() -> List[str]:
         settings.LLM_MODEL_CREW,
     ]
 
-    # 2. Modelos de respaldo modernos, rápidos y 100% compatibles con JSON
+    # 2. Modelos de respaldo modernos, comprobados activos, rápidos y 100% compatibles con JSON
     respaldos_vigentes = [
-        "nvidia/llama-3.1-nemotron-70b-instruct",
-        "mistralai/mistral-large-2-instruct",
-        "nvidia/nemotron-3-super-120b-a12b",
-        "openai/gpt-oss-120b",
-        "openai/gpt-oss-20b",
+        "deepseek-ai/deepseek-v4-flash-0731",
         "meta/llama-3.2-11b-vision-instruct",
         "nvidia/nemotron-3.5-lightning-30b-a3b",
+        "openai/gpt-oss-20b",
+        "z-ai/glm-5.3-flash",
+        "nvidia/nemotron-3-super-120b-a12b",
     ]
 
     todos_candidatos = preferidos + respaldos_vigentes
@@ -267,11 +266,11 @@ def _lista_modelos_razonamiento() -> List[str]:
 
 
 def _parece_modelo_no_disponible(status_code: Optional[int], texto_error: str) -> bool:
-    if status_code in (404, 410):
+    if status_code in (404, 410, 503):
         return True
     texto_error = (texto_error or "").lower()
     return any(s in texto_error for s in [
-        "end of life", "no longer available", "gone", "model_not_found", "unknown model",
+        "end of life", "no longer available", "gone", "model_not_found", "unknown model", "unavailable"
     ])
 
 
@@ -285,12 +284,11 @@ def chat_completion_resiliente(
 ) -> Tuple[str, str]:
     """
     Llama al endpoint de chat de NVIDIA NIM probando una lista de modelos en
-    orden; si uno ya no está disponible (410/404/"end of life"/etc.), sigue
-    con el siguiente automáticamente. Devuelve (contenido_respuesta, modelo_usado).
-    Lanza la última excepción si NINGÚN modelo de la lista responde.
+    orden; si uno ya no está disponible (410/404/503), sigue con el siguiente.
+    Timeout acotado para respuesta ultra-rápida.
     """
     modelos = modelos or _lista_modelos_razonamiento()
-    timeout_efectivo = timeout or getattr(settings, "TIMEOUT_LLM_SEG", 60)
+    timeout_efectivo = timeout or 10  # 10s máximo por intento para no bloquear el sistema
     ultimo_error: Optional[Exception] = None
 
     for modelo in modelos:

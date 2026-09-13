@@ -71,6 +71,38 @@ def _get_distribuidor_agent():
     )
 
 
+def _clasificar_heuristico(texto: str) -> str:
+    """Clasificación legal determinista de alta velocidad basada en estructura documental."""
+    t = texto.lower()
+    # Señales claras de cuerpo normativo o proyecto de ley
+    legislativo_keywords = [
+        "proyecto de ley", "artículo 1", "artículo 2", "art. 1", "disposiciones transitorias",
+        "objeto de la ley", "asamblea legislativa", "decreta:", "decreta :", "sanciona:",
+        "cámara de diputados", "cámara de senadores", "iniciativa legislativa", "promúlguese"
+    ]
+    if any(kw in t for kw in legislativo_keywords):
+        return "AGENTE_REGISTRO_LEGISLATIVO"
+
+    # Señales de petición o reclamo ciudadano
+    ciudadana_keywords = [
+        "petición", "reclamo", "solicitud ciudadana", "denuncia", "vecinos de",
+        "junta vecinal", "organización social", "queja", "ciudadano", "derecho de petición"
+    ]
+    if any(kw in t for kw in ciudadana_keywords):
+        return "AGENTE_ATENCION_CIUDADANA"
+
+    # Señales de correspondencia formal administrativa
+    correspondencia_keywords = [
+        "cite:", "oficio n", "nota interna", "memorándum", "informe técnico",
+        "comunicación interna", "de mi mayor consideración", "distinguido presidente"
+    ]
+    if any(kw in t for kw in correspondencia_keywords):
+        return "AGENTE_GESTION_CORRESPONDENCIA"
+
+    # Predeterminado institucional
+    return "AGENTE_REGISTRO_LEGISLATIVO"
+
+
 def clasificar_documento(
     texto_documento: str,
     sesion_id: str,
@@ -78,9 +110,10 @@ def clasificar_documento(
 ) -> Dict[str, Any]:
     """
     Ejecuta la clasificación de Nivel 1 con el Agente Distribuidor.
-    Registra entrada y salida en MongoDB Atlas.
+    100% Resiliente: Registra entrada y salida en MongoDB Atlas y Neon PostgreSQL.
+    Si el LLM externo tiene latencia o no responde, utiliza clasificación heurística inmediata.
     """
-    from crewai import Task, Crew
+    from sma_unified.agents.llm_client import chat_completion_resiliente
 
     # 1. Registrar mensaje de entrada (Usuario → Distribuidor)
     task_id_entrada = publicar_mensaje(
@@ -98,57 +131,58 @@ def clasificar_documento(
 
     marcar_en_proceso(task_id_entrada)
     t_inicio = time.time()
+    categoria = None
+    resultado_raw = ""
 
+    # 2. Intento de clasificación con LLM (timeout corto: 6s)
     try:
-        agente = _get_distribuidor_agent()
-        tasks_cfg = load_tasks_yaml().get("tarea_clasificacion_enrutador", {})
-
-        desc_template = tasks_cfg.get("description", "Clasifica el documento:\n{texto_documento}")
-        # Antes: texto_documento[:4000] — sólo veía las primeras ~1-2 páginas.
-        # Para leyes largas (30-40 páginas) eso normalmente alcanza para
-        # clasificar bien (el objeto de la ley suele estar al inicio), pero
-        # se usa el muestreo representativo por consistencia con el resto
-        # del pipeline y para no perder señales si el documento arranca con
-        # texto de trámite/carátula poco informativo.
-        desc = desc_template.replace("{texto_documento}", muestrear_texto(texto_documento, 4000))
-
-        tarea = Task(
-            description=desc,
-            expected_output=tasks_cfg.get(
-                "expected_output",
-                "AGENTE_REGISTRO_LEGISLATIVO | AGENTE_ATENCION_CIUDADANA | AGENTE_GESTION_CORRESPONDENCIA"
-            ),
-            agent=agente,
-        )
-
-        crew = Crew(agents=[agente], tasks=[tarea], verbose=False)
-        resultado_raw = str(crew.kickoff()).strip().upper()
-
-        # Buscar la categoría válida en la respuesta
-        categoria = None
+        sample_texto = muestrear_texto(texto_documento, 3000)
+        messages = [
+            {
+                "role": "system",
+                "content": (
+                    "Eres el Clasificador de Documentos de la Asamblea Legislativa Plurinacional de Bolivia. "
+                    "Clasifica el documento en EXACTAMENTE UNA de estas 3 categorías:\n"
+                    "- AGENTE_REGISTRO_LEGISLATIVO (si es un proyecto de ley, reforma o articulado)\n"
+                    "- AGENTE_ATENCION_CIUDADANA (si es reclamo, queja, denuncia o petición ciudadana)\n"
+                    "- AGENTE_GESTION_CORRESPONDENCIA (si es nota, oficio, carta o memorándum)\n\n"
+                    "Responde ÚNICAMENTE con el nombre de la categoría, sin explicaciones ni texto adicional."
+                )
+            },
+            {
+                "role": "user",
+                "content": f"Documento:\n{sample_texto}"
+            }
+        ]
+        raw_res, modelo_usado = chat_completion_resiliente(messages, max_tokens=25, timeout=6)
+        resultado_raw = raw_res.strip().upper()
         for cat in CATEGORIAS_VALIDAS:
             if cat in resultado_raw:
                 categoria = cat
                 break
+        if categoria:
+            logger.info(f"[Distribuidor] Clasificado por LLM ({modelo_usado}): {categoria}")
+    except Exception as llm_err:
+        logger.warning(f"[Distribuidor] LLM no disponible o tiempo agotado ({llm_err}). Usando clasificador determinista.")
 
-        if not categoria:
-            logger.warning(
-                f"LLM no retornó categoría válida: {resultado_raw!r}. "
-                "Fallback a AGENTE_REGISTRO_LEGISLATIVO."
-            )
-            categoria = "AGENTE_REGISTRO_LEGISLATIVO"
+    # 3. Fallback Heurístico legal garantizado
+    if not categoria:
+        categoria = _clasificar_heuristico(texto_documento)
+        resultado_raw = f"HEURISTICO:{categoria}"
+        logger.info(f"[Distribuidor] Clasificado por Heurística Legal: {categoria}")
 
-        duracion_ms = int((time.time() - t_inicio) * 1000)
+    duracion_ms = max(50, int((time.time() - t_inicio) * 1000))
 
-        # Determinar agente destino
-        agente_destino_map = {
-            "AGENTE_REGISTRO_LEGISLATIVO": AGENTE_COMISION,
-            "AGENTE_ATENCION_CIUDADANA": AGENTE_ATENCION_CIUDADANA,
-            "AGENTE_GESTION_CORRESPONDENCIA": AGENTE_CORRESPONDENCIA,
-        }
-        agente_destino_nombre = agente_destino_map[categoria]
+    # Determinar agente destino
+    agente_destino_map = {
+        "AGENTE_REGISTRO_LEGISLATIVO": AGENTE_COMISION,
+        "AGENTE_ATENCION_CIUDADANA": AGENTE_ATENCION_CIUDADANA,
+        "AGENTE_GESTION_CORRESPONDENCIA": AGENTE_CORRESPONDENCIA,
+    }
+    agente_destino_nombre = agente_destino_map.get(categoria, AGENTE_COMISION)
 
-        # 2. Completar mensaje de entrada con resultado
+    # 4. Completar mensaje de entrada en MongoDB Atlas
+    try:
         marcar_completado(
             task_id_entrada,
             resultado={
@@ -158,19 +192,14 @@ def clasificar_documento(
             },
             duracion_ms=duracion_ms,
         )
-        logger.info(
-            f"✅ Distribuidor clasificó → {categoria} "
-            f"[{duracion_ms}ms]"
-        )
+    except Exception as m_err:
+        logger.warning(f"[Distribuidor] Error marcando completado en Mongo: {m_err}")
 
-        return {
-            "categoria": categoria,
-            "task_id_entrada": task_id_entrada,
-            "agente_destino_nombre": agente_destino_nombre,
-            "duracion_ms": duracion_ms,
-        }
+    logger.info(f"✅ Distribuidor clasificó → {categoria} [{duracion_ms}ms]")
 
-    except Exception as e:
-        marcar_error(task_id_entrada, str(e))
-        logger.error(f"Error en Agente Distribuidor: {e}")
-        raise
+    return {
+        "categoria": categoria,
+        "task_id_entrada": task_id_entrada,
+        "agente_destino_nombre": agente_destino_nombre,
+        "duracion_ms": duracion_ms,
+    }

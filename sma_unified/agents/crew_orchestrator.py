@@ -136,13 +136,22 @@ def ejecutar_pipeline_completo(
     _progress("Etapa_6_Bicameral", "EN_PROCESO", "Iniciando tramite bicameral entre camaras...")
     try:
         agente_bic = AgenteBicameral(base_agent=base)
+        acta_debate = resultado_sec.get("acta_debate", {})
+        # Version original: texto real del proyecto tal como entro al pipeline.
         version_original = {
-            "articulos": [f"Articulo original del proyecto: {proyecto_info.get('titulo', '')}"],
-            "sesion_origen": resultado_sec.get("acta_debate", {}).get("sesion_numero", 1)
+            "articulos": [texto_documento],
+            "sesion_origen": acta_debate.get("sesion_numero", 1),
         }
+        # Version retornada: aun no existe una etapa de edicion real por la
+        # Camara Revisora en este sistema, asi que se usa el propio texto
+        # mas los acuerdos/observaciones surgidos del debate (lo unico que
+        # refleja cambios sugeridos hasta ahora). Cuando exista una etapa
+        # real de "camara revisora" que produzca un texto editado, debe
+        # reemplazar este bloque.
         version_retornada = {
-            "articulos": ["Articulo revisado por Camara Revisora con ajustes menores de redaccion"],
-            "sesion_revision": resultado_sec.get("acta_debate", {}).get("sesion_numero", 1) + 1
+            "articulos": [texto_documento],
+            "acuerdos_debate": acta_debate.get("acuerdos", []),
+            "sesion_revision": acta_debate.get("sesion_numero", 1) + 1,
         }
         resultado_bic = agente_bic.ejecutar(
             version_original=version_original,
@@ -156,6 +165,36 @@ def ejecutar_pipeline_completo(
     except Exception as e:
         _progress("Etapa_6_Bicameral", "ERROR", str(e))
         resultados["bicameral"] = {"error": str(e)}
+        ciclo = {}
+
+    # ── Bifurcacion segun la decision del Agente Bicameral ─────────────────
+    # Si el tramite requiere Conferencia Bicameral (cambios MAYORES), el
+    # proyecto no debe pasar directo a Veto/Promulgacion: queda detenido en
+    # esta etapa hasta que se resuelva la conferencia.
+    ruta_bicameral = ciclo.get("ruta_siguiente", "SANCION_DIRECTA")
+    if ruta_bicameral != "SANCION_DIRECTA":
+        _progress("Etapa_7_Veto", "OMITIDA", f"Pendiente de Conferencia Bicameral (ruta: {ruta_bicameral})")
+        resultados["veto_promulgacion"] = {
+            "evaluacion_veto": {
+                "decision": "PENDIENTE_CONFERENCIA_BICAMERAL",
+                "razon": ciclo.get("justificacion", ""),
+            }
+        }
+        resultados["publicacion"] = {
+            "publicacion_oficial": {
+                "estado": "NO_PUBLICADA",
+                "razon": "Proyecto detenido en Conferencia Bicameral",
+            }
+        }
+        duracion_total = int((time.time() - t0) * 1000)
+        resultados["_meta"] = {
+            "duracion_total_ms": duracion_total,
+            "etapas_ejecutadas": list(resultados.keys()),
+            "decision_final": "PENDIENTE_CONFERENCIA_BICAMERAL",
+            "proyecto_id": proyecto_info.get("id") or proyecto_info.get("id_proyecto"),
+        }
+        logger.info(f"Pipeline detenido en Conferencia Bicameral: {duracion_total}ms")
+        return resultados
 
     # ── ETAPA 7: Evaluacion Veto / Promulgacion ────────────────────────────
     _progress("Etapa_7_Veto", "EN_PROCESO", "Evaluacion estrategica multicriterio en curso...")

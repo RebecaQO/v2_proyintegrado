@@ -39,15 +39,36 @@ except ImportError:
     SENDGRID_AVAILABLE = False
 
 
+def _resolver_ruta_adjunto(nombre_archivo: str) -> Optional[str]:
+    """Busca un PDF adjunto por nombre, primero en uploaded_files/informes/
+    (dictámenes/informes generados por el Agente Emisor de Resultados) y luego
+    en uploaded_files/ (documentos originales subidos por el usuario, p. ej. el
+    proyecto de ley en PDF). Devuelve la ruta absoluta si lo encuentra."""
+    if not nombre_archivo:
+        return None
+    base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    candidatos = [
+        os.path.join(base_dir, "uploaded_files", "informes", nombre_archivo),
+        os.path.join(base_dir, "uploaded_files", nombre_archivo),
+    ]
+    for ruta in candidatos:
+        if os.path.exists(ruta):
+            return ruta
+    return None
+
+
 def enviar_correo_gmail_smtp(
     asunto: str,
     destinatarios: List[str],
     html_content: str,
     pdf_filename: Optional[str] = None,
+    pdf_filenames: Optional[List[str]] = None,
 ) -> Dict[str, Any]:
     """
     Envía el correo directamente usando Gmail SMTP (smtp.gmail.com:587 con TLS).
     Requiere GMAIL_USER y GMAIL_APP_PASSWORD (Contraseña de Aplicación de Google).
+    Adjunta uno o varios PDFs: pasa `pdf_filename` (uno) y/o `pdf_filenames` (varios);
+    ambos se combinan y se buscan tanto en uploaded_files/informes/ como en uploaded_files/.
     """
     gmail_user = (os.getenv("GMAIL_USER") or os.getenv("SMTP_USER") or "").strip()
     gmail_pass = (os.getenv("GMAIL_APP_PASSWORD") or os.getenv("SMTP_PASSWORD") or "").strip().replace(" ", "")
@@ -64,6 +85,8 @@ def enviar_correo_gmail_smtp(
     valid_recipients = [d.strip() for d in destinatarios if d and "@" in d]
     if not valid_recipients:
         valid_recipients = [gmail_user]
+
+    adjuntos = [n for n in ([pdf_filename] if pdf_filename else []) + (pdf_filenames or []) if n]
 
     resultados = []
     try:
@@ -82,14 +105,13 @@ def enviar_correo_gmail_smtp(
                 msg_html = MIMEText(html_content, "html", "utf-8")
                 msg.attach(msg_html)
 
-                # Adjuntar PDF
-                if pdf_filename:
-                    base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-                    pdf_path = os.path.join(base_dir, "uploaded_files", "informes", pdf_filename)
-                    if os.path.exists(pdf_path):
+                # Adjuntar PDF(s)
+                for nombre_pdf in adjuntos:
+                    pdf_path = _resolver_ruta_adjunto(nombre_pdf)
+                    if pdf_path:
                         with open(pdf_path, "rb") as f:
-                            part = MIMEApplication(f.read(), Name=pdf_filename)
-                            part["Content-Disposition"] = f'attachment; filename="{pdf_filename}"'
+                            part = MIMEApplication(f.read(), Name=nombre_pdf)
+                            part["Content-Disposition"] = f'attachment; filename="{nombre_pdf}"'
                             msg.attach(part)
 
                 server.sendmail(gmail_user, [dest], msg.as_string())
@@ -124,25 +146,27 @@ def enviar_correo_hibrido(
     destinatarios: List[str],
     html_content: str,
     pdf_filename: Optional[str] = None,
+    pdf_filenames: Optional[List[str]] = None,
 ) -> Dict[str, Any]:
     """
     Despacha el correo usando la mejor vía disponible:
     1. Si GMAIL_APP_PASSWORD está configurado, usa Gmail SMTP directo.
     2. Si SENDGRID_API_KEY está configurado, usa Twilio SendGrid API.
     3. Si ambos fallan o no están configurados, registra la simulación formal.
+    Acepta un solo PDF (`pdf_filename`) y/o varios (`pdf_filenames`) como adjuntos.
     """
     gmail_pass = (os.getenv("GMAIL_APP_PASSWORD") or os.getenv("SMTP_PASSWORD") or "").strip()
     sendgrid_key = (os.getenv("SENDGRID_API_KEY") or "").strip()
 
     # Intentar primero Gmail SMTP si tiene credenciales
     if gmail_pass:
-        res_gmail = enviar_correo_gmail_smtp(asunto, destinatarios, html_content, pdf_filename)
+        res_gmail = enviar_correo_gmail_smtp(asunto, destinatarios, html_content, pdf_filename, pdf_filenames)
         if res_gmail.get("enviado"):
             return res_gmail
 
     # Intentar SendGrid API
     if sendgrid_key and SENDGRID_AVAILABLE:
-        res_sg = enviar_correo_sendgrid(asunto, destinatarios, html_content, pdf_filename)
+        res_sg = enviar_correo_sendgrid(asunto, destinatarios, html_content, pdf_filename, pdf_filenames)
         if res_sg.get("enviado"):
             return res_sg
 
@@ -162,10 +186,11 @@ def enviar_correo_sendgrid(
     destinatarios: List[str],
     html_content: str,
     pdf_filename: Optional[str] = None,
+    pdf_filenames: Optional[List[str]] = None,
 ) -> Dict[str, Any]:
     """
     Envía un correo institucional vía Twilio SendGrid Email API.
-    Si hay un PDF generado, lo adjunta en base64.
+    Adjunta en base64 uno o varios PDFs (`pdf_filename` y/o `pdf_filenames`).
     """
     api_key = os.getenv("SENDGRID_API_KEY", "").strip()
     if not api_key or not SENDGRID_AVAILABLE:
@@ -180,6 +205,8 @@ def enviar_correo_sendgrid(
 
     from_email = os.getenv("SENDGRID_FROM_EMAIL", "notificaciones@asamblea.gob.bo")
     from_name = os.getenv("SENDGRID_FROM_NAME", "Mesa de Partes Virtual — ALP Bolivia")
+
+    adjuntos = [n for n in ([pdf_filename] if pdf_filename else []) + (pdf_filenames or []) if n]
 
     # Enviar a los destinatarios
     resultados_envio = []
@@ -198,22 +225,25 @@ def enviar_correo_sendgrid(
                 html_content=html_content
             )
 
-            # Adjuntar PDF si existe
-            if pdf_filename:
-                base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-                pdf_path = os.path.join(base_dir, "uploaded_files", "informes", pdf_filename)
-                if os.path.exists(pdf_path):
+            # Adjuntar PDF(s) si existen
+            attachments = []
+            for nombre_pdf in adjuntos:
+                pdf_path = _resolver_ruta_adjunto(nombre_pdf)
+                if pdf_path:
                     with open(pdf_path, "rb") as f:
                         pdf_data = f.read()
                         encoded_file = base64.b64encode(pdf_data).decode()
 
-                    attached_file = Attachment(
+                    attachments.append(Attachment(
                         FileContent(encoded_file),
-                        FileName(pdf_filename),
+                        FileName(nombre_pdf),
                         FileType('application/pdf'),
                         Disposition('attachment')
-                    )
-                    message.attachment = attached_file
+                    ))
+            if len(attachments) == 1:
+                message.attachment = attachments[0]
+            elif len(attachments) > 1:
+                message.attachment = attachments
 
             sg = SendGridAPIClient(api_key)
             response = sg.send(message)
@@ -638,7 +668,7 @@ def notificar_miembros_comision(
                 id_proyecto=id_proyecto,
                 agente_accion="Agente_Notificador_Comision",
                 accion_realizada="Despacho de Correo Institucional HTML vía SendGrid",
-                descripcion=f"Comisión: {comision_nombre} | Destinatarios: {len(destinatarios)} | Método: {resultado_sendgrid.get('metodo')}",
+                descripcion=f"Comisión: {comision_nombre} | Destinatarios: {len(destinatarios)} | Método: {resultado_envio.get('metodo')}",
                 tiempo_segundos=max(1, duracion_ms // 1000),
             )
         except Exception as _be:
