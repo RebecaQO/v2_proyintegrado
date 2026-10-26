@@ -25,7 +25,17 @@ class AgenteEspecialistaTecnico:
 
     def crear_tarea(self, texto_proyecto: str, proyecto_info: Dict[str, Any]) -> Task:
         """Crear tarea CrewAI de dictamen técnico."""
-        prompt = f"""
+        sys_tpl, usr_tpl = self.base.get_prompt_templates("Especialista_Tecnico")
+        if usr_tpl:
+            prompt = self.base.render_template(
+                usr_tpl,
+                titulo=proyecto_info.get('titulo', 'Proyecto de Ley'),
+                proyecto_id=proyecto_info.get('id', 'N/A'),
+                materia=proyecto_info.get('materia', 'General'),
+                texto_proyecto=texto_proyecto[:2000] if texto_proyecto else 'Texto no disponible'
+            )
+        else:
+            prompt = f"""
         Realiza una evaluación pericial de viabilidad técnica y fáctica del siguiente proyecto de ley.
         PROYECTO: ID={proyecto_info.get('id', 'N/A')}, Titulo={proyecto_info.get('titulo', 'N/A')}
         TEXTO: {texto_proyecto[:2000]}...
@@ -45,14 +55,25 @@ class AgenteEspecialistaTecnico:
         titulo = proyecto_info.get('titulo', 'Proyecto de Ley')
         materia = proyecto_info.get('materia', 'General')
 
-        system_prompt = (
-            "Eres el Especialista Técnico Pericial de las Comisiones Legislativas de Bolivia. "
-            "Tu deber es evaluar la factibilidad fáctica de las leyes propuestas: infraestructura, "
-            "estándares internacionales (ISO, OIT, OMS), recursos técnicos y riesgos operacionales. "
-            "Responde ÚNICAMENTE con un JSON válido estructurado."
-        )
+        sys_tpl, usr_tpl = self.base.get_prompt_templates("Especialista_Tecnico")
+        if sys_tpl and usr_tpl:
+            system_prompt = sys_tpl
+            user_prompt = self.base.render_template(
+                usr_tpl,
+                titulo=titulo,
+                proyecto_id=proyecto_id,
+                materia=materia,
+                texto_proyecto=texto_proyecto[:2000] if texto_proyecto else 'Texto no disponible'
+            )
+        else:
+            system_prompt = (
+                "Eres el Especialista Técnico Pericial de las Comisiones Legislativas de Bolivia. "
+                "Tu deber es evaluar la factibilidad fáctica de las leyes propuestas: infraestructura, "
+                "estándares internacionales (ISO, OIT, OMS), recursos técnicos y riesgos operacionales. "
+                "Responde ÚNICAMENTE con un JSON válido estructurado."
+            )
 
-        user_prompt = f"""
+            user_prompt = f"""
         Proyecto de Ley: {titulo} (ID: {proyecto_id})
         Materia: {materia}
         Texto del proyecto:

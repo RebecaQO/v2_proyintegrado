@@ -17,9 +17,21 @@ def validar_edicion(usuario, snapshot):
         raise ValueError("El caso excede el tamaño permitido")
 
 
+_INDICES_CASOS_CREADOS = False
+
+
 def coleccion():
+    global _INDICES_CASOS_CREADOS
     from sma_unified.db.mongo_atlas import get_db
-    return get_db()["casos_compartidos"]
+    col = get_db()["casos_compartidos"]
+    if not _INDICES_CASOS_CREADOS:
+        try:
+            col.create_index([("actualizado", -1)])
+            col.create_index([("autor_id", 1), ("actualizado", -1)])
+            _INDICES_CASOS_CREADOS = True
+        except Exception:
+            pass
+    return col
 
 
 def publico(doc):

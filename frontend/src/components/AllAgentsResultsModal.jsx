@@ -41,6 +41,41 @@ const AGENT_ICONS = {
   publicacion: Newspaper,
 };
 
+// ── Formateo de los valores reales que devuelve el backend ─────────────────────
+// Antes estos bloques usaban literales fijos ("Legislativo", "Comisión de
+// Constitución", "Ingreso válido por Mesa de Partes") que se mostraban pase
+// lo que devolviera la API, ocultando el dato real.
+
+/** "AGENTE_GESTION_CORRESPONDENCIA" -> "Gestión de Correspondencia". */
+const nombreLegible = (valor) => {
+  const txt = String(valor ?? '').trim();
+  if (!txt) return '';
+  return txt
+    .replace(/^AGENTE_/i, '')
+    .replace(/_/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .toLowerCase()
+    .replace(/(^|\s)\p{L}/gu, (c) => c.toUpperCase());
+};
+
+/** `articulos_consultados` es una lista de objetos; `.join()` daba [object Object]. */
+const formatearArticulos = (lista) => {
+  if (!Array.isArray(lista) || lista.length === 0) return '';
+  const items = lista.map((a) => {
+    if (a && typeof a === 'object') {
+      if (a.numero != null && a.numero !== '') return `Art. ${a.numero}`;
+      if (a.articulo_constitucional != null) return String(a.articulo_constitucional);
+      if (a.articulo != null) return String(a.articulo);
+      if (a.titulo != null && a.titulo !== '') return String(a.titulo);
+      return JSON.stringify(a);
+    }
+    return String(a);
+  });
+  if (items.length <= 20) return items.join(', ');
+  return `${items.slice(0, 20).join(', ')} +${items.length - 20} más`;
+};
+
 const AGENT_LOGOS = {
   distribuidor:       '/robots/logos/agente_distribuidor.jpeg',
   comision:           '/robots/logos/agente_comision.jpeg',
@@ -488,9 +523,9 @@ export default function AllAgentsResultsModal({
                         <span style={{ fontWeight: 800, color: '#126596' }}>
                           Salida Estructurada — {agent.name}
                         </span>
-                        {agent.model && (
+                        {(resultData.modelo_llm_usado || agent.model) && (
                           <span style={{ fontSize: '0.7rem', color: '#6A8295', fontFamily: 'monospace' }}>
-                            Modelo: {agent.model}
+                            Modelo: {resultData.modelo_llm_usado || agent.model}
                           </span>
                         )}
                       </div>
@@ -498,39 +533,51 @@ export default function AllAgentsResultsModal({
                       {/* Resumen específico por agente */}
                       {agent.id === 'distribuidor' && (
                         <div>
-                          <div><strong>Tipo Documento:</strong> {resultData.tipo_documento || resultData.clasificacion || 'Legislativo'}</div>
-                          <div><strong>Justificación:</strong> {resultData.justificacion || 'Ingreso válido por Mesa de Partes'}</div>
+                          <div><strong>Tipo Documento:</strong> {resultData.tipo_documento || resultData.clasificacion || nombreLegible(resultData.categoria) || nombreLegible(resultData.tipo_entrada) || '—'}</div>
+                          <div><strong>Destino institucional:</strong> {resultData.justificacion || (resultData.agente_destino_nombre ? `Turnado a ${nombreLegible(resultData.agente_destino_nombre)}` : '—')}</div>
                         </div>
                       )}
 
                       {agent.id === 'comision' && (
                         <div>
-                          <div><strong>Comisión Asignada:</strong> <span style={{ color: '#38BDF8', fontWeight: 800 }}>{resultData.comision_asignada || resultData.nombre_comision || 'Comisión de Constitución'}</span></div>
-                          <div><strong>Materia:</strong> {resultData.materia_predominante || 'Legislativa'}</div>
+                          <div><strong>Comisión Asignada:</strong> <span style={{ color: '#38BDF8', fontWeight: 800 }}>{resultData.nombre_comision_display || resultData.comision_asignada || resultData.nombre_comision || nombreLegible(resultData.comision_principal) || '—'}</span></div>
+                          <div><strong>Materia:</strong> {resultData.materia_predominante || (resultData.prioridad ? `Prioridad ${resultData.prioridad} · Complejidad ${resultData.complejidad || '—'}` : '—')}</div>
                         </div>
                       )}
 
-                      {agent.id === 'constitucional' && (
-                        <div>
-                          <div><strong>Dictamen CPE:</strong> <span style={{ color: resultData.valido ? '#8AC926' : '#F4A261', fontWeight: 800 }}>{resultData.valido ? 'ARTICULADO VÁLIDO' : 'CONTRADICCIONES DETECTADAS'}</span></div>
-                          <div><strong>Artículos Analizados:</strong> {(resultData.articulos_consultados || []).join(', ') || 'Art. 1, 9, 14, 158'}</div>
-                          {resultData.contradicciones && resultData.contradicciones.length > 0 && (
-                            <div style={{ marginTop: '6px', color: '#F4A261' }}>
-                              <strong>Contradicciones ({resultData.contradicciones.length}):</strong>
-                              <ul style={{ margin: '4px 0 0 16px', padding: 0 }}>
-                                {resultData.contradicciones.slice(0, 3).map((c, i) => (
-                                  <li key={i}>{c.articulo_constitucional || c.articulo}: {c.fundamento || c.razon}</li>
-                                ))}
-                              </ul>
-                            </div>
-                          )}
-                        </div>
-                      )}
+                      {agent.id === 'constitucional' && (() => {
+                        const numContradicciones = Array.isArray(resultData.contradicciones)
+                          ? resultData.contradicciones.length
+                          : (resultData.num_contradicciones || 0);
+                        // Antes se declaraba "CONTRADICCIONES DETECTADAS" cuando
+                        // `valido` era false aunque no hubiera ninguna (num=0).
+                        const dictamen = numContradicciones > 0
+                          ? 'CONTRADICCIONES DETECTADAS'
+                          : (resultData.valido ? 'ARTICULADO VÁLIDO' : 'SIN CONTRADICCIONES DETECTADAS');
+                        const colorDictamen = numContradicciones > 0 ? '#F4A261' : (resultData.valido ? '#8AC926' : '#6A8295');
+                        const articulos = formatearArticulos(resultData.articulos_consultados);
+                        return (
+                          <div>
+                            <div><strong>Dictamen CPE:</strong> <span style={{ color: colorDictamen, fontWeight: 800 }}>{dictamen}</span></div>
+                            {articulos && (<div><strong>Artículos Analizados:</strong> {articulos}</div>)}
+                            {numContradicciones > 0 && (
+                              <div style={{ marginTop: '6px', color: '#F4A261' }}>
+                                <strong>Contradicciones ({numContradicciones}):</strong>
+                                <ul style={{ margin: '4px 0 0 16px', padding: 0 }}>
+                                  {resultData.contradicciones.slice(0, 3).map((c, i) => (
+                                    <li key={i}>{c.articulo_constitucional || c.articulo}: {c.fundamento || c.razon}</li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })()}
 
                       {agent.id === 'consistencia' && (
                         <div>
-                          <div><strong>Antinomias / Hallazgos:</strong> {(resultData.hallazgos || []).length} normas cotejadas</div>
-                          <div><strong>Riesgo Global:</strong> {resultData.nivel_riesgo_global || 'OK'}</div>
+                          <div><strong>Antinomias / Hallazgos:</strong> {(resultData.hallazgos || []).length}{(resultData.pendientes_revision || []).length > 0 ? ` · ${resultData.pendientes_revision.length} pendientes de revisión` : ''}</div>
+                          <div><strong>Riesgo Global:</strong> {resultData.nivel_riesgo_global || '—'}</div>
                         </div>
                       )}
 

@@ -283,3 +283,32 @@ def notificar_camara_opuesta(
         except Exception:
             pass
         raise
+
+
+class AgenteNotificadorCamaraOpuesta:
+    """Agente Notificador de Cámara Opuesta (Trámite Bicameral)."""
+
+    def __init__(self, base_agent: Optional[Any] = None):
+        from sma_unified.agents.base_agent import get_base_agent
+        self.base = base_agent or get_base_agent()
+        try:
+            self.agent = self.base.crear_agente("Notificador_Camara_Opuesta")
+        except Exception:
+            self.agent = None
+
+    def crear_tarea(self, proyecto_info: Dict[str, Any], camara_origen: str) -> Any:
+        from crewai import Task
+        camara_destino = _CAMARA_OPUESTA.get(camara_origen, "Senador" if "Dip" in camara_origen else "Diputado")
+        titulo = proyecto_info.get("titulo") or "Proyecto de Ley"
+        return Task(
+            description=f"Notificar a la Cámara de {camara_destino}s la aprobación del proyecto '{titulo}' (Art. 163 CPE).",
+            agent=self.agent,
+            expected_output="HTML con confirmación bicameral despachada a cámara revisora"
+        )
+
+    def ejecutar(self, rol_remitente: str, titulo_proyecto: str, **kwargs) -> Dict[str, Any]:
+        return notificar_camara_opuesta(
+            rol_remitente=rol_remitente,
+            titulo_proyecto=titulo_proyecto,
+            **kwargs
+        )

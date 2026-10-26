@@ -109,6 +109,7 @@ tareas:
   # ── FASE 1: Ingreso, clasificación y atención ───────────────────────────────
 
   Clasificar_Documento:
+    perfil: determinista
     descripcion: >
       Analizar el documento ingresado (texto, PDF o transcripción de voz) y clasificarlo
       unívocamente en una de las 3 categorías institucionales de la ALP, verificando
@@ -232,6 +233,7 @@ tareas:
     herramientas: []
 
   Atender_Consulta_Ciudadana:
+    perfil: conversacional
     descripcion: >
       Procesar consulta ciudadana por texto o voz (STT), detectar intención,
       formular respuesta clara e institucional en markdown y derivar si es trámite
@@ -355,6 +357,7 @@ tareas:
   # ── FASE 2: Auditoría normativa y trabajo en comisión ──────────────────────
 
   Auditar_Constitucionalidad:
+    perfil: razonamiento
     descripcion: >
       Evaluación preliminar crítica y equilibrada frente a la CPE 2009 y fuentes bolivianas recuperadas.
       Verifica cada artículo del proyecto con citas literales, evalúa concordancias, antinomias,
@@ -515,6 +518,7 @@ tareas:
     herramientas: []
 
   Analizar_Consistencia:
+    perfil: normativo
     descripcion: >
       Auditoría semántica con pgvector sobre corpus de leyes vigentes de Bolivia.
       Detecta antinomias, derogaciones tácitas y redundancias. Presenta cuadro
@@ -626,6 +630,7 @@ tareas:
       - "normativa_metadata_lookup"
 
   Evaluar_Viabilidad_Tecnica:
+    perfil: conversacional
     descripcion: >
       Análisis técnico pericial y fáctico: infraestructura existente, estándares
       internacionales (ISO, OIT, OMS, Escazú), matriz de riesgos y viabilidad en
@@ -735,6 +740,7 @@ tareas:
     herramientas: []
 
   Planificar_Debate_Comision:
+    perfil: normativo
     descripcion: >
       Orquestar trabajo legislativo en comisión: Orden del Día con tiempos,
       especialistas a convocar, cronograma 15-30 días hábiles, instrucciones
@@ -845,6 +851,7 @@ tareas:
     herramientas: []
 
   Analizar_Fondo_Constitucional:
+    perfil: razonamiento
     descripcion: >
       Análisis hermenéutico y de fondo: ponderación de valores supremos (Vivir
       Bien, plurinacionalidad), precedentes TCP, test de proporcionalidad completo.
@@ -939,6 +946,7 @@ tareas:
     herramientas: []
 
   Evaluar_Impacto_Presupuestario:
+    perfil: normativo
     descripcion: >
       Evaluación de sostenibilidad fiscal y cumplimiento de Ley 1178 SAFCO.
       Costo inicial y operativo, fuente de financiamiento, 3 escenarios
@@ -1047,6 +1055,7 @@ tareas:
       - "consulta_tgn"
 
   Concentrar_Observaciones:
+    perfil: razonamiento
     descripcion: >
       Integrar observaciones de todos los agentes de análisis en expediente
       unificado con dictamen PDF firmado, trazabilidad forense y metodología
@@ -1166,6 +1175,7 @@ tareas:
   # ── FASE 3: Plenaria y procedimiento bicameral ─────────────────────────────
 
   Registrar_Debate:
+    perfil: determinista
     descripcion: >
       Capturar estructura formal del debate: quórum, intervenciones por bancada,
       mociones, doble votación En Grande / En Detalle, acta certificada.
@@ -1294,6 +1304,7 @@ tareas:
     herramientas: []
 
   Gestionar_Bicameral:
+    perfil: conversacional
     descripcion: >
       Gestión del procedimiento bicameral (Art. 163 CPE): diff artículo por
       artículo entre Cámara de Origen y Revisora, clasificación de cambios,
@@ -1391,6 +1402,7 @@ tareas:
   # ── FASE 4: Poder Ejecutivo y publicación ──────────────────────────────────
 
   Evaluar_Veto_Promulgacion:
+    perfil: razonamiento
     descripcion: >
       Dictamen técnico-jurídico para la Presidencia del Estado (Art. 164 CPE):
       decisión de PROMULGAR, VETO_PARCIAL o VETO_TOTAL, con pliego de
@@ -1515,6 +1527,7 @@ tareas:
     herramientas: []
 
   Publicar_Ley_Oficial:
+    perfil: determinista
     descripcion: >
       Publicación en Gaceta Oficial: número correlativo de Ley, Decreto Supremo
       de Promulgación, cálculo de vacatio legis (15 días hábiles con feriados
@@ -1613,6 +1626,7 @@ tareas:
   # ── FASE 5: Difusión y fiscalización ───────────────────────────────────────
 
   Generar_Difusion_Ciudadana:
+    perfil: conversacional
     descripcion: >
       Traducir la ley promulgada a lenguaje claro: propósito, derechos,
       obligaciones, aplicabilidad, vigencia, FAQ, canales ALP por departamento.
@@ -1735,6 +1749,7 @@ tareas:
     herramientas: []
 
   Monitorear_Fiscalizacion:
+    perfil: normativo
     descripcion: >
       Control posterior (Art. 158 CPE): monitoreo de plazos de reglamentación,
       auditoría de ejecución presupuestaria vs. programada, alertas a Contraloría.
@@ -1835,6 +1850,7 @@ tareas:
       - "consulta_ejecucion_presupuestaria"
 
   Notificar_Comision:
+    perfil: determinista
     descripcion: >
       Redactar y despachar notificación HTML institucional a legisladores,
       autoridades del Ejecutivo y proponentes ciudadanos con estado del
@@ -1922,6 +1938,7 @@ tareas:
   # ── TAREAS SUPLEMENTARIAS Y DE DISTRIBUCIÓN ────────────────────────────────
 
   Distribuir_Analisis_Especializado:
+    perfil: determinista
     descripcion: >
       En la segunda fase, enrutar tareas especializadas del expediente admitido a
       constitucionalidad, consistencia, análisis técnico, comisión y presupuesto;
@@ -1959,6 +1976,7 @@ tareas:
     herramientas: []
 
   Emitir_Documentos_Oficiales:
+    perfil: determinista
     descripcion: >
       Preparar borradores de actas, informes y remisiones con datos verificados.
       Marcar BORRADOR o PENDIENTE_FIRMA; no inventar firmas, sellos, números ni fechas oficiales.
@@ -1993,6 +2011,7 @@ tareas:
     herramientas: []
 
   Coordinar_Tarea_Comodin:
+    perfil: razonamiento
     descripcion: >
       Descomponer solicitudes complejas, asignar subtareas a subagentes declarados,
       consolidar resultados trazables y señalar pendientes humanos.

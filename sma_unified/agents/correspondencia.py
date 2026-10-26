@@ -28,16 +28,6 @@ from sma_unified.db.mongo_atlas import publicar_mensaje, marcar_en_proceso, marc
 from sma_unified.utils.text_sampler import muestrear_texto
 
 
-def _get_llm():
-    from crewai import LLM
-    return LLM(
-        model=f"openai/{settings.LLM_MODEL_CREW}",
-        api_key=settings.NVIDIA_API_KEY,
-        base_url=settings.NVIDIA_BASE_URL,
-        additional_params={"chat_template_kwargs": {"enable_thinking": False}},
-    )
-
-
 def procesar_correspondencia(
     texto_documento: str,
     sesion_id: str,
@@ -63,23 +53,20 @@ def procesar_correspondencia(
     t0 = time.time()
 
     try:
-        llm = _get_llm()
-        agents_cfg = load_agents_yaml().get("agente_gestion_correspondencia", {})
-        agente = Agent(
-            role=agents_cfg.get("role", "Gestor de Trámites e Inicio de Procedimientos Institucionales"),
-            goal=agents_cfg.get("goal", "Analizar correspondencia oficial e iniciar trámite administrativo."),
-            backstory=agents_cfg.get("backstory", "Gestor Central de Trámites del Senado de Bolivia."),
-            llm=llm,
-            verbose=True,
-            allow_delegation=False,
-            max_iter=2,
-            memory=False,
-        )
+        from sma_unified.agents.base_agent import get_base_agent, get_prompt_templates, render_prompt
+
+        base = get_base_agent()
+        agente = base.crear_agente("Gestion_Correspondencia")
+
+        sample_texto = muestrear_texto(texto_documento, 3000)
+        sys_tpl, usr_tpl = get_prompt_templates("Gestion_Correspondencia")
+        if usr_tpl:
+            desc = render_prompt(usr_tpl, texto_documento=sample_texto)
+        else:
+            tasks_cfg = load_tasks_yaml().get("tarea_gestion_correspondencia", {})
+            desc = tasks_cfg.get("description", "Analiza la correspondencia:\n{texto_documento}").replace("{texto_documento}", sample_texto)
 
         tasks_cfg = load_tasks_yaml().get("tarea_gestion_correspondencia", {})
-        desc = tasks_cfg.get("description", "Analiza la correspondencia:\n{texto_documento}")
-        desc = desc.replace("{texto_documento}", muestrear_texto(texto_documento, 3000))
-
         tarea = Task(
             description=desc,
             expected_output=tasks_cfg.get(

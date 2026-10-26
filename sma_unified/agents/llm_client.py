@@ -86,7 +86,7 @@ def chat_completion_auditoria(**kwargs: Any) -> Tuple[str, str]:
         # ResourceExhausted y priorizar respaldos antes de razonadores largos.
         modelos_texto = [m for m in disponibles if not any(
             marca in m.lower() for marca in ("omni", "vision", "-vl-"))]
-        disponibles = modelos_texto + [m for m in disponibles if m not in modelos_texto]
+        disponibles = modelos_texto if modelos_texto else disponibles
         prioridad = [modelo_preferido, settings.LLM_MODEL_CONSISTENCIA,
                      settings.LLM_MODEL_CREW, "moonshotai/kimi-k3", settings.LLM_MODEL_NVIDIA]
         modelos = sorted(disponibles, key=lambda m: prioridad.index(m) if m in prioridad else len(prioridad))

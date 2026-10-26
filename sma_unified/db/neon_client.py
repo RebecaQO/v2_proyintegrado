@@ -265,6 +265,7 @@ class NeonDBClient:
         for nombre, tipo in (("secretario", "ACTA_DEBATE"), ("concentrador", "EXPEDIENTE_CONSOLIDADO")):
             registro = self._ultimo_registro(cur, proyecto["id_proyecto"], tipo)
             resultado[nombre] = registro["hallazgos"] if registro else {}
+            resultado["referencias_insumos"][nombre] = registro["id"] if registro else None
             h_insumo = (registro["hallazgos"] if registro else {}).get("hash_documento")
             resultado["insumos_vigentes"] = resultado["insumos_vigentes"] and bool(registro) and (h_insumo == resultado["hash_documento"] or (nombre == "concentrador" and bool(h_insumo)))
         return resultado

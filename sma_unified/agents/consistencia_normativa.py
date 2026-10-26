@@ -69,6 +69,96 @@ UMBRAL_SIMILITUD = 0.42     # Similitud mínima coseno (más bajo = más cobertu
 LONGITUD_MIN_BLOQUE = 30    # Mínimo de caracteres para considerar un bloque analizable
 MAX_CHARS_EMBEDDING = 1500  # Máximo de caracteres enviados al modelo de embedding
 
+# ── Normalización de la relación declarada por el LLM ─────────────────────────
+# Los prompts del YAML y las restricciones transversales proponen vocabulario
+# que NO pertenece a TIPOS_RELACION_CONSISTENCIA ("colision", "COLISION_DIRECTA",
+# "DEROGACION_TACITA", "REDUNDANCIA", "COMPLEMENTARIA", "MODIFICACION_IMPLICITA").
+# El modelo lo elige con más naturalidad que "contradiccion", y hasta ahora esa
+# diferencia bastaba para rechazar toda la clasificación y dejar el artículo en
+# PENDIENTE_REVISION. Aquí se traduce al conjunto válido en lugar de descartarla.
+_ALIAS_TIPO_RELACION = {
+    # contradicción / antinomia
+    "colision": "contradiccion",
+    "colision_directa": "contradiccion",
+    "conflicto": "contradiccion",
+    "conflicto_directo": "contradiccion",
+    "antinomia": "contradiccion",
+    "incompatible": "contradiccion",
+    "incompatibilidad": "contradiccion",
+    "modificacion_implicita": "contradiccion",
+    "contradiccion_directa": "contradiccion",
+    # repetición / derogación tácita
+    "redundancia": "repeticion",
+    "redundante": "repeticion",
+    "duplicidad": "repeticion",
+    "duplicado": "repeticion",
+    "derogacion_tacita": "repeticion",
+    "derogacion": "repeticion",
+    "modificacion": "repeticion",
+    # vacío cubierto
+    "vacio": "vacio_llenado",
+    "llenado_vacio": "vacio_llenado",
+    "vacio_llenado": "vacio_llenado",
+    # complemento
+    "complementaria": "complementario",
+    "complemento": "complementario",
+    "compatible": "complementario",
+    "concordante": "complementario",
+    # sin relación
+    "ninguna": "sin_relacion",
+    "sin_relacion": "sin_relacion",
+    "no_relacion": "sin_relacion",
+    "sin_relacion_juridica": "sin_relacion",
+    "superficial": "sin_relacion",
+}
+
+
+def _clave_tipo(valor: Any) -> str:
+    """Clave de comparación en minúsculas, sin acentos ni separadores."""
+    texto = str(valor or "").strip().lower()
+    for a, b in (("á", "a"), ("é", "e"), ("í", "i"), ("ó", "o"), ("ú", "u"), ("ü", "u"), ("ñ", "n")):
+        texto = texto.replace(a, b)
+    texto = "".join(c if c.isalnum() else "_" for c in texto)
+    return "_".join(t for t in texto.split("_") if t)
+
+
+def normalizar_tipo_relacion(valor: Any) -> Optional[str]:
+    """Devuelve un valor de TIPOS_RELACION_CONSISTENCIA o None si es irreconocible.
+
+    Se acepta tal cual si ya es válido, se traduce por alias y, en último lugar,
+    por subcadena ("relación de colisión" -> "contradiccion"). `None` significa
+    que no hay categoría fiable: el llamador debe conservar PENDIENTE_REVISION en
+    vez de inventar una clasificación.
+    """
+    clave = _clave_tipo(valor)
+    if not clave:
+        return None
+    if clave in TIPOS_RELACION_CONSISTENCIA:
+        return clave
+    if clave in _ALIAS_TIPO_RELACION:
+        return _ALIAS_TIPO_RELACION[clave]
+
+    # coincidencia por subcadena, de más específica a más general
+    for fragmento, destino in (
+        ("derogacion", "repeticion"),
+        ("redundan", "repeticion"),
+        ("repetic", "repeticion"),
+        ("duplic", "repeticion"),
+        ("vacio", "vacio_llenado"),
+        ("llenado", "vacio_llenado"),
+        ("complement", "complementario"),
+        ("colision", "contradiccion"),
+        ("contradicc", "contradiccion"),
+        ("antinom", "contradiccion"),
+        ("incompat", "contradiccion"),
+        ("conflict", "contradiccion"),
+        ("sin_relacion", "sin_relacion"),
+        ("ninguna", "sin_relacion"),
+    ):
+        if fragmento in clave:
+            return destino
+    return None
+
 
 class AgenteConsistenciaNormativa:
     """
@@ -131,30 +221,41 @@ class AgenteConsistenciaNormativa:
           - Conflicto de especialidad: la norma especial prevalece sobre la general.
           - Conflicto temporal: la norma posterior prevalece sobre la anterior.
         """
-        prompt_sistema = (
-            "Eres un jurista boliviano experto en análisis de consistencia normativa y técnica legislativa.\n"
-            "Compara el artículo NUEVO (proyecto de ley) con el artículo VIGENTE de la legislación boliviana y clasifica su relación jurídica con máxima rigurosidad y precisión (SIN ALUCINACIONES).\n\n"
-            "Responde ÚNICAMENTE con un objeto JSON válido (sin texto adicional, sin bloques markdown extra):\n"
-            '{"tipo_relacion": "contradiccion|repeticion|vacio_llenado|complementario|sin_relacion", '
-            '"justificacion": "explicacion estricta citando ambos textos (max 120 palabras)", '
-            '"sugerencia": "derogar|modificar|mantener|ninguna, con una frase de razon", '
-            '"derogacion_tacita": true|false, '
-            '"conflicto_especialidad": true|false, '
-            '"riesgo": "alto|medio|bajo|ninguno"}\n\n'
-            "Definiciones:\n"
-            "- contradiccion: consecuencias jurídicas incompatibles. Riesgo alto/medio.\n"
-            "- repeticion: mismo contenido, distinta redacción. Puede implicar derogación tácita.\n"
-            "- vacio_llenado: el nuevo cubre un vacío que el vigente dejaba abierto.\n"
-            "- complementario: misma materia, sin conflicto.\n"
-            "- sin_relacion: similitud superficial, sin relación jurídica real.\n"
-            "- derogacion_tacita: el artículo nuevo regula la misma materia sin indicar que deroga al anterior.\n"
-            "- conflicto_especialidad: la norma especial debería prevalecer sobre la general."
-        )
-        prompt_usuario = (
-            f"ARTÍCULO NUEVO (proyecto):\n{texto_nuevo[:800]}\n\n"
-            f"ARTÍCULO VIGENTE — {candidato['documento']}, Art. {candidato['numero']}:\n"
-            f"{candidato['texto'][:800]}"
-        )
+        from sma_unified.agents.base_agent import get_prompt_templates, render_prompt
+
+        sys_tpl, usr_tpl = get_prompt_templates("Consistencia_Normativa")
+        if sys_tpl and usr_tpl:
+            prompt_sistema = sys_tpl
+            prompt_usuario = render_prompt(
+                usr_tpl,
+                texto_proyecto=texto_nuevo[:800],
+                normas_vigentes_texto=f"{candidato['documento']}, Art. {candidato['numero']}:\n{candidato['texto'][:800]}"
+            )
+        else:
+            prompt_sistema = (
+                "Eres un jurista boliviano experto en análisis de consistencia normativa y técnica legislativa.\n"
+                "Compara el artículo NUEVO (proyecto de ley) con el artículo VIGENTE de la legislación boliviana y clasifica su relación jurídica con máxima rigurosidad y precisión (SIN ALUCINACIONES).\n\n"
+                "Responde ÚNICAMENTE con un objeto JSON válido (sin texto adicional, sin bloques markdown extra):\n"
+                '{"tipo_relacion": "contradiccion|repeticion|vacio_llenado|complementario|sin_relacion", '
+                '"justificacion": "explicacion estricta citando ambos textos (max 120 palabras)", '
+                '"sugerencia": "derogar|modificar|mantener|ninguna, con una frase de razon", '
+                '"derogacion_tacita": true|false, '
+                '"conflicto_especialidad": true|false, '
+                '"riesgo": "alto|medio|bajo|ninguno"}\n\n'
+                "Definiciones:\n"
+                "- contradiccion: consecuencias jurídicas incompatibles. Riesgo alto/medio.\n"
+                "- repeticion: mismo contenido, distinta redacción. Puede implicar derogación tácita.\n"
+                "- vacio_llenado: el nuevo cubre un vacío que el vigente dejaba abierto.\n"
+                "- complementario: misma materia, sin conflicto.\n"
+                "- sin_relacion: similitud superficial, sin relación jurídica real.\n"
+                "- derogacion_tacita: el artículo nuevo regula la misma materia sin indicar que deroga al anterior.\n"
+                "- conflicto_especialidad: la norma especial debería prevalecer sobre la general."
+            )
+            prompt_usuario = (
+                f"ARTÍCULO NUEVO (proyecto):\n{texto_nuevo[:800]}\n\n"
+                f"ARTÍCULO VIGENTE — {candidato['documento']}, Art. {candidato['numero']}:\n"
+                f"{candidato['texto'][:800]}"
+            )
 
         try:
             contenido, _modelo = chat_completion_auditoria(
@@ -169,8 +270,21 @@ class AgenteConsistenciaNormativa:
             )
             from sma_unified.agents.llm_client import extraer_json_de_llm
             data = extraer_json_de_llm(contenido)
-            if not isinstance(data, dict) or data.get("tipo_relacion") not in TIPOS_RELACION_CONSISTENCIA:
-                raise ValueError("Clasificacion normativa incompleta o invalida")
+            if not isinstance(data, dict):
+                raise ValueError("Clasificacion normativa incompleta o invalida: respuesta no es un objeto JSON")
+            crudo = data.get("tipo_relacion")
+            tipo = normalizar_tipo_relacion(crudo)
+            if tipo is None:
+                raise ValueError(
+                    f"Clasificacion normativa incompleta o invalida: tipo_relacion={crudo!r} sin equivalente valido"
+                )
+            if _clave_tipo(crudo) != tipo:
+                logger.info(f"[Consistencia] tipo_relacion normalizado: {crudo!r} -> {tipo!r}")
+            data["tipo_relacion"] = tipo
+            # "derogacion_tacita" puede llegar como tipo en vez de como bandera:
+            # se conserva la señal sin perder la categoría válida.
+            if "derogacion" in _clave_tipo(crudo) and "derogacion_tacita" not in data:
+                data["derogacion_tacita"] = True
             data["verificado"] = True
         except Exception as e:
             logger.warning(f"[Consistencia] Cotejo pendiente por error LLM: {e}")

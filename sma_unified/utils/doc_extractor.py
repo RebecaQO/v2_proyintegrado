@@ -6,7 +6,7 @@ usando pdfplumber, pypdf y python-docx con fallbacks automáticos.
 """
 import io
 import os
-from typing import Dict, Any, Tuple
+from typing import Dict, Any, Optional, Tuple
 
 try:
     from loguru import logger
@@ -82,13 +82,79 @@ def extraer_texto_docx(file_bytes: bytes) -> Tuple[str, Dict[str, Any]]:
         return "", {"num_paginas": 0, "motor": "error", "error": str(e)}
 
 
+def _buscar_variante_ocr(filename: str) -> Optional[Tuple[str, bytes]]:
+    """Busca una variante ya OCR-izada del PDF cuando el original no tiene texto.
+
+    Un escaneo sin capa de texto devuelve 0 caracteres y el pipeline seguiría
+    ejecutándose contra el marcador de posición "[No se pudo extraer texto...]",
+    comparando ese placeholder con la CPE y con el corpus normativo. Si junto al
+    documento existe una variante OCR (``{stem}_OCR.pdf`` y equivalentes), se usa
+    como fuente de texto.
+
+    Devuelve ``(nombre_encontrado, bytes)`` o ``None`` si no hay variante.
+    """
+    stem, _ = os.path.splitext(os.path.basename(filename))
+    if not stem:
+        return None
+
+    sufijos = ("_OCR", "-OCR", "_ocr", "-ocr", ".OCR", ".ocr")
+    nombres = [f"{stem}{s}.pdf" for s in sufijos]
+
+    # Directorio del propio archivo, directorio de trabajo y carpeta de subidas.
+    base_dir = os.path.dirname(filename)
+    buscados = [base_dir] if base_dir else []
+    for extra in (".", "uploaded_files"):
+        if extra not in buscados:
+            buscados.append(extra)
+
+    for directorio in buscados:
+        for nombre in nombres:
+            ruta = os.path.join(directorio, nombre)
+            try:
+                if os.path.isfile(ruta):
+                    with open(ruta, "rb") as fh:
+                        datos = fh.read()
+                    if datos:
+                        return nombre, datos
+            except OSError:
+                continue
+    return None
+
+
 def extraer_texto_archivo(filename: str, file_bytes: bytes) -> Tuple[str, Dict[str, Any]]:
     """
     Función general para extraer texto de cualquier formato soportado (.pdf, .docx, .txt, .md).
+
+    Si un PDF devuelve texto vacío (escaneo sin capa de texto) se intenta una
+    variante OCR hermana antes de rendirse; el metadato ``motor`` y la bandera
+    ``ocr_fallback`` dejan constancia de qué fuente se usó realmente.
     """
     ext = os.path.splitext(filename.lower())[1]
     if ext == ".pdf":
-        return extraer_texto_pdf(file_bytes)
+        texto, meta = extraer_texto_pdf(file_bytes)
+        if texto and texto.strip():
+            return texto, meta
+
+        variante = _buscar_variante_ocr(filename)
+        if variante:
+            nombre_ocr, bytes_ocr = variante
+            texto_ocr, meta_ocr = extraer_texto_pdf(bytes_ocr)
+            if texto_ocr and texto_ocr.strip():
+                logger.info(
+                    f"{filename}: sin texto extraíble; se usa la variante OCR {nombre_ocr} "
+                    f"({len(texto_ocr)} caracteres)."
+                )
+                meta_ocr = dict(meta_ocr)
+                meta_ocr["motor_origen"] = meta.get("motor", "desconocido")
+                meta_ocr["ocr_fallback"] = True
+                meta_ocr["ocr_fuente"] = nombre_ocr
+                meta_ocr["motor"] = f"{meta_ocr.get('motor', 'ocr')}+ocr_fallback"
+                return texto_ocr, meta_ocr
+
+            logger.warning(
+                f"{filename}: variante OCR {nombre_ocr} encontrada pero sin texto usable."
+            )
+        return texto, meta
     elif ext in [".docx", ".doc"]:
         return extraer_texto_docx(file_bytes)
     else:

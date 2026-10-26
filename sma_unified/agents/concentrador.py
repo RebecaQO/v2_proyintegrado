@@ -399,6 +399,24 @@ INSTRUCCIÓN: Devuelve un JSON estructurado con exactamente estas claves:
 }}
 """
 
+    try:
+        from sma_unified.agents.base_agent import get_prompt_templates, render_prompt
+        sys_tpl, usr_tpl = get_prompt_templates("Concentrador")
+        if sys_tpl and usr_tpl:
+            system_prompt = sys_tpl
+            user_prompt = render_prompt(
+                usr_tpl,
+                titulo=titulo,
+                id_proyecto=id_proyecto,
+                riesgo_global=riesgo_global,
+                agentes_presentes=", ".join(agentes_presentes) if agentes_presentes else "Evaluador",
+                total_observaciones=len(obs_verificadas),
+                observaciones_verificadas=json.dumps(obs_verificadas[:15], ensure_ascii=False, indent=2),
+                informe_profesional=json.dumps(proyecto_info.get('informe_profesional', {}), ensure_ascii=False)
+            )
+    except Exception as e_tpl:
+        logger.debug(f"[Concentrador] Usando prompt local por fallback: {e_tpl}")
+
     # 1. Intento primario con cliente OpenAI oficial hacia NVIDIA NIM
     try:
         client = OpenAI(

@@ -44,32 +44,10 @@ from sma_unified.db.mongo_atlas import (
 )
 
 
-def _get_llm():
-    """Instancia el LLM NVIDIA para CrewAI."""
-    from crewai import LLM
-    return LLM(
-        model=f"openai/{settings.LLM_MODEL_CREW}",
-        api_key=settings.NVIDIA_API_KEY,
-        base_url=settings.NVIDIA_BASE_URL,
-        additional_params={"chat_template_kwargs": {"enable_thinking": False}},
-    )
-
-
 def _get_distribuidor_agent():
     """Crea el agente CrewAI para clasificación / distribución desde YAML."""
-    from crewai import Agent
-    llm = _get_llm()
-    agents_cfg = load_agents_yaml().get("agente_enrutador", {})
-    return Agent(
-        role=agents_cfg.get("role", "Clasificador Estricto de Documentación Oficial de Bolivia"),
-        goal=agents_cfg.get("goal", "Clasificar en EXACTAMENTE UNA de las 3 categorías institucionales."),
-        backstory=agents_cfg.get("backstory", "Sistema automatizado de recepción y enrutamiento documental."),
-        llm=llm,
-        verbose=True,
-        allow_delegation=False,
-        max_iter=2,
-        memory=False,
-    )
+    from sma_unified.agents.base_agent import get_base_agent
+    return get_base_agent().crear_agente("Distribuidor")
 
 
 def _clasificar_heuristico(texto: str) -> str:
@@ -137,23 +115,27 @@ def clasificar_documento(
 
     # 2. Intento de clasificación con LLM (timeout corto: 6s)
     try:
+        from sma_unified.agents.base_agent import get_prompt_templates, render_prompt
+
         sample_texto = muestrear_texto(texto_documento, 3000)
+        sys_tpl, usr_tpl = get_prompt_templates("Distribuidor")
+        if sys_tpl and usr_tpl:
+            system_content = sys_tpl
+            user_content = render_prompt(usr_tpl, texto_documento=sample_texto)
+        else:
+            system_content = (
+                "Eres el Clasificador de Documentos de la Asamblea Legislativa Plurinacional de Bolivia. "
+                "Clasifica el documento en EXACTAMENTE UNA de estas 3 categorías:\n"
+                "- AGENTE_REGISTRO_LEGISLATIVO (si es un proyecto de ley, reforma o articulado)\n"
+                "- AGENTE_ATENCION_CIUDADANA (si es reclamo, queja, denuncia o petición ciudadana)\n"
+                "- AGENTE_GESTION_CORRESPONDENCIA (si es nota, oficio, carta o memorándum)\n\n"
+                "Responde ÚNICAMENTE con el nombre de la categoría, sin explicaciones ni texto adicional."
+            )
+            user_content = f"Documento:\n{sample_texto}"
+
         messages = [
-            {
-                "role": "system",
-                "content": (
-                    "Eres el Clasificador de Documentos de la Asamblea Legislativa Plurinacional de Bolivia. "
-                    "Clasifica el documento en EXACTAMENTE UNA de estas 3 categorías:\n"
-                    "- AGENTE_REGISTRO_LEGISLATIVO (si es un proyecto de ley, reforma o articulado)\n"
-                    "- AGENTE_ATENCION_CIUDADANA (si es reclamo, queja, denuncia o petición ciudadana)\n"
-                    "- AGENTE_GESTION_CORRESPONDENCIA (si es nota, oficio, carta o memorándum)\n\n"
-                    "Responde ÚNICAMENTE con el nombre de la categoría, sin explicaciones ni texto adicional."
-                )
-            },
-            {
-                "role": "user",
-                "content": f"Documento:\n{sample_texto}"
-            }
+            {"role": "system", "content": system_content},
+            {"role": "user", "content": user_content}
         ]
         raw_res, modelo_usado = chat_completion_resiliente(messages, max_tokens=25, timeout=6)
         resultado_raw = raw_res.strip().upper()

@@ -153,6 +153,11 @@ def _ensure_indexes(db):
         voz = db["voz_comandos"]
         voz.create_index([("sesion_id", 1)])
 
+        casos = db["casos_compartidos"]
+        casos.create_index([("actualizado", -1)])
+        casos.create_index([("autor_id", 1), ("actualizado", -1)])
+        casos.create_index([("estado", 1)])
+
         logger.info("Índices relacionales MongoDB verificados/creados.")
     except Exception as e:
         logger.warning(f"No se pudieron crear índices: {e}")

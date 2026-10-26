@@ -39,6 +39,14 @@ try:
         LLM_MODEL_CREW: str = Field(default="nvidia/nemotron-3.5-lightning-30b-a3b")
         LLM_MODEL_NVIDIA: str = Field(default="nvidia/nemotron-3-nano-omni-30b-a3b-reasoning")
 
+        # ── Perfiles de modelo por rol de agente (fuente oficial: .env) ─────
+        # El YAML declara el PERFIL por agente; base_agent.py lo resuelve con
+        # resolver_modelo_por_perfil(). Cambiar un modelo no exige tocar el YAML.
+        LLM_MODELO_RAZONAMIENTO: str = Field(default="nvidia/nemotron-3-super-120b-a12b")
+        LLM_MODELO_DETERMINISTA: str = Field(default="openai/gpt-oss-20b")
+        LLM_MODELO_NORMATIVO: str = Field(default="nvidia/nemotron-3.5-lightning-30b-a3b")
+        LLM_MODELO_CONVERSACIONAL: str = Field(default="nvidia/nemotron-3-nano-omni-30b-a3b-reasoning")
+
         # ── Agente de Consistencia Normativa (embeddings + pgvector) ────────
         NVIDIA_EMBED_MODEL: str = Field(default="nvidia/nemotron-3-embed-1b")
         NVIDIA_EMBED_DIM: int = Field(default=2048)
@@ -78,6 +86,10 @@ except Exception:
             self.NVIDIA_BASE_URL = os.getenv("NVIDIA_BASE_URL", "https://integrate.api.nvidia.com/v1")
             self.LLM_MODEL_CREW = os.getenv("LLM_MODEL_CREW", "nvidia/nemotron-3.5-lightning-30b-a3b")
             self.LLM_MODEL_NVIDIA = os.getenv("LLM_MODEL_NVIDIA", "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning")
+            self.LLM_MODELO_RAZONAMIENTO = os.getenv("LLM_MODELO_RAZONAMIENTO", "nvidia/nemotron-3-super-120b-a12b")
+            self.LLM_MODELO_DETERMINISTA = os.getenv("LLM_MODELO_DETERMINISTA", "openai/gpt-oss-20b")
+            self.LLM_MODELO_NORMATIVO = os.getenv("LLM_MODELO_NORMATIVO", "nvidia/nemotron-3.5-lightning-30b-a3b")
+            self.LLM_MODELO_CONVERSACIONAL = os.getenv("LLM_MODELO_CONVERSACIONAL", "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning")
             self.NVIDIA_EMBED_MODEL = os.getenv("NVIDIA_EMBED_MODEL", "nvidia/nemotron-3-embed-1b")
             self.NVIDIA_EMBED_DIM = int(os.getenv("NVIDIA_EMBED_DIM", "2048"))
             self.LLM_MODEL_CONSISTENCIA = os.getenv("LLM_MODEL_CONSISTENCIA", "nvidia/nemotron-3.5-lightning-30b-a3b")
@@ -100,6 +112,39 @@ except Exception:
             return d
 
     settings = SettingsFallback()
+
+# ── Resolución de perfiles de modelo ───────────────────────────────────────
+# Catálogo de perfiles que el YAML puede declarar. El valor concreto del modelo
+# vive SOLO en .env: esta tabla traduce perfil -> nombre de variable de entorno.
+PERFILES_MODELO = {
+    "razonamiento": "LLM_MODELO_RAZONAMIENTO",
+    "determinista": "LLM_MODELO_DETERMINISTA",
+    "normativo": "LLM_MODELO_NORMATIVO",
+    "conversacional": "LLM_MODELO_CONVERSACIONAL",
+}
+
+
+def resolver_modelo_por_perfil(perfil: str, fallback: str = "") -> str:
+    """Resuelve un perfil declarado en el YAML a su modelo definido en .env.
+
+    Acepta tanto el nombre corto del perfil ("razonamiento") como la variable
+    completa ("LLM_MODELO_RAZONAMIENTO") para tolerar YAML ya escritos con la
+    forma larga. Devuelve ``fallback`` (por defecto LLM_MODEL_CREW) si el
+    perfil es desconocido o la variable no está definida.
+    """
+    if not perfil:
+        return fallback or getattr(settings, "LLM_MODEL_CREW", "")
+
+    clave = str(perfil).strip()
+    # ¿Declararon la variable entera en lugar del perfil corto?
+    var = clave if clave in PERFILES_MODELO.values() else PERFILES_MODELO.get(clave.lower())
+
+    if var:
+        valor = getattr(settings, var, "") or os.getenv(var, "")
+        if valor:
+            return valor
+    return fallback or getattr(settings, "LLM_MODEL_CREW", "")
+
 
 # ── Nombres de Agentes (constantes) ───────────────────────────────────────
 AGENTE_USUARIO = "Usuario"
@@ -155,7 +200,10 @@ def load_control_aprobacion() -> dict:
             control = (config.get("workflows", {})
                        .get("Pipeline_Legislativo_Completo", {})
                        .get("etapas", {})
-                       .get("Fase_3_Plenaria_Bicameral", {})
+                       # La clave real en workflows.yaml es Fase_3_Actas_y_Bicameral;
+                       # con el nombre anterior el YAML nunca se leía y siempre caía
+                       # al default hardcodeado de abajo.
+                       .get("Fase_3_Actas_y_Bicameral", {})
                        .get("control_aprobacion"))
             if control:
                 return control

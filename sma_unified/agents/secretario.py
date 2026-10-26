@@ -86,7 +86,32 @@ class AgenteSecretarioCamara:
     
     def crear_tarea(self, debate_data: Dict, proyecto_info: Dict) -> Task:
         """Crear tarea CrewAI de registro integral del debate parlamentario"""
-        prompt = f"""
+        sys_tpl, usr_tpl = self.base.get_prompt_templates("Secretario_Camara")
+        if usr_tpl:
+            camara = debate_data.get("camara") or "DIPUTADOS"
+            total_camara = 130 if "DIP" in camara.upper() else 36
+            presentes = int(debate_data.get("presentes") or debate_data.get("quorum_legal", {}).get("presentes") or int(total_camara * 0.85))
+            v_grande_in = debate_data.get("votacion_esencial") or debate_data.get("votacion_en_grande") or {}
+            favor_grande = int(v_grande_in.get("favor", debate_data.get("favor_grande", int(presentes * 0.65))))
+            contra_grande = int(v_grande_in.get("contra", debate_data.get("contra_grande", int(presentes * 0.25))))
+            abst_grande = int(v_grande_in.get("abstenciones", debate_data.get("abstenciones_grande", max(0, presentes - favor_grande - contra_grande))))
+            prompt = self.base.render_template(
+                usr_tpl,
+                proyecto_id=proyecto_info.get('id', proyecto_info.get('id_proyecto', 'N/A')),
+                titulo=proyecto_info.get('titulo', proyecto_info.get('titulo_proyecto', 'Proyecto de Ley')),
+                comision_origen=debate_data.get("comision_origen", "Comisión de Constitución"),
+                correcciones_comision=json.dumps(debate_data.get("correcciones_comision", []), ensure_ascii=False),
+                camara=camara,
+                total_camara=total_camara,
+                presentes=presentes,
+                favor_grande=favor_grande,
+                contra_grande=contra_grande,
+                abst_grande=abst_grande,
+                sesion_numero=debate_data.get('sesion_numero', 1),
+                fecha_sesion=debate_data.get('fecha', time.strftime('%Y-%m-%d'))
+            )
+        else:
+            prompt = f"""
         Registra de manera fidedigna y exhaustiva la sesión plenaria conforme al Reglamento Camaral.
         
         PROYECTO DE LEY:
@@ -217,15 +242,38 @@ class AgenteSecretarioCamara:
         if (favor_grande + contra_grande + abst_grande) != presentes:
             abst_grande = max(0, presentes - favor_grande - contra_grande)
 
-        system_prompt = (
-            "Eres el Secretario de Cámara y fedatario oficial de la Asamblea Legislativa Plurinacional de Bolivia. "
-            "Tu labor es consolidar los antecedentes de las comisiones parlamentarias y registrar el Acta Oficial "
-            "del debate y votación. La votación se basa estricta y únicamente en 3 métricas esenciales: "
-            "1. Votos a favor, 2. Votos en contra, 3. Abstenciones. "
-            "No inventes datos. Computa mayorías sobre el quórum real y responde estrictamente en JSON válido."
-        )
+        try:
+            res_tpl = self.base.get_prompt_templates("Secretario_Camara")
+            sys_tpl, usr_tpl = res_tpl if isinstance(res_tpl, (tuple, list)) and len(res_tpl) >= 2 else ("", "")
+        except Exception:
+            sys_tpl, usr_tpl = "", ""
+        if sys_tpl and usr_tpl:
+            system_prompt = sys_tpl
+            user_prompt = self.base.render_template(
+                usr_tpl,
+                proyecto_id=proyecto_id,
+                titulo=antecedentes_comision.get('titulo_proyecto', proyecto_info.get('titulo', 'Proyecto de Ley')),
+                comision_origen=antecedentes_comision.get('comision_origen', 'Comisión Ordinaria'),
+                correcciones_comision=json.dumps(antecedentes_comision.get('correcciones_comision', []), ensure_ascii=False),
+                camara=camara,
+                total_camara=total_camara,
+                presentes=presentes,
+                favor_grande=favor_grande,
+                contra_grande=contra_grande,
+                abst_grande=abst_grande,
+                sesion_numero=debate_data.get('sesion_numero', 1),
+                fecha_sesion=debate_data.get('fecha', time.strftime('%Y-%m-%d'))
+            )
+        else:
+            system_prompt = (
+                "Eres el Secretario de Cámara y fedatario oficial de la Asamblea Legislativa Plurinacional de Bolivia. "
+                "Tu labor es consolidar los antecedentes de las comisiones parlamentarias y registrar el Acta Oficial "
+                "del debate y votación. La votación se basa estricta y únicamente en 3 métricas esenciales: "
+                "1. Votos a favor, 2. Votos en contra, 3. Abstenciones. "
+                "No inventes datos. Computa mayorías sobre el quórum real y responde estrictamente en JSON válido."
+            )
 
-        user_prompt = f"""
+            user_prompt = f"""
         PROYECTO DE LEY:
         - ID: {proyecto_id}
         - Título: {antecedentes_comision.get('titulo_proyecto', proyecto_info.get('titulo', 'Proyecto de Ley'))}
@@ -419,14 +467,14 @@ class AgenteSecretarioCamara:
         resultado = acta.get("resultado_final", "APROBADO_EN_GRANDE_Y_DETALLE")
         es_rechazado = "RECHAZADO" in str(resultado)
 
-        # Persistencia Neon
-        try:
-            if hasattr(self.neon, "guardar_insumo_legislativo"):
-                self.neon.guardar_insumo_legislativo(
-                    int(proyecto_id), "ACTA_DEBATE", data,
-                    "Secretario de Cámara", acta.get("estado_siguiente", "EN_TRAMITE_BICAMERAL")
-                )
-            else:
+        # Persistencia Neon (usando método transaccional si existe)
+        if hasattr(self.neon, "guardar_insumo_legislativo"):
+            self.neon.guardar_insumo_legislativo(
+                int(proyecto_id), "ACTA_DEBATE", data,
+                "Secretario de Cámara", acta.get("estado_siguiente", "EN_TRAMITE_BICAMERAL")
+            )
+        else:
+            try:
                 self.neon.insertar_observacion(
                     id_proyecto=int(proyecto_id),
                     tipo_obs="ACTA_DEBATE",
@@ -437,8 +485,8 @@ class AgenteSecretarioCamara:
                 )
                 nuevo_estado = "RECHAZADO_ORIGEN" if es_rechazado else "EN_TRAMITE_BICAMERAL"
                 self.neon.actualizar_estado_proyecto(int(proyecto_id), nuevo_estado, "Secretario de Cámara")
-        except Exception as err:
-            logger.warning(f"Aviso Neon Secretario: {err}")
+            except Exception as err:
+                logger.warning(f"Aviso Neon Secretario: {err}")
 
         # MongoDB logging en agent_executions
         try:

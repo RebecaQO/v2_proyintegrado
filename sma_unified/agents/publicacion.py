@@ -34,7 +34,7 @@ from sma_unified.db.mongo_atlas import get_db
 
 
 # ── Constantes de configuración determinista ─────────────────────────────────
-DIAS_VIGENCIA_DEFAULT = int(os.getenv("PUBLICACION_DIAS_VIGENCIA", "1"))
+DIAS_VIGENCIA_DEFAULT = int(os.getenv("PUBLICACION_DIAS_VIGENCIA", "15"))
 NUM_LEY_BASE = 1400  # Base si tabla vacía
 
 
@@ -171,6 +171,33 @@ class AgentePublicacionOficial:
                 self.agent = base_agent.crear_agente("Publicacion_Oficial")
             except Exception:
                 self.agent = None
+
+    def crear_tarea(self, evaluacion_veto: Dict, proyecto_info: Dict) -> Any:
+        """Crea tarea CrewAI determinista para la Publicación Oficial."""
+        from crewai import Task
+        try:
+            from sma_unified.agents.base_agent import get_prompt_templates, render_prompt
+            _, usr_tpl = get_prompt_templates("Publicacion_Oficial")
+            titulo = proyecto_info.get("titulo") or "Ley Plurinacional"
+            if usr_tpl:
+                desc = render_prompt(
+                    usr_tpl,
+                    numero_ley=proyecto_info.get("numero_ley", "A_DETERMINAR"),
+                    titulo=titulo,
+                    fecha_promulgacion=datetime.now().strftime("%Y-%m-%d"),
+                    fecha_vigencia=_calcular_fecha_vigencia(datetime.now().strftime("%Y-%m-%d"), DIAS_VIGENCIA_DEFAULT),
+                    boletin_oficial="BOL-OFICIAL",
+                    hash_texto="PENDIENTE_HASH"
+                )
+            else:
+                desc = f"Publicar oficialmente la norma: {titulo}"
+        except Exception:
+            desc = f"Publicar oficialmente la norma: {proyecto_info.get('titulo', 'Ley')}"
+        return Task(
+            description=desc,
+            agent=self.agent,
+            expected_output="JSON publicacion_oficial determinista sellado"
+        )
 
     def ejecutar(self, evaluacion_veto: Dict, proyecto_info: Dict, **kwargs) -> Dict:
         """
@@ -348,10 +375,29 @@ Genera el JSON de publicación oficial con exactamente esta estructura (sin inve
   }}
 }}
 """
+        system_prompt_llm = self.SYSTEM_PROMPT
+        try:
+            from sma_unified.agents.base_agent import get_prompt_templates, render_prompt
+            sys_tpl, usr_tpl = get_prompt_templates("Publicacion_Oficial")
+            if sys_tpl:
+                system_prompt_llm = sys_tpl
+            if usr_tpl:
+                user_prompt = render_prompt(
+                    usr_tpl,
+                    numero_ley=numero_ley_str,
+                    titulo=titulo,
+                    fecha_promulgacion=fecha_promulgacion,
+                    fecha_vigencia=fecha_vigencia,
+                    boletin_oficial=boletin_id,
+                    hash_texto=hash_txt
+                )
+        except Exception as e_tpl:
+            logger.debug(f"[Publicacion] Usando prompt local por fallback: {e_tpl}")
+
         try:
             raw, _ = chat_completion_resiliente(
                 messages=[
-                    {"role": "system", "content": self.SYSTEM_PROMPT},
+                    {"role": "system", "content": system_prompt_llm},
                     {"role": "user", "content": user_prompt},
                 ],
                 temperature=0.0,

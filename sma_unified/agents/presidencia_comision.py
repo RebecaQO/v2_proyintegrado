@@ -25,7 +25,17 @@ class AgentePresidenciaComision:
 
     def crear_tarea(self, texto_proyecto: str, proyecto_info: Dict[str, Any]) -> Task:
         """Crear tarea CrewAI de planificación de comisión."""
-        prompt = f"""
+        sys_tpl, usr_tpl = self.base.get_prompt_templates("Presidencia_Comision")
+        if usr_tpl:
+            prompt = self.base.render_template(
+                usr_tpl,
+                titulo=proyecto_info.get('titulo', 'Proyecto de Ley'),
+                proyecto_id=proyecto_info.get('id', 'N/A'),
+                comision_asignada=proyecto_info.get('comision_asignada', 'Comisión de Constitución y Legislación'),
+                texto_proyecto=texto_proyecto[:1500] if texto_proyecto else 'Texto no disponible'
+            )
+        else:
+            prompt = f"""
         Elabora el plan de trabajo y Orden del Día para la Comisión Legislativa competente.
         PROYECTO: ID={proyecto_info.get('id', 'N/A')}, Titulo={proyecto_info.get('titulo', 'N/A')}
         Establece orden del día detallado, tiempos de exposición, peritos a convocar y cronograma.
@@ -44,14 +54,25 @@ class AgentePresidenciaComision:
         titulo = proyecto_info.get('titulo', 'Proyecto de Ley')
         comision = proyecto_info.get('comision_asignada', 'Comisión de Constitución y Legislación')
 
-        system_prompt = (
-            "Eres la Presidencia de la Comisión Legislativa de la Asamblea Legislativa Plurinacional de Bolivia. "
-            "Conforme al Reglamento Camaral y el Art. 156 de la CPE, organizas el debate parlamentario: "
-            "confeccionas el Orden del Día, convocas peritos y proyectas el calendario legislativo. "
-            "Responde ÚNICAMENTE con JSON válido."
-        )
+        sys_tpl, usr_tpl = self.base.get_prompt_templates("Presidencia_Comision")
+        if sys_tpl and usr_tpl:
+            system_prompt = sys_tpl
+            user_prompt = self.base.render_template(
+                usr_tpl,
+                titulo=titulo,
+                proyecto_id=proyecto_id,
+                comision_asignada=comision,
+                texto_proyecto=texto_proyecto[:1500] if texto_proyecto else 'Texto no disponible'
+            )
+        else:
+            system_prompt = (
+                "Eres la Presidencia de la Comisión Legislativa de la Asamblea Legislativa Plurinacional de Bolivia. "
+                "Conforme al Reglamento Camaral y el Art. 156 de la CPE, organizas el debate parlamentario: "
+                "confeccionas el Orden del Día, convocas peritos y proyectas el calendario legislativo. "
+                "Responde ÚNICAMENTE con JSON válido."
+            )
 
-        user_prompt = f"""
+            user_prompt = f"""
         Proyecto de Ley: {titulo} (ID: {proyecto_id})
         Comisión Responsable: {comision}
 

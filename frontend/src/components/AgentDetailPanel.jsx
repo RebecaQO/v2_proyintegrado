@@ -375,7 +375,7 @@ export default function AgentDetailPanel({
           </div>
 
           {/* Modelo IA */}
-          {agent.model && (
+          {(resultData?.modelo_llm_usado || agent.model) && (
             <div style={{
               display: 'flex', alignItems: 'center', gap: '6px',
               marginBottom: '14px', padding: '7px 10px', borderRadius: '10px',
@@ -383,7 +383,7 @@ export default function AgentDetailPanel({
             }}>
               <Cpu size={13} color="#38BDF8" />
               <span style={{ fontSize: '0.74rem', color: '#94A3B8', fontFamily: 'monospace' }}>
-                Modelo: <strong style={{ color: '#38BDF8' }}>{agent.model}</strong>
+                Modelo: <strong style={{ color: '#38BDF8' }}>{resultData?.modelo_llm_usado || agent.model}</strong>
               </span>
               {agent.db && agent.db.length > 0 && (
                 <>

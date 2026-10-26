@@ -32,13 +32,26 @@ class AgenteBicameral:
         return self.base.crear_agente("Bicameral")
 
     def crear_tarea(self, version_original: Dict, version_retornada: Dict, proyecto_info: Dict) -> Task:
-        return Task(
-            description=(
+        sys_tpl, usr_tpl = self.base.get_prompt_templates("Bicameral")
+        if usr_tpl:
+            prompt = self.base.render_template(
+                usr_tpl,
+                titulo=proyecto_info.get("titulo") or proyecto_info.get("titulo_proyecto", "Proyecto de Ley"),
+                proyecto_id=proyecto_info.get("id") or proyecto_info.get("id_proyecto", "N/A"),
+                camara_origen=version_original.get("camara", "DIPUTADOS"),
+                camara_revisora=version_retornada.get("camara", "SENADORES"),
+                texto_origen=version_original.get("texto", "")[:2000],
+                texto_revisora=version_retornada.get("texto", "")[:2000]
+            )
+        else:
+            prompt = (
                 "Comparar los textos documentados y revisar los antecedentes del Secretario y Concentrador. "
                 "Evaluar circuito constitucional entre Cámara de Origen y Revisora (votación en grande y en detalle). "
                 "No aprobar ni sancionar automáticamente sin revisión humana formal.\n" +
                 json.dumps({"proyecto_info": proyecto_info, "version_original": version_original, "version_retornada": version_retornada}, ensure_ascii=False)
-            ),
+            )
+        return Task(
+            description=prompt,
             agent=self.agent,
             expected_output="JSON ciclo_bicameral con verificaciones y PENDIENTE_APROBACION_HUMANA"
         )
@@ -317,7 +330,8 @@ class AgenteBicameral:
             with conn.cursor() as cur:
                 cur.execute("""
                     UPDATE sistema.proyecto_ley
-                    SET estado_proyecto = 'DEVUELTO_A_COMISION',
+                    SET estado_actual = 'DEVUELTO_A_COMISION',
+                        estado_tramite = 'DEVUELTO_A_COMISION',
                         observaciones_generales = COALESCE(observaciones_generales, '') || %s
                     WHERE id_proyecto = %s
                 """, (f"\n[DEVOLUCION_BICAMERAL {time.strftime('%Y-%m-%d')}]: {motivo_limpio}", int(proyecto_id)))

@@ -24,9 +24,20 @@ class AgenteFiscalizacion:
 
     def crear_tarea(self, datos_ejecucion: Dict[str, Any], ley_info: Dict[str, Any]) -> Task:
         """Crear tarea CrewAI de fiscalización posterior."""
-        prompt = f"""
+        sys_tpl, usr_tpl = self.base.get_prompt_templates("Fiscalizacion")
+        numero_ley = ley_info.get('numero_ley') or ley_info.get('numero_ley_asignado') or "Ley del Estado"
+        titulo = ley_info.get('titulo', 'Ley Promulgada')
+        if usr_tpl:
+            prompt = self.base.render_template(
+                usr_tpl,
+                numero_ley=numero_ley,
+                titulo=titulo,
+                datos_ejecucion=json.dumps(datos_ejecucion, ensure_ascii=False)
+            )
+        else:
+            prompt = f"""
         Realiza la auditoría y control posterior de implementación de la ley.
-        LEY: {ley_info.get('numero_ley', 'Ley N° XXXX')}, Titulo={ley_info.get('titulo', 'N/A')}
+        LEY: {numero_ley}, Titulo={titulo}
         DATOS DE EJECUCIÓN: {json.dumps(datos_ejecucion, ensure_ascii=False)}
         Evalúa el cumplimiento de plazos reglamentarios, presupuesto ejecutado y detecta anomalías.
         Responde estrictamente en formato JSON con la clave reporte_fiscalizacion.
@@ -44,15 +55,25 @@ class AgenteFiscalizacion:
         titulo = ley_info.get('titulo', 'Ley Promulgada')
         id_proyecto = ley_info.get('id_proyecto') or ley_info.get('id')
 
-        system_prompt = (
-            "Eres el Auditor de la Comisión de Fiscalización y Control Posterior de la Asamblea "
-            "Legislativa Plurinacional de Bolivia (Art. 158 CPE). Monitoreas el cumplimiento de las leyes "
-            "promulgadas: plazos de reglamentación por los ministerios del Órgano Ejecutivo, ejecución "
-            "del gasto y detección de irregularidades para alertar a la Contraloría General del Estado. "
-            "Responde ÚNICAMENTE con JSON válido."
-        )
+        sys_tpl, usr_tpl = self.base.get_prompt_templates("Fiscalizacion")
+        if sys_tpl and usr_tpl:
+            system_prompt = sys_tpl
+            user_prompt = self.base.render_template(
+                usr_tpl,
+                numero_ley=numero_ley,
+                titulo=titulo,
+                datos_ejecucion=json.dumps(datos_ejecucion, ensure_ascii=False, indent=2)
+            )
+        else:
+            system_prompt = (
+                "Eres el Auditor de la Comisión de Fiscalización y Control Posterior de la Asamblea "
+                "Legislativa Plurinacional de Bolivia (Art. 158 CPE). Monitoreas el cumplimiento de las leyes "
+                "promulgadas: plazos de reglamentación por los ministerios del Órgano Ejecutivo, ejecución "
+                "del gasto y detección de irregularidades para alertar a la Contraloría General del Estado. "
+                "Responde ÚNICAMENTE con JSON válido."
+            )
 
-        user_prompt = f"""
+            user_prompt = f"""
         Ley Monitoreada: {numero_ley} - {titulo}
         Datos de implementación reportados:
         {json.dumps(datos_ejecucion, ensure_ascii=False, indent=2)}

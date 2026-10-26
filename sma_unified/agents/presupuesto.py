@@ -24,14 +24,23 @@ class AgentePresupuesto:
 
     def crear_tarea(self, texto_proyecto: str, proyecto_info: Dict[str, Any]) -> Task:
         """Crear tarea CrewAI de evaluación presupuestaria."""
-        prompt = f"""
-        Realiza una evaluación de impacto fiscal y presupuestario del proyecto de ley.
-        PROYECTO: ID={proyecto_info.get('id', 'N/A')}, Titulo={proyecto_info.get('titulo', 'N/A')}
-        TEXTO: {texto_proyecto[:2000]}...
-        Evalúa costos de implementación, gastos operativos recurrentes, fuentes de financiamiento
-        y simula 3 escenarios macroeconómicos (optimista, conservador, pesimista).
-        Responde estrictamente en JSON con la clave evaluacion_fiscal.
-        """
+        sys_tpl, usr_tpl = self.base.get_prompt_templates("Planificacion_Presupuesto")
+        if usr_tpl:
+            prompt = self.base.render_template(
+                usr_tpl,
+                titulo=proyecto_info.get('titulo', 'Proyecto de Ley'),
+                proyecto_id=proyecto_info.get('id', 'N/A'),
+                texto_proyecto=texto_proyecto[:2000]
+            )
+        else:
+            prompt = f"""
+            Realiza una evaluación de impacto fiscal y presupuestario del proyecto de ley.
+            PROYECTO: ID={proyecto_info.get('id', 'N/A')}, Titulo={proyecto_info.get('titulo', 'N/A')}
+            TEXTO: {texto_proyecto[:2000]}...
+            Evalúa costos de implementación, gastos operativos recurrentes, fuentes de financiamiento
+            y simula 3 escenarios macroeconómicos (optimista, conservador, pesimista).
+            Responde estrictamente en JSON con la clave evaluacion_fiscal.
+            """
         return Task(
             description=prompt,
             agent=self.agent,
@@ -44,25 +53,35 @@ class AgentePresupuesto:
         proyecto_id = proyecto_info.get('id') or proyecto_info.get('id_proyecto') or 1
         titulo = proyecto_info.get('titulo', 'Proyecto de Ley')
 
-        system_prompt = (
-            "Eres el Analista Principal de la Comisión de Planificación, Política Económica y Finanzas "
-            "de la Asamblea Legislativa Plurinacional de Bolivia. Rigiendo bajo la Ley 1178 (SAFCO), "
-            "evalúas si los proyectos de ley cuentan con respaldo presupuestario real en el Tesoro General "
-            "de la Nación (TGN), calculas costos y proyectas 3 escenarios fiscales. Responde en JSON válido."
-        )
+        sys_tpl, usr_tpl = self.base.get_prompt_templates("Planificacion_Presupuesto")
+        if sys_tpl and usr_tpl:
+            system_prompt = sys_tpl
+            user_prompt = self.base.render_template(
+                usr_tpl,
+                titulo=titulo,
+                proyecto_id=proyecto_id,
+                texto_proyecto=texto_proyecto[:2000] if texto_proyecto else 'Texto no disponible'
+            )
+        else:
+            system_prompt = (
+                "Eres el Analista Principal de la Comisión de Planificación, Política Económica y Finanzas "
+                "de la Asamblea Legislativa Plurinacional de Bolivia. Rigiendo bajo la Ley 1178 (SAFCO), "
+                "evalúas si los proyectos de ley cuentan con respaldo presupuestario real en el Tesoro General "
+                "de la Nación (TGN), calculas costos y proyectas 3 escenarios fiscales. Responde en JSON válido."
+            )
 
-        user_prompt = f"""
-        Proyecto de Ley: {titulo} (ID: {proyecto_id})
+            user_prompt = f"""
+            Proyecto de Ley: {titulo} (ID: {proyecto_id})
 
-        Texto del proyecto:
-        {texto_proyecto[:2000] if texto_proyecto else 'Texto no disponible'}
+            Texto del proyecto:
+            {texto_proyecto[:2000] if texto_proyecto else 'Texto no disponible'}
 
-        Genera el informe de viabilidad fiscal en este formato JSON exacto:
-        {{
-          "evaluacion_fiscal": {{
-            "proyecto_id": "{proyecto_id}",
-            "viabilidad_fiscal": "SOSTENIBLE",
-            "costo_implementacion_inicial_bs": 12000000.0,
+            Genera el informe de viabilidad fiscal en este formato JSON exacto:
+            {{
+              "evaluacion_fiscal": {{
+                "proyecto_id": "{proyecto_id}",
+                "viabilidad_fiscal": "SOSTENIBLE",
+                "costo_implementacion_inicial_bs": 12000000.0,
             "costo_operativo_anual_bs": 3500000.0,
             "fuente_financiamiento_identificada": true,
             "fuentes_propuestas": [

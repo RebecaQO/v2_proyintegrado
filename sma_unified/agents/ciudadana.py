@@ -28,16 +28,6 @@ from sma_unified.db.mongo_atlas import publicar_mensaje, marcar_en_proceso, marc
 from sma_unified.utils.text_sampler import muestrear_texto
 
 
-def _get_llm():
-    from crewai import LLM
-    return LLM(
-        model=f"openai/{settings.LLM_MODEL_CREW}",
-        api_key=settings.NVIDIA_API_KEY,
-        base_url=settings.NVIDIA_BASE_URL,
-        additional_params={"chat_template_kwargs": {"enable_thinking": False}},
-    )
-
-
 def procesar_atencion_ciudadana(
     texto_documento: str,
     sesion_id: str,
@@ -63,23 +53,20 @@ def procesar_atencion_ciudadana(
     t0 = time.time()
 
     try:
-        llm = _get_llm()
-        agents_cfg = load_agents_yaml().get("agente_atencion_ciudadana", {})
-        agente = Agent(
-            role=agents_cfg.get("role", "Especialista en Atención y Defensoría Ciudadana"),
-            goal=agents_cfg.get("goal", "Procesar solicitudes ciudadanas, evaluar su prioridad y estructurar respuesta."),
-            backstory=agents_cfg.get("backstory", "Servidor público dedicado a la atención de peticiones ciudadanas."),
-            llm=llm,
-            verbose=True,
-            allow_delegation=False,
-            max_iter=2,
-            memory=False,
-        )
+        from sma_unified.agents.base_agent import get_base_agent, get_prompt_templates, render_prompt
+
+        base = get_base_agent()
+        agente = base.crear_agente("Interaccion_Ciudadana")
+
+        sample_texto = muestrear_texto(texto_documento, 3000)
+        sys_tpl, usr_tpl = get_prompt_templates("Interaccion_Ciudadana")
+        if usr_tpl:
+            desc = render_prompt(usr_tpl, mensaje_usuario=sample_texto, contexto_profesional="Petición de ventanilla ciudadana")
+        else:
+            tasks_cfg = load_tasks_yaml().get("tarea_atencion_ciudadana", {})
+            desc = tasks_cfg.get("description", "Procesa la solicitud ciudadana:\n{texto_documento}").replace("{texto_documento}", sample_texto)
 
         tasks_cfg = load_tasks_yaml().get("tarea_atencion_ciudadana", {})
-        desc = tasks_cfg.get("description", "Procesa la solicitud ciudadana:\n{texto_documento}")
-        desc = desc.replace("{texto_documento}", muestrear_texto(texto_documento, 3000))
-
         tarea = Task(
             description=desc,
             expected_output=tasks_cfg.get(

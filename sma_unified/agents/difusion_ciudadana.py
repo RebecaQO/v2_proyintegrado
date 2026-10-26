@@ -24,9 +24,20 @@ class AgenteDifusionCiudadana:
 
     def crear_tarea(self, texto_ley: str, ley_info: Dict[str, Any]) -> Task:
         """Crear tarea CrewAI de difusión ciudadana."""
-        prompt = f"""
+        sys_tpl, usr_tpl = self.base.get_prompt_templates("Difusion_Ciudadana")
+        numero_ley = ley_info.get('numero_ley') or ley_info.get('numero_ley_asignado') or "Ley del Estado"
+        titulo = ley_info.get('titulo', 'Ley Promulgada')
+        if usr_tpl:
+            prompt = self.base.render_template(
+                usr_tpl,
+                numero_ley=numero_ley,
+                titulo=titulo,
+                texto_ley=texto_ley[:2500] if texto_ley else 'Texto no disponible'
+            )
+        else:
+            prompt = f"""
         Transforma el texto de la ley promulgada en una guía en Lenguaje Claro para la población boliviana.
-        LEY: {ley_info.get('numero_ley', 'Ley Promulgada')}, Titulo={ley_info.get('titulo', 'N/A')}
+        LEY: {numero_ley}, Titulo={titulo}
         TEXTO: {texto_ley[:2500]}...
         Explica sin tecnicismos: qué derechos otorga, qué obligaciones impone, a quiénes beneficia
         y genera 3 preguntas frecuentes con respuestas sencillas.
@@ -44,14 +55,24 @@ class AgenteDifusionCiudadana:
         numero_ley = ley_info.get('numero_ley') or ley_info.get('numero_ley_asignado') or "Ley del Estado"
         titulo = ley_info.get('titulo', 'Ley Promulgada')
 
-        system_prompt = (
-            "Eres el Comunicador Cívico Oficial de la Asamblea Legislativa Plurinacional de Bolivia. "
-            "Tu misión es aplicar las normas internacionales de 'Lenguaje Claro': traducir textos legales "
-            "complejos a un castellano sencillo, directo, comprensible y cercano para cualquier ciudadano, "
-            "destacando siempre sus derechos y deberes. Responde en JSON estructurado."
-        )
+        sys_tpl, usr_tpl = self.base.get_prompt_templates("Difusion_Ciudadana")
+        if sys_tpl and usr_tpl:
+            system_prompt = sys_tpl
+            user_prompt = self.base.render_template(
+                usr_tpl,
+                numero_ley=numero_ley,
+                titulo=titulo,
+                texto_ley=texto_ley[:2500] if texto_ley else 'Texto no disponible'
+            )
+        else:
+            system_prompt = (
+                "Eres el Comunicador Cívico Oficial de la Asamblea Legislativa Plurinacional de Bolivia. "
+                "Tu misión es aplicar las normas internacionales de 'Lenguaje Claro': traducir textos legales "
+                "complejos a un castellano sencillo, directo, comprensible y cercano para cualquier ciudadano, "
+                "destacando siempre sus derechos y deberes. Responde en JSON estructurado."
+            )
 
-        user_prompt = f"""
+            user_prompt = f"""
         Ley Oficial: {numero_ley} - {titulo}
 
         Texto íntegro o articulado principal:

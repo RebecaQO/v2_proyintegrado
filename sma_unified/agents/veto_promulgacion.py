@@ -38,13 +38,28 @@ class AgenteVetoPromulgacion:
         return self.base.crear_agente("Veto_Promulgacion")
 
     def crear_tarea(self, expediente: Dict, proyecto_info: Dict) -> Task:
-        return Task(
-            description=(
+        sys_tpl, usr_tpl = self.base.get_prompt_templates("Veto_Promulgacion")
+        if usr_tpl:
+            pct_origen = proyecto_info.get("pct_origen", 72.5)
+            pct_revisora = proyecto_info.get("pct_revisora", 68.0)
+            prompt = self.base.render_template(
+                usr_tpl,
+                titulo=proyecto_info.get("titulo") or proyecto_info.get("titulo_proyecto", "Proyecto de Ley"),
+                proyecto_id=proyecto_info.get("id") or proyecto_info.get("id_proyecto", "N/A"),
+                pct_origen=pct_origen,
+                pct_revisora=pct_revisora,
+                expediente_texto=json.dumps(expediente, ensure_ascii=False)[:3000],
+                antecedentes_texto=json.dumps(proyecto_info.get("antecedentes_agentes", {}), ensure_ascii=False)[:3000]
+            )
+        else:
+            prompt = (
                 "Generar el Informe Asesor Ejecutivo para el Presidente del Estado (Arts. 163-164 CPE). "
                 "Sintetizar concordancia legal, respaldo legislativo (% de votos) y factibilidad fiscal. "
                 "Emitir recomendación de Promulgación o Veto y esperar la decisión documentada del Presidente.\n" +
                 json.dumps({"proyecto_info": proyecto_info, "expediente": expediente}, ensure_ascii=False)
-            ),
+            )
+        return Task(
+            description=prompt,
             agent=self.agent,
             expected_output="JSON evaluacion_veto con informe_asesor_presidencial y opciones de acción ejecutiva"
         )
@@ -116,15 +131,29 @@ class AgenteVetoPromulgacion:
 
         # Invocar LLM para enriquecer el Informe Asesor Presidencial
         try:
-            prompt_asesor_system = (
-                "Eres el Asesor Jurídico Principal del Presidente del Estado Plurinacional de Bolivia (Arts. 163-165 CPE). "
-                "Tu misión es elaborar un Informe Ejecutivo de Asesoría Presidencial para orientar al Presidente "
-                "sobre si debe PROMULGAR o VETAR (Observar) la ley sancionada por la ALP. "
-                "Recuerda: El Ejecutivo NO aprueba leyes (eso lo hizo el Legislativo); el Presidente PROMULGA o VETA. "
-                "Evalúa: 1. Resumen sustantivo, 2. Concordancia legal, 3. Respaldo político de votos, 4. Viabilidad presupuestaria. "
-                "Responde estrictamente en formato JSON válido."
-            )
-            prompt_asesor_user = f"""
+            res_tpl = self.base.get_prompt_templates("Veto_Promulgacion")
+            sys_tpl, usr_tpl = res_tpl if isinstance(res_tpl, (tuple, list)) and len(res_tpl) >= 2 else ("", "")
+            if sys_tpl and usr_tpl:
+                prompt_asesor_system = sys_tpl
+                prompt_asesor_user = self.base.render_template(
+                    usr_tpl,
+                    titulo=titulo_ley,
+                    proyecto_id=proyecto_id,
+                    pct_origen=pct_origen,
+                    pct_revisora=pct_revisora,
+                    expediente_texto=json.dumps(expediente_consolidado, ensure_ascii=False)[:5000],
+                    antecedentes_texto=json.dumps(antecedentes_agentes, ensure_ascii=False)[:9000]
+                )
+            else:
+                prompt_asesor_system = (
+                    "Eres el Asesor Jurídico Principal del Presidente del Estado Plurinacional de Bolivia (Arts. 163-165 CPE). "
+                    "Tu misión es elaborar un Informe Ejecutivo de Asesoría Presidencial para orientar al Presidente "
+                    "sobre si debe PROMULGAR o VETAR (Observar) la ley sancionada por la ALP. "
+                    "Recuerda: El Ejecutivo NO aprueba leyes (eso lo hizo el Legislativo); el Presidente PROMULGA o VETA. "
+                    "Evalúa: 1. Resumen sustantivo, 2. Concordancia legal, 3. Respaldo político de votos, 4. Viabilidad presupuestaria. "
+                    "Responde estrictamente en formato JSON válido."
+                )
+                prompt_asesor_user = f"""
             PROYECTO DE LEY SANCIONADO:
             - Título: {titulo_ley}
             - ID: {proyecto_id}
@@ -171,17 +200,42 @@ class AgenteVetoPromulgacion:
         if expediente.get("pliego_objeciones"):
             pliego_objeciones = expediente["pliego_objeciones"]
 
+        # Cálculo determinista de evaluación multicriterio ponderada
+        score_legalidad = float(informe_asesor.get("puntuacion_multicriterio", {}).get("legalidad", 8.5))
+        score_fiscal = float(informe_asesor.get("puntuacion_multicriterio", {}).get("impacto_fiscal", 8.0))
+        score_tecnica = float(informe_asesor.get("puntuacion_multicriterio", {}).get("viabilidad_tecnica", 8.0))
+        score_politico = float(informe_asesor.get("puntuacion_multicriterio", {}).get("alineamiento_politico", 7.5))
+        score_social = float(informe_asesor.get("puntuacion_multicriterio", {}).get("urgencia_social", 8.0))
+        promedio_ponderado = round(
+            (score_legalidad * 0.25) +
+            (score_fiscal * 0.25) +
+            (score_tecnica * 0.20) +
+            (score_politico * 0.15) +
+            (score_social * 0.15),
+            2
+        )
+        puntuacion_multicriterio = {
+            "legalidad": score_legalidad,
+            "impacto_fiscal": score_fiscal,
+            "viabilidad_tecnica": score_tecnica,
+            "alineamiento_politico": score_politico,
+            "urgencia_social": score_social,
+            "promedio_ponderado": promedio_ponderado
+        }
+
         # 4. Estructurar el estado y el contrato de decisión ejecutiva
-        es_promulgacion = (decision == "PROMULGAR")
-        es_veto = (decision in ("VETAR_TOTAL", "VETAR_PARCIAL"))
+        decision_final = decision or "PENDIENTE_DECISION_HUMANA"
+        es_promulgacion = (decision_final == "PROMULGAR")
+        es_veto = (decision_final in ("VETAR_TOTAL", "VETAR_PARCIAL"))
 
         evaluacion = {
             "proyecto_id": int(proyecto_id),
             "titulo_normativa": titulo_ley,
             "modo_control": "HUMAN_IN_THE_LOOP",
             "roles_registro": load_control_aprobacion()["roles_permitidos"],
-            "decision": decision or "PENDIENTE_DECISION_PRESIDENCIAL",
+            "decision": decision_final,
             "informe_asesor_presidencial": informe_asesor,
+            "puntuacion_multicriterio": puntuacion_multicriterio,
             "recomendacion_tecnica": {
                 "dictamen_sugerido": informe_asesor.get("dictamen_sugerido", "RECOMIENDA_PROMULGAR"),
                 "resumen_ejecutivo": informe_asesor.get("resumen_ejecutivo", ""),
@@ -203,7 +257,7 @@ class AgenteVetoPromulgacion:
             "estado_siguiente": (
                 "PROMULGADA_POR_EJECUTIVO" if es_promulgacion else
                 "VETADA_DEVUELTA_A_ALP" if es_veto else
-                "PENDIENTE_DECISION_PRESIDENCIAL"
+                "PENDIENTE_DECISION_HUMANA"
             ),
             "opciones_operador_humano": [
                 {

@@ -13,6 +13,14 @@
 
 ## Introducción
 
+> [!NOTE]
+> **Evolución del Sistema hacia la Arquitectura v2.0 Unificada (NVIDIA NIM & Prometheus PDT):**  
+> Este documento representa la especificación conceptual y prototípica del sistema multi-agente. En la **implementación operativa vigente de producción**, el sistema ha evolucionado con:
+> 1. **Inferencia con NVIDIA NIM API:** Estandarización sobre el catálogo NIM (`openai/gpt-oss-20b` para auditoría ágil, `nvidia/nemotron-3-nano-omni-30b-a3b-reasoning` y `nvidia/nemotron-3-super-120b-a12b` para pensamiento analítico ampliado CoT).
+> 2. **Agente Concentrador y Emisor:** Incorporación del Nivel 3 para consolidación forense de dictámenes, deduplicación de fuentes y compilación del informe oficial en PDF.
+> 3. **Ingeniería Formal Prometheus PDT v2:** Modelado detallado (Agent Overview, Capability Overview y Process Diagram de 16 pasos) disponible en [`informe/figurasPrometheus_v2/`](informe/figurasPrometheus_v2/).
+> 4. **Persistencia Unificada:** Centralización en el esquema `sistema.*` de PostgreSQL Neon con pgvector (2048d) y MongoDB Atlas.
+
 Este documento describe un sistema multiagente basado en **CrewAI** que automatiza el proceso legislativo boliviano, desde la presentación de un proyecto de ley hasta su promulgación, integrando:
 
 - **Módulo de Voz**: Captura (STT) y generación (TTS) de audio

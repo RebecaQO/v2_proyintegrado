@@ -1279,58 +1279,68 @@ export default function MesaPartes({ onNavigateExpedientes, onNavigateEjecutivo,
     setDetailPanelAgent(null);
   };
 
-  // ── EJECUCIÓN SECUENCIAL: Constitucionalidad primero, después Consistencia ──
+  // ── AUDITORÍA PARALELA MULTIHILO: Constitucionalidad CPE y Consistencia Normativa ──
   const handleEjecutarAuditoriaParalela = async () => {
     if (readOnly) return;
     if (!fase1Data) return;
-    updateActiveSession({ isProcessing: true, errorMessage: '', pipelineStep: 4, inspectedAgentId: null });
-    appendLog('Auditoria_Secuencial', 'EN_PROCESO', 'Constitucionalidad por artículo primero; Consistencia Normativa después (máximo 4 minutos).');
-    let auditoriaActual = 'Constitucional';
+    updateActiveSession({
+      isProcessing: true,
+      errorMessage: '',
+      pipelineStep: 4,
+      inspectedAgentId: null,
+      agentesEnProceso: ['constitucional', 'consistencia']
+    });
+    appendLog('Auditoria_Paralela', 'EN_PROCESO', 'Iniciando auditorías paralelas: Constitucionalidad CPE y Consistencia Normativa.');
     try {
       const payload = buildPayload();
-      const ejecutar = async (nombre, campo, llamada) => {
-        const presupuesto = Math.max(1, Math.min(240, Math.ceil((limite - Date.now()) / 1000)));
-        if (Date.now() >= limite) {
-          const detalle = 'Se agotó el límite de 4 minutos; el agente queda pendiente de revisión.';
-          updateActiveSession({ [campo]: { estado: 'PENDIENTE_REVISION', error: detalle, confianza: 0 } });
-          throw new Error(detalle);
+      const ejecutar = async (nombre, campo, llamada, presupuestoSegundos = 240) => {
+        try {
+          const res = await llamada({ ...payload, presupuesto_segundos: presupuestoSegundos });
+          if (!res.success || !res.data || res.data.error) {
+            throw new Error(`${nombre}: ${res.data?.error || res.error || 'Respuesta incompleta'}`);
+          }
+          updateActiveSession({ [campo]: res.data });
+          if (res.data.estado === 'PENDIENTE_REVISION') {
+            appendLog(nombre, 'PENDIENTE_REVISION', `${res.data.total_pendientes || 1} cotejos sin completar`);
+          } else {
+            appendLog(nombre, 'COMPLETADO', 'Análisis terminado. Resultado disponible.');
+          }
+          return res.data;
+        } catch (e) {
+          const detalle = e.message || `Error en ${nombre}`;
+          const fallback = {
+            estado: 'PENDIENTE_REVISION',
+            error: detalle,
+            confianza: 0,
+            pendientes_revision: [{ motivo: detalle }]
+          };
+          updateActiveSession({ [campo]: fallback });
+          appendLog(nombre, 'ERROR', detalle);
+          return fallback;
         }
-        const res = await llamada({ ...payload, presupuesto_segundos: presupuesto });
-        if (!res.success || !res.data || res.data.error) {
-          throw new Error(`${nombre}: ${res.data?.error || res.error || 'Respuesta incompleta'}`);
-        }
-        updateActiveSession({ [campo]: res.data });
-        if (res.data.estado === 'PENDIENTE_REVISION') {
-          appendLog(nombre, 'PENDIENTE_REVISION', `${res.data.total_pendientes} cotejos sin completar`);
-          return res;
-        }
-        appendLog(nombre, 'COMPLETADO', 'Análisis terminado. Resultado disponible.');
-        return res;
       };
-      const limite = Date.now() + 240_000;
-      const resConstitucional = await ejecutar('Constitucional', 'dictamenData', api.runAgentConstitucional);
-      auditoriaActual = 'Consistencia';
-      const resConsistencia = await ejecutar('Consistencia', 'consistenciaData', api.runAgentConsistencia);
+
+      const [cpeData, normasData] = await Promise.all([
+        ejecutar('Constitucional', 'dictamenData', api.runAgentConstitucional, 240),
+        ejecutar('Consistencia', 'consistenciaData', api.runAgentConsistencia, 240)
+      ]);
+
       updateActiveSession({
-        dictamenData: resConstitucional.data,
-        consistenciaData: resConsistencia.data,
+        dictamenData: cpeData,
+        consistenciaData: normasData,
         pipelineStep: 6,
-        isProcessing: false
+        isProcessing: false,
+        agentesEnProceso: []
       });
-      appendLog('Constitucional', 'COMPLETADO', `Resultado constitucional: ${resConstitucional.data?.valido ? 'VÁLIDO' : 'CON OBSERVACIONES'}`);
-      appendLog('Consistencia', 'COMPLETADO', `Hallazgos: ${(resConsistencia.data?.hallazgos || []).length} detectados`);
+      appendLog('Auditoria_Paralela', 'COMPLETADO', 'Ambas auditorías concluidas.');
     } catch (err) {
-      const campoPendiente = auditoriaActual === 'Constitucional' ? 'dictamenData' : 'consistenciaData';
       updateActiveSession({
-        [campoPendiente]: activeSession[campoPendiente] || {
-          estado: 'PENDIENTE_REVISION', error: err.message, confianza: 0,
-          pendientes_revision: [{ motivo: err.message || 'Tiempo máximo de auditoría agotado' }]
-        },
-        errorMessage: err.message || 'Error en auditoría secuencial',
+        errorMessage: err.message || 'Error en auditorías paralelas',
         pipelineStep: 4,
-        isProcessing: false
+        isProcessing: false,
+        agentesEnProceso: []
       });
-      appendLog('Auditoria_Secuencial', 'ERROR', err.message);
+      appendLog('Auditoria_Paralela', 'ERROR', err.message);
     }
   };
 
@@ -5452,5 +5462,5 @@ export default function MesaPartes({ onNavigateExpedientes, onNavigateEjecutivo,
         </aside>
       </div>
     </div>
-  ); 0
+  );
 }

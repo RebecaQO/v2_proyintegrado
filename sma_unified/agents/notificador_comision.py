@@ -953,3 +953,54 @@ def notificar_mesa_senadores_normativa(
         "destinatarios": destinatarios_finales,
         "envio": resultado_envio,
     }
+
+
+class AgenteNotificadorComision:
+    """Agente Notificador Oficial de la Asamblea (Fase 5 y Auxiliar) - Despacho HTML institucional."""
+
+    def __init__(self, base_agent: Optional[Any] = None):
+        from sma_unified.agents.base_agent import get_base_agent
+        self.base = base_agent or get_base_agent()
+        try:
+            self.agent = self.base.crear_agente("Notificador_Comision")
+        except Exception:
+            self.agent = None
+
+    def crear_tarea(self, proyecto_info: Dict[str, Any], destinatarios: Optional[List[str]] = None) -> Any:
+        from crewai import Task
+        try:
+            from sma_unified.agents.base_agent import get_prompt_templates, render_prompt
+            _, usr_tpl = get_prompt_templates("Notificador_Comision")
+            titulo = proyecto_info.get("titulo") or "Proyecto de Ley"
+            if usr_tpl:
+                desc = render_prompt(
+                    usr_tpl,
+                    destinatario=", ".join(destinatarios) if destinatarios else "Comisión Legislativa",
+                    titulo_proyecto=titulo,
+                    codigo_expediente=proyecto_info.get("codigo_expediente", f"PL-{proyecto_info.get('id', '1')}"),
+                    dictamen_constitucional=proyecto_info.get("dictamen_constitucional", "CONFORME"),
+                    dictamen_consistencia=proyecto_info.get("dictamen_consistencia", "CONCORDANTE")
+                )
+            else:
+                desc = f"Notificar a comisión legislativa sobre {titulo}"
+        except Exception:
+            desc = f"Notificar a comisión legislativa sobre {proyecto_info.get('titulo', 'Proyecto de Ley')}"
+        return Task(
+            description=desc,
+            agent=self.agent,
+            expected_output="HTML con cédula formal de notificación parlamentaria"
+        )
+
+    def ejecutar(self, proyecto_info: Dict[str, Any], destinatarios: Optional[List[str]] = None, **kwargs) -> Dict[str, Any]:
+        """Ejecuta el despacho de notificación a miembros de comisión o partes interesadas."""
+        id_proyecto = int(proyecto_info.get("id") or proyecto_info.get("id_proyecto") or 0)
+        titulo = proyecto_info.get("titulo") or proyecto_info.get("titulo_proyecto") or "Proyecto de Ley"
+        comision = proyecto_info.get("comision") or proyecto_info.get("comision_asignada") or "Comisión de Constitución"
+        return notificar_miembros_comision(
+            id_proyecto=id_proyecto,
+            comision=comision,
+            titulo_proyecto=titulo,
+            dictamen_constitucional=proyecto_info.get("dictamen_constitucional", {}),
+            analisis_consistencia=proyecto_info.get("analisis_consistencia", {}),
+            destinatarios_extra=destinatarios
+        )

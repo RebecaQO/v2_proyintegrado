@@ -51,19 +51,30 @@ from sma_unified.db.neon_postgres import (
 )
 
 
-def _get_llm():
+def _get_llm(nombre_agente: str):
+    """LLM resolviendo el perfil declarado en agents.yaml contra .env.
+
+    Antes se construía con ``settings.LLM_MODEL_CREW`` directamente, ignorando
+    la orquestación por perfiles: el verificador constitucional corría con el
+    modelo general en vez del perfil `razonamiento` que le corresponde.
+    """
     from crewai import LLM
+    from sma_unified.agents.base_agent import get_base_agent
+    modelo = get_base_agent().resolver_modelo(nombre_agente)
+    cfg = get_base_agent().get_config(nombre_agente).get('configuracion_llm', {}) or {}
     return LLM(
-        model=f"openai/{settings.LLM_MODEL_CREW}",
+        model=modelo,
         api_key=settings.NVIDIA_API_KEY,
         base_url=settings.NVIDIA_BASE_URL,
+        temperature=cfg.get('temperatura', 0.2),
+        max_tokens=cfg.get('max_tokens', 1200),
         additional_params={"chat_template_kwargs": {"enable_thinking": False}},
     )
 
 
 def _get_asignador_agent(comisiones: List[str]):
     from crewai import Agent
-    llm = _get_llm()
+    llm = _get_llm("Asignacion_Comision")
     agents_cfg = load_agents_yaml().get("agente_comision_legislativa", {})
     comisiones_str = "\n".join(f"- {c}" for c in comisiones)
     base_backstory = agents_cfg.get(
@@ -84,7 +95,7 @@ def _get_asignador_agent(comisiones: List[str]):
 
 def _get_verificador_constitucional_agent():
     from crewai import Agent
-    llm = _get_llm()
+    llm = _get_llm("Verificador_Constitucional")
     agents_cfg = load_agents_yaml().get("agente_fiscal_constitucional", {})
     return Agent(
         role=agents_cfg.get("role", "Agente Fiscal Constitucional — Control Textual Estricto"),

@@ -70,7 +70,8 @@ export const AGENTS_DEFINITION = [
     desc: 'Determina si el documento es legislativo, ciudadano o correspondencia.',
     justificacion: 'Debido proceso parlamentario: canaliza cada documento por su vía institucional correcta.',
     garantiaEtica: 'Distribución justa, imparcial y debida custodia documental',
-    model: 'Nemotron-3 30B',
+    model: 'Perfil determinista',
+    perfil: 'determinista',
     workflowIcon: FolderInput, iconLabel: 'Admisión', isParallel: false
   },
   // ── ETAPA 2: COMISIÓN ──
@@ -83,7 +84,8 @@ export const AGENTS_DEFINITION = [
     desc: 'Asigna la comisión parlamentaria competente según la materia de ley y catálogo institucional en Neon.',
     justificacion: 'Art. 158 CPE: distribución por especialidad temática a comisiones camarales.',
     garantiaEtica: 'Asignación objetiva por competencia material y especialidad',
-    model: 'Nemotron-3 Super 120B',
+    model: 'Perfil determinista',
+    perfil: 'determinista',
     workflowIcon: Building2, iconLabel: 'Comisiones', isParallel: false
   },
   // ── ETAPA 3a: VERIFICADOR CONSTITUCIONAL Y CPE FONDO (PARALELO) ──
@@ -96,7 +98,8 @@ export const AGENTS_DEFINITION = [
     desc: 'Coteja formalmente y realiza análisis hermenéutico de fondo (Art. 196 CPE, bloque de constitucionalidad y precedentes TCP).',
     justificacion: 'Art. 410 y 196 CPE: Supremacía constitucional y ponderación sustantiva de derechos.',
     garantiaEtica: 'Supremacía constitucional, interpretación pro homine y salvaguarda del debido proceso',
-    model: 'Nemotron-3 Super 120B',
+    model: 'Perfil razonamiento',
+    perfil: 'razonamiento',
     db: ['Neon PostgreSQL', 'MongoDB'],
     workflowIcon: Scale, iconLabel: 'CPE & Fondo', isParallel: true, parallelGroup: 'auditoria'
   },
@@ -110,7 +113,8 @@ export const AGENTS_DEFINITION = [
     desc: 'Detecta antinomias, repeticiones o derogaciones tácitas contra las leyes y códigos vigentes.',
     justificacion: 'Seguridad jurídica: previene antinomias con códigos y leyes del ordenamiento boliviano.',
     garantiaEtica: 'Seguridad jurídica: prevención rigurosa de antinomias normativas',
-    model: 'pgvector 2048d + NVIDIA NIM',
+    model: 'Perfil normativo + pgvector 2048d',
+    perfil: 'normativo',
     db: ['Neon PostgreSQL', 'MongoDB'],
     workflowIcon: FileSearch, iconLabel: 'Leyes 2048d', isParallel: true, parallelGroup: 'auditoria'
   },
@@ -124,7 +128,8 @@ export const AGENTS_DEFINITION = [
     desc: 'Sintetiza de forma fidedigna los dictámenes técnicos, emite el Dictamen Oficial en PDF (letra negra formal) y despacha la notificación a los miembros de la comisión.',
     justificacion: 'Trazabilidad y fe pública: expediente consolidado con dictamen formal y notificación fehaciente.',
     garantiaEtica: 'Cadena de custodia intacta, síntesis probatoria y notificación fehaciente',
-    model: 'Nemotron-3 Super 120B + FPDF',
+    model: 'Perfil razonamiento + FPDF',
+    perfil: 'razonamiento',
     db: ['Neon PostgreSQL', 'MongoDB'],
     workflowIcon: Merge, iconLabel: 'Dictamen & Envío', isParallel: false
   },
@@ -138,7 +143,8 @@ export const AGENTS_DEFINITION = [
     desc: 'Registra intervenciones, quórum legal, votaciones nominales (Grande y Detalle) y formaliza el acta.',
     justificacion: 'Transparencia parlamentaria: acta fidedigna del debate legislativo plenario.',
     garantiaEtica: 'Fe pública parlamentaria y registro nominal inalterable de votos',
-    model: 'Nemotron-3 Super 120B',
+    model: 'Perfil determinista',
+    perfil: 'determinista',
     db: ['Neon PostgreSQL', 'MongoDB'],
     workflowIcon: MessagesSquare, iconLabel: 'Acta Debate', isParallel: false
   },
@@ -152,7 +158,8 @@ export const AGENTS_DEFINITION = [
     desc: 'Compara versiones de ambas cámaras (Origen y Revisora) y decide ruta: Sanción o Comisión Mixta.',
     justificacion: 'Art. 163 CPE: coordinación obligatoria entre Cámara de Senadores y Diputados.',
     garantiaEtica: 'Equilibrio democrático y respeto estricto al trámite bicameral',
-    model: 'Nemotron-3 Super 120B',
+    model: 'Perfil conversacional',
+    perfil: 'conversacional',
     db: ['Neon PostgreSQL', 'MongoDB'],
     workflowIcon: GitBranch, iconLabel: 'Bicameral', isParallel: false
   },
@@ -166,7 +173,8 @@ export const AGENTS_DEFINITION = [
     desc: 'Genera número de ley, publica en Gaceta Oficial del Estado y emite boletín legislativo.',
     justificacion: 'Art. 164 CPE: publicidad registral oficial para presunción de conocimiento universal.',
     garantiaEtica: 'Publicidad registral oficial y presunción de conocimiento universal de la ley',
-    model: 'Nemotron-3 Super 120B',
+    model: 'Perfil determinista',
+    perfil: 'determinista',
     db: ['Neon PostgreSQL', 'MongoDB'],
     workflowIcon: Newspaper, iconLabel: 'Gaceta Oficial', isParallel: false
   }

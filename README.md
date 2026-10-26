@@ -46,8 +46,24 @@ flowchart TD
     H --> M[Agente Concentrador\nExpediente consolidado + Dictamen PDF]
     I --> M
     J --> M
-    M --> N[🏛️ Cámara de destino\nSeguimiento por Diputado / Senador]
-    N -.->|Estado y resultados del caso| CIU
+
+    M --> SEC[Agente Secretario de Cámara\nQuórum y Registro de Votaciones]
+    SEC --> BIC[Agente Coordinación Bicameral\nCotejo de Minutas Art. 163 CPE]
+    BIC --> CH2{🛑 Punto de Control Humano 2\nSanción Bicameral ALP en RevisionLegislativa}
+    
+    CH2 -->|Sancionado| VETO[Agente Veto y Promulgación\nEvaluación Presidencial / Despacho Ejecutivo]
+    CH2 -->|Observado / Discrepancia| DEV[Devuelto a Comisión / Conferencia]
+    DEV -.-> H
+
+    VETO -->|Promulgar| GAC[Agente Publicación Oficial\nGaceta Oficial de Bolivia]
+    VETO -->|Veto Total/Parcial| ALP[Devuelto a ALP con Pliego Fundado]
+    ALP -.-> SEC
+
+    GAC --> DIF[Agente Difusión Ciudadana\nLenguaje Claro y Guías Cívicas]
+    GAC --> FISC[Agente Fiscalización\nControl Posterior y Decretos]
+
+    DIF -.->|Comprensión y transparencia| CIU
+    FISC -.->|Alertas ciudadanas| CIU
 ```
 
 ### 🧑‍🤝‍🧑 Ruta de la iniciativa ciudadana (proyecto de ley o propuesta)
@@ -129,6 +145,18 @@ flowchart LR
 | **`Agente_Notificador_Comision`** | Fase 5 | Envía notificaciones formales HTML/email a la comisión con el dictamen. | SMTP + HTML |
 
 ---
+
+## 📐 Especificación Arquitectónica Formal (Metodología Prometheus PDT v2)
+
+Para los agentes clave de la columna vertebral legislativa, el sistema cuenta con especificaciones de ingeniería formal bajo la metodología **Prometheus (AOSE / PDT v2)** ubicadas en [`informe/figurasPrometheus_v2/`](informe/figurasPrometheus_v2/). Cada agente dispone de su tríada de diagramas de alta resolución y su especificación técnica completa:
+
+| Agente Parlamentario | Diagrama de Visión General (*Agent Overview*) | Descomposición de Capacidades (*Capability Overview*) | Diagrama de Proceso Secuencial (*Process Diagram*) | Especificación y Código Generador |
+|---|---|---|---|---|
+| **Agente Concentrador y Emisor** | [Ver Visión General](informe/figurasPrometheus_v2/concentrador/01_Agent_Overview_Concentrador.png) | [Síntesis Legislativa](informe/figurasPrometheus_v2/concentrador/02_Capability_Overview_Sintesis_Legislativa.png) | [Flujo 16 Pasos (CoT 120B / PDF)](informe/figurasPrometheus_v2/concentrador/03_Process_Diagram_Concentrador.png) | [Doc A.1-A.5](informe/figurasPrometheus_v2/concentrador/especificacion_agente_concentrador.txt) · [Script Python](informe/figurasPrometheus_v2/concentrador/generar_diagramas_concentrador_v2.py) |
+| **Agente Secretario de Cámara** | [Ver Visión General](informe/figurasPrometheus_v2/secretario/01_Agent_Overview_Secretario.png) | [Control Votaciones](informe/figurasPrometheus_v2/secretario/02_Capability_Overview_Control_Votaciones.png) | [Flujo 16 Pasos (Quórum / Escrutinio)](informe/figurasPrometheus_v2/secretario/03_Process_Diagram_Secretario.png) | [Doc A.1-A.5](informe/figurasPrometheus_v2/secretario/especificacion_agente_secretario.txt) · [Script Python](informe/figurasPrometheus_v2/secretario/generar_diagramas_secretario_v2.py) |
+| **Agente Trámite Bicameral** | [Ver Visión General](informe/figurasPrometheus_v2/bicameral/01_Agent_Overview_Bicameral.png) | [Conciliación Art. 163](informe/figurasPrometheus_v2/bicameral/02_Capability_Overview_Conciliacion_Bicameral.png) | [Flujo 16 Pasos (Diff / Freno Humano)](informe/figurasPrometheus_v2/bicameral/03_Process_Diagram_Bicameral.png) | [Doc A.1-A.5](informe/figurasPrometheus_v2/bicameral/especificacion_agente_bicameral.txt) · [Script Python](informe/figurasPrometheus_v2/bicameral/generar_diagramas_bicameral_v2.py) |
+| **Agente Veto y Promulgación** | [Ver Visión General](informe/figurasPrometheus_v2/veto&promulgacion/01_Agent_Overview_Veto_Promulgacion.png) | [Evaluación Estratégica](informe/figurasPrometheus_v2/veto&promulgacion/02_Capability_Overview_Evaluacion_Estrategica.png) | [Flujo 16 Pasos (10 días / Mandatario)](informe/figurasPrometheus_v2/veto&promulgacion/03_Process_Diagram_Veto_Promulgacion.png) | [Doc A.1-A.5](informe/figurasPrometheus_v2/veto&promulgacion/especificacion_agente_veto_promulgacion.txt) · [Script Python](informe/figurasPrometheus_v2/veto&promulgacion/generar_diagramas_veto_promulgacion_v2.py) |
+
 
 ## ⚡ Rendimiento y Optimizaciones Clave
 
@@ -287,10 +315,14 @@ Variables principales en `.env`:
 # LLM & Embeddings (NVIDIA NIM)
 NVIDIA_API_KEY=nvapi-xxxxxxxxxxxxxxxxxxxxxxxx
 NVIDIA_BASE_URL=https://integrate.api.nvidia.com/v1
-LLM_MODEL_NVIDIA=nvidia/llama-3.1-nemotron-70b-instruct
-LLM_MODEL_CONSISTENCIA=nvidia/llama-3.1-nemotron-70b-instruct
+LLM_MODEL_CREW=nvidia/nemotron-3-nano-omni-30b-a3b-reasoning
+LLM_MODEL_NVIDIA=nvidia/nemotron-3-nano-omni-30b-a3b-reasoning
+LLM_MODEL_CONSISTENCIA=nvidia/nemotron-3-nano-omni-30b-a3b-reasoning
 NVIDIA_EMBED_MODEL=nvidia/nemotron-3-embed-1b
 NVIDIA_EMBED_DIM=2048
+# Modelos complementarios en ejecución:
+# - openai/gpt-oss-20b (inferencia rápida ~2.0s y extracción JSON)
+# - nvidia/nemotron-3-super-120b-a12b (razonamiento analítico profundo CoT en Concentrador)
 
 # MongoDB Atlas
 MONGO_URI=mongodb+srv://usuario:password@cluster.mongodb.net/sma_congreso
@@ -371,19 +403,6 @@ npm run dev
 
 ---
 
-## 📄 Licencia
-
-Desarrollado para el análisis y auditoría legislativa del Congreso. Reservados todos los derechos.
-
-
-## 🧹 Tablas candidatas a eliminación
-
-public.Solicitudes_Documentos: Entrada de documentos de atención ciudadana y correspondencia institucional externa.
-public.Clasificacion_Agente: (Candidata a unificación/eliminación) Guarda el resultado inicial del Agente Distribuidor para solicitudes.
-public.Clasificacion_Comision: (Candidata a unificación/eliminación) Guarda la comisión y metadatos derivados para solicitudes.
-
-
----
 
 ## Agente Multi-Faceta de Atención Ciudadana (routing automático de prompts)
 
@@ -473,3 +492,9 @@ endpoints `GET/POST/PATCH/DELETE /api/ciudadana/agentes[/id]`.
 
 Un ciudadano sin sesión interna solo ve el chat (`AsistenteMultifacetaPanel`),
 nunca el panel de administración.
+
+---
+
+## 📄 Licencia
+
+Desarrollado para el análisis y auditoría legislativa del Congreso. Reservados todos los derechos.
