@@ -753,31 +753,39 @@ export default function MesaPartes({ onNavigateExpedientes, onNavigateEjecutivo,
 
   const handleEjecutarConsistencia = async () => {
     if (readOnly) return;
-    if (!dictamenData) {
-      updateActiveSession({ errorMessage: 'Ejecuta primero la Verificación Constitucional artículo por artículo.' });
+    if (!fase1Data) {
+      updateActiveSession({ errorMessage: 'Registra primero el documento en Mesa de Entradas.' });
       return;
     }
     updateActiveSession({
       isProcessing: true,
       errorMessage: '',
-      inspectedAgentId: null
+      inspectedAgentId: null,
+      agentesEnProceso: ['consistencia']
     });
     try {
       const res = await api.runAgentConsistencia(buildPayload());
-      if (res.data?.estado === 'PENDIENTE_REVISION') {
-        updateActiveSession({ consistenciaData: res.data });
-        throw new Error(`Consistencia: ${res.data.total_pendientes} cotejos pendientes de revisión. Reintenta la auditoría.`);
+      if (!res.success || !res.data) {
+        throw new Error(res.error || 'Respuesta incompleta del Agente de Consistencia Normativa');
       }
       updateActiveSession({
         consistenciaData: res.data,
-        pipelineStep: 6,
-        isProcessing: false
+        pipelineStep: Math.max(activeSession.pipelineStep || 0, 6),
+        isProcessing: false,
+        agentesEnProceso: []
       });
+      if (res.data.estado === 'PENDIENTE_REVISION') {
+        appendLog('Consistencia', 'PENDIENTE_REVISION', `${res.data.total_pendientes || 1} cotejos normativos con observaciones / pendientes de revisión.`);
+      } else {
+        appendLog('Consistencia', 'COMPLETADO', `Consistencia normativa completada: ${(res.data.hallazgos || []).length} hallazgos.`);
+      }
     } catch (err) {
       updateActiveSession({
         errorMessage: err.message || 'Error en Consistencia Normativa',
-        isProcessing: false
+        isProcessing: false,
+        agentesEnProceso: []
       });
+      appendLog('Consistencia', 'ERROR', err.message);
     }
   };
 
@@ -894,7 +902,18 @@ export default function MesaPartes({ onNavigateExpedientes, onNavigateEjecutivo,
 
   const handleConcentrador = async () => {
     if (readOnly) return;
-    if (isProcessing || !(dictamenData && consistenciaData && !dictamenData.error && !consistenciaData.error && dictamenData.estado !== 'PENDIENTE_REVISION' && consistenciaData.estado !== 'PENDIENTE_REVISION')) {
+    if (isProcessing) return;
+    const tieneCpe = Boolean(
+      dictamenData &&
+      !dictamenData.error &&
+      (dictamenData.analisis || dictamenData.articulos_consultados || dictamenData.estado === 'COMPLETADO' || dictamenData.valido !== undefined)
+    );
+    const tieneNormas = Boolean(
+      consistenciaData &&
+      !consistenciaData.error &&
+      (consistenciaData.hallazgos || consistenciaData.pendientes_revision || consistenciaData.total_hallazgos !== undefined || consistenciaData.estado === 'COMPLETADO' || consistenciaData.estado === 'PENDIENTE_REVISION')
+    );
+    if (!tieneCpe || !tieneNormas) {
       updateActiveSession({ errorMessage: 'Completa las auditorias constitucional y normativa antes de consolidar.' });
       return;
     }
