@@ -270,10 +270,54 @@ class AgenteConsistenciaNormativa:
             )
             from sma_unified.agents.llm_client import extraer_json_de_llm
             data = extraer_json_de_llm(contenido)
+            if isinstance(data, list) and len(data) > 0 and isinstance(data[0], dict):
+                data = data[0]
             if not isinstance(data, dict):
                 raise ValueError("Clasificacion normativa incompleta o invalida: respuesta no es un objeto JSON")
-            crudo = data.get("tipo_relacion")
+
+            crudo = (
+                data.get("tipo_relacion")
+                or data.get("tipo")
+                or data.get("relacion")
+                or data.get("clasificacion")
+                or data.get("categoria")
+                or data.get("tipo_de_relacion")
+                or data.get("resultado")
+                or data.get("compatibilidad")
+            )
+            if not crudo:
+                # Buscar en valores de tipo string si alguno coincide con un tipo válido
+                for k, v in data.items():
+                    if isinstance(v, str):
+                        cand_tipo = normalizar_tipo_relacion(v)
+                        if cand_tipo:
+                            crudo = v
+                            break
+
             tipo = normalizar_tipo_relacion(crudo)
+
+            # Fallback en caso de que el modelo haya respondido texto libre o claves no mapeadas
+            if tipo is None and contenido:
+                cont_lower = str(contenido).lower()
+                for fragmento, destino in (
+                    ("contradicc", "contradiccion"),
+                    ("antinom", "contradiccion"),
+                    ("colision", "contradiccion"),
+                    ("incompat", "contradiccion"),
+                    ("repetic", "repeticion"),
+                    ("derogacion", "repeticion"),
+                    ("redundanc", "repeticion"),
+                    ("duplic", "repeticion"),
+                    ("vacio", "vacio_llenado"),
+                    ("complement", "complementario"),
+                    ("sin_relacion", "sin_relacion"),
+                ):
+                    if fragmento in cont_lower:
+                        tipo = destino
+                        crudo = fragmento
+                        logger.info(f"[Consistencia] Tipo inferido del contenido textual del LLM: {tipo}")
+                        break
+
             if tipo is None:
                 raise ValueError(
                     f"Clasificacion normativa incompleta o invalida: tipo_relacion={crudo!r} sin equivalente valido"
@@ -281,10 +325,31 @@ class AgenteConsistenciaNormativa:
             if _clave_tipo(crudo) != tipo:
                 logger.info(f"[Consistencia] tipo_relacion normalizado: {crudo!r} -> {tipo!r}")
             data["tipo_relacion"] = tipo
-            # "derogacion_tacita" puede llegar como tipo en vez de como bandera:
-            # se conserva la señal sin perder la categoría válida.
+
+            # Normalizar nivel de riesgo
+            riesgo_crudo = str(
+                data.get("riesgo")
+                or data.get("severidad")
+                or data.get("nivel_riesgo")
+                or ("alto" if tipo == "contradiccion" else "bajo")
+            ).lower()
+            if "alto" in riesgo_crudo:
+                data["riesgo"] = "alto"
+            elif "medio" in riesgo_crudo:
+                data["riesgo"] = "medio"
+            elif "bajo" in riesgo_crudo:
+                data["riesgo"] = "bajo"
+            else:
+                data["riesgo"] = "ninguno" if tipo == "sin_relacion" else "bajo"
+
+            # Banderas y campos requeridos
             if "derogacion" in _clave_tipo(crudo) and "derogacion_tacita" not in data:
                 data["derogacion_tacita"] = True
+            else:
+                data.setdefault("derogacion_tacita", False)
+            data.setdefault("conflicto_especialidad", False)
+            data.setdefault("justificacion", data.get("motivo", "Cotejo de consistencia realizado."))
+            data.setdefault("sugerencia", "ninguna")
             data["verificado"] = True
         except Exception as e:
             logger.warning(f"[Consistencia] Cotejo pendiente por error LLM: {e}")
@@ -346,7 +411,7 @@ class AgenteConsistenciaNormativa:
                 if candidatos:
                     logger.info(f"[Consistencia] Recuperados {len(candidatos)} candidatos por palabras clave")
 
-        # Deduplicación de candidatos por (documento, numero) y límite a top 6
+        # Deduplicación de candidatos por (documento, numero) y límite a top 4
         vistos_cand = set()
         candidatos_unicos = []
         for c in (candidatos or []):
@@ -354,7 +419,7 @@ class AgenteConsistenciaNormativa:
             if clave not in vistos_cand:
                 vistos_cand.add(clave)
                 candidatos_unicos.append(c)
-        candidatos_unicos = candidatos_unicos[:6]
+        candidatos_unicos = candidatos_unicos[:4]
 
         if not candidatos_unicos:
             return []

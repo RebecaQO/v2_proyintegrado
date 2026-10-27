@@ -1,2157 +1,1575 @@
-# ==============================================================================
-# SISTEMA LEGISLATIVO ALP — BolivIA (SMA Congreso)
-# MATRIZ DE TAREAS OPERATIVAS ROBUSTECIDAS (tasks.yaml)
-# ==============================================================================
-# Versión: 3.0
-# Frameworks: CO-STAR, CRAFT, CARE, RACER, RTF
-# Técnicas: Few-shot, CoT, ToT, ReAct, Self-consistency, CoVe, Maieutic, PoT, etc.
-# ==============================================================================
+version: '3.0'
+proyecto: Sistema Legislativo ALP — BolivIA
+descripcion_general: 'Matriz de 16 tareas legislativas operativas enriquecidas con marcos de diseño estructurados (CO-STAR,
+  CRAFT, CARE, RACER, RTF), ingeniería de prompts avanzada, contexto normativo y geográfico de Bolivia, salidas estructuradas
+  JSON verificables, criterios de aceptación objetivos y políticas deterministas de degradación.
 
-version: "3.0"
-proyecto: "Sistema Legislativo ALP — BolivIA"
-descripcion_general: >
-  Matriz de 16 tareas legislativas operativas enriquecidas con marcos de diseño
-  estructurados (CO-STAR, CRAFT, CARE, RACER, RTF), ingeniería de prompts avanzada,
-  contexto normativo y geográfico de Bolivia, salidas estructuradas JSON verificables,
-  criterios de aceptación objetivos y políticas deterministas de degradación.
-
-# ──────────────────────────────────────────────────────────────────────────────
-# PROTOCOLO TRANSVERSAL DE TAREAS (Reglas aplicables a cualquier tarea)
-# ──────────────────────────────────────────────────────────────────────────────
+  '
 protocolo_tareas_transversal:
   campos_obligatorios:
-    - "descripcion"
-    - "agente"
-    - "framework_diseno"
-    - "tecnicas_prompt (>=3)"
-    - "contexto_boliviano"
-    - "prompt_operativo"
-    - "expected_output"
-    - "criterios_aceptacion (>=3)"
-    - "politica_degradacion"
-    - "herramientas"
-    - "depends_on (si aplica)"
+  - descripcion
+  - agente
+  - framework_diseno
+  - tecnicas_prompt (>=3)
+  - contexto_boliviano
+  - prompt_operativo
+  - expected_output
+  - criterios_aceptacion (>=3)
+  - politica_degradacion
+  - herramientas
+  - depends_on (si aplica)
   tecnicas_minimas_por_tipo:
     clasificacion:
-      - "Few-shot"
-      - "Structured output"
-      - "Negative prompting"
+    - Few-shot
+    - Structured output
+    - Negative prompting
     analisis_juridico:
-      - "Chain of Thought"
-      - "Chain of Verification"
-      - "Contrastive"
-      - "Self-consistency"
+    - Chain of Thought
+    - Chain of Verification
+    - Contrastive
+    - Self-consistency
     decision_multicriterio:
-      - "Tree of Thought"
-      - "Debate prompting"
-      - "Self-consistency"
+    - Tree of Thought
+    - Debate prompting
+    - Self-consistency
     generacion_documento:
-      - "Skeleton-of-Thought"
-      - "Structured output"
-      - "Negative prompting"
+    - Skeleton-of-Thought
+    - Structured output
+    - Negative prompting
     monitoreo:
-      - "Chain of Thought"
-      - "ReAct"
-      - "Chain of Verification"
+    - Chain of Thought
+    - ReAct
+    - Chain of Verification
   contexto_boliviano_minimo:
-    - "Órgano o institución (ALP, TCP, TGN, Contraloría, Gaceta Oficial)"
-    - "Marco normativo (CPE 2009, Ley 1630, Ley 1178, Ley 031)"
-    - "Principios (Vivir Bien, plurinacionalidad, interculturalidad, descolonización)"
-    - "Cobertura (9 departamentos, 36 idiomas oficiales)"
-    - "Moneda (Bs) y plazos (10 días veto, 15 días vacatio, 90 días reglamentación)"
+  - Órgano o institución (ALP, TCP, TGN, Contraloría, Gaceta Oficial)
+  - Marco normativo (CPE 2009, Ley 1630, Ley 1178, Ley 031)
+  - Principios (Vivir Bien, plurinacionalidad, interculturalidad, descolonización)
+  - Cobertura (9 departamentos, 36 idiomas oficiales)
+  - Moneda (Bs) y plazos (10 días veto, 15 días vacatio, 90 días reglamentación)
   metricas_robustez:
-    - "Toda cita jurídica verificada doble."
-    - "Cero alucinaciones: citas provienen de input o tool."
-    - "Trazabilidad: cada conclusión declara fuente y regla."
-    - "Temperatura <= 0.2 en tareas deterministas."
-
-# ──────────────────────────────────────────────────────────────────────────────
-# FASES DEL PROCESO LEGISLATIVO BOLIVIANO
-# ──────────────────────────────────────────────────────────────────────────────
+  - Toda cita jurídica verificada doble.
+  - 'Cero alucinaciones: citas provienen de input o tool.'
+  - 'Trazabilidad: cada conclusión declara fuente y regla.'
+  - Temperatura <= 0.2 en tareas deterministas.
 fases:
   fase_1_ingreso_clasificacion_atencion:
-    nombre: "Fase 1: Ingreso, clasificación y atención ciudadana"
+    nombre: 'Fase 1: Ingreso, clasificación y atención ciudadana'
     tareas:
-      - "Clasificar_Documento"
-      - "Atender_Consulta_Ciudadana"
+    - Clasificar_Documento
+    - Atender_Consulta_Ciudadana
   fase_2_auditoria_normativa_comision:
-    nombre: "Fase 2: Auditoría normativa y trabajo en comisión"
+    nombre: 'Fase 2: Auditoría normativa y trabajo en comisión'
     tareas:
-      - "Auditar_Constitucionalidad"
-      - "Analizar_Consistencia"
-      - "Evaluar_Viabilidad_Tecnica"
-      - "Planificar_Debate_Comision"
-      - "Analizar_Fondo_Constitucional"
-      - "Evaluar_Impacto_Presupuestario"
-      - "Concentrar_Observaciones"
+    - Auditar_Constitucionalidad
+    - Analizar_Consistencia
+    - Evaluar_Viabilidad_Tecnica
+    - Planificar_Debate_Comision
+    - Analizar_Fondo_Constitucional
+    - Evaluar_Impacto_Presupuestario
+    - Concentrar_Observaciones
   fase_3_plenaria_bicameral:
-    nombre: "Fase 3: Plenaria camaral y procedimiento bicameral"
+    nombre: 'Fase 3: Plenaria camaral y procedimiento bicameral'
     tareas:
-      - "Registrar_Debate"
-      - "Gestionar_Bicameral"
+    - Registrar_Debate
+    - Gestionar_Bicameral
   fase_4_ejecutivo_publicacion:
-    nombre: "Fase 4: Órgano Ejecutivo, veto y publicación oficial"
+    nombre: 'Fase 4: Órgano Ejecutivo, veto y publicación oficial'
     tareas:
-      - "Evaluar_Veto_Promulgacion"
-      - "Publicar_Ley_Oficial"
+    - Evaluar_Veto_Promulgacion
+    - Publicar_Ley_Oficial
   fase_5_difusion_fiscalizacion:
-    nombre: "Fase 5: Difusión ciudadana, control posterior y fiscalización"
+    nombre: 'Fase 5: Difusión ciudadana, control posterior y fiscalización'
     tareas:
-      - "Generar_Difusion_Ciudadana"
-      - "Monitorear_Fiscalizacion"
-      - "Notificar_Comision"
-
-# ──────────────────────────────────────────────────────────────────────────────
-# CATÁLOGO PRINCIPAL DE TAREAS OPERATIVAS (16 Tareas + Complementarias)
-# ──────────────────────────────────────────────────────────────────────────────
+    - Generar_Difusion_Ciudadana
+    - Monitorear_Fiscalizacion
+    - Notificar_Comision
 tareas:
-
-  # ── FASE 1: Ingreso, clasificación y atención ───────────────────────────────
-
   Clasificar_Documento:
     perfil: determinista
-    descripcion: >
-      Analizar el documento ingresado (texto, PDF o transcripción de voz) y clasificarlo
-      unívocamente en una de las 3 categorías institucionales de la ALP, verificando
-      requisitos de forma (Ley 1630 y Art. 156 CPE), asignando materia temática y
-      generando propuesta de número de expediente correlativo.
-    description: >
-      Analizar el documento ingresado (texto, PDF o transcripción de voz) y clasificarlo
-      unívocamente en una de las 3 categorías institucionales de la ALP, verificando
-      requisitos de forma (Ley 1630 y Art. 156 CPE), asignando materia temática y
-      generando propuesta de número de expediente correlativo.
-    agente: "Distribuidor"
-    agent: "Distribuidor"
-    framework_diseno: "CO-STAR"
+    descripcion: 'Analizar el documento ingresado (texto, PDF o transcripción de voz) y clasificarlo unívocamente en una de
+      las 3 categorías institucionales de la ALP, verificando requisitos de forma (Ley 1630 y Art. 156 CPE), asignando materia
+      temática y generando propuesta de número de expediente correlativo.
+
+      '
+    description: 'Analizar el documento ingresado (texto, PDF o transcripción de voz) y clasificarlo unívocamente en una de
+      las 3 categorías institucionales de la ALP, verificando requisitos de forma (Ley 1630 y Art. 156 CPE), asignando materia
+      temática y generando propuesta de número de expediente correlativo.
+
+      '
+    agente: Distribuidor
+    agent: Distribuidor
+    framework_diseno: CO-STAR
     tecnicas_prompt:
-      - "Few-shot (3 ejemplos canónicos por categoría)"
-      - "Structured output (JSON estricto)"
-      - "XML tags (delimitación del documento)"
-      - "Negative prompting (6 prohibiciones)"
-      - "Chain of Thought (5 pasos)"
-      - "Self-consistency (doble clasificación)"
+    - Few-shot (3 ejemplos canónicos por categoría)
+    - Structured output (JSON estricto)
+    - XML tags (delimitación del documento)
+    - Negative prompting (6 prohibiciones)
+    - Chain of Thought (5 pasos)
+    - Self-consistency (doble clasificación)
     contexto_boliviano:
       marco_normativo:
-        - "CPE 2009 Art. 156"
-        - "Ley 1630"
-        - "Reglamento General de Cámaras"
-      idiomas: "español + 35 idiomas oficiales (quechua, aymara, guaraní, etc.)"
-      sedes: "La Paz (sede de gobierno) y Sucre (capital constitucional)"
+      - CPE 2009 Art. 156
+      - Ley 1630
+      - Reglamento General de Cámaras
+      idiomas: español + 35 idiomas oficiales (quechua, aymara, guaraní, etc.)
+      sedes: La Paz (sede de gobierno) y Sucre (capital constitucional)
       departamentos:
-        - "La Paz"
-        - "Santa Cruz"
-        - "Cochabamba"
-        - "Oruro"
-        - "Potosí"
-        - "Chuquisaca"
-        - "Tarija"
-        - "Beni"
-        - "Pando"
+      - La Paz
+      - Santa Cruz
+      - Cochabamba
+      - Oruro
+      - Potosí
+      - Chuquisaca
+      - Tarija
+      - Beni
+      - Pando
       entidades_frecuentes:
-        - "Ministerio de Salud"
-        - "Ministerio de Economía y Finanzas Públicas"
-        - "Gobernación de Santa Cruz"
-        - "Alcaldía de El Alto"
-        - "CIDOB"
-        - "COB"
-    prompt_operativo: |
-      [CONTEXTO]
-      Eres el Distribuidor de la Mesa de Entradas de la ALP (La Paz / Sucre).
-      Recibes documentos en los 36 idiomas oficiales provenientes de los 9
-      departamentos de Bolivia.
-
-      [ROL]
-      Clasificador oficial, estricto e imparcial. Primer filtro de admisión.
-
-      [ACCIÓN — Chain of Thought de 5 pasos]
-        Paso 1 (STEP-BACK). Identifica la NATURALEZA JURÍDICA del documento:
-                ¿iniciativa legislativa formal, petición ciudadana o acto
-                administrativo interinstitucional?
-        Paso 2. Verifica requisitos de forma (Ley 1630 y Art. 156 CPE):
-                ¿proponente identificado? ¿exposición de motivos? ¿parte
-                dispositiva articulada? ¿anexos?
-        Paso 3. Clasifica en UNA categoría:
-                AGENTE_REGISTRO_LEGISLATIVO | AGENTE_ATENCION_CIUDADANA |
-                AGENTE_GESTION_CORRESPONDENCIA.
-        Paso 4. Asigna materia temática.
-        Paso 5. Genera propuesta de número correlativo de expediente.
-
-      [SELF-CONSISTENCY]
-      Ejecuta la clasificación DOS veces de forma independiente. Si ambas coinciden
-      → confianza ≥ 0.90. Si difieren → confianza ≤ 0.70 y prioridad MEDIA.
-
-      [XML — delimitación de entrada]
-      <documento_entrada>
-      {texto_del_documento}
-      </documento_entrada>
-
-      [FEW-SHOT — 3 ejemplos]
-      E1: "PROYECTO DE LEY N° 042/2026. EXPOSICIÓN DE MOTIVOS: ... Art. 1 ... Art. 2..."
-        → {"categoria":"AGENTE_REGISTRO_LEGISLATIVO","confianza":0.96,
-           "materia":"Recursos Hídricos","cumple_requisitos_forma":true,
-           "prioridad_sugerida":"ALTA"}
-      E2: "Estimado Diputado, solicito apoyo para mi madre enferma en El Alto..."
-        → {"categoria":"AGENTE_ATENCION_CIUDADANA","confianza":0.93,
-           "materia":"Asistencia Social","cumple_requisitos_forma":false,
-           "observaciones_forma":["No es iniciativa legislativa"],
-           "prioridad_sugerida":"MEDIA"}
-      E3: "Oficio CITE: MIN-SALUD-2026-042. De: Ministerio de Salud. A: Presidente
-          Cámara de Diputados. Ref: Remisión informe trimestral."
-        → {"categoria":"AGENTE_GESTION_CORRESPONDENCIA","confianza":0.95,
-           "materia":"Trámite Administrativo","cumple_requisitos_forma":false,
-           "prioridad_sugerida":"BAJA"}
-
-      [FORMATO]
-      JSON estricto, sin markdown ni texto adicional, según contrato, es-BO.
-
-      [NEGATIVE PROMPTING — 6 prohibiciones]
-      - NO clasifiques como Proyecto de Ley si falta exposición de motivos o articulado.
-      - NO clasifiques como registro legislativo una denuncia vecinal o petición individual.
-      - NO inventes datos del proponente, fechas o materias.
-      - NO uses lenguaje interpretativo ni valoraciones políticas.
-      - NO respondas en idioma distinto al español boliviano.
-      - NO uses markdown, emojis ni texto fuera del JSON.
-    expected_output: |
-      {
-        "categoria": "AGENTE_REGISTRO_LEGISLATIVO | AGENTE_ATENCION_CIUDADANA | AGENTE_GESTION_CORRESPONDENCIA",
-        "confianza": 0.95,
-        "materia": "string",
-        "resumen_ejecutivo": "string",
-        "cumple_requisitos_forma": true,
-        "observaciones_forma": [],
-        "prioridad_sugerida": "ALTA | MEDIA | BAJA"
-      }
+      - Ministerio de Salud
+      - Ministerio de Economía y Finanzas Públicas
+      - Gobernación de Santa Cruz
+      - Alcaldía de El Alto
+      - CIDOB
+      - COB
+    prompt_operativo: "[CONTEXTO]\nEres el Distribuidor de la Mesa de Entradas de la ALP (La Paz / Sucre).\nRecibes documentos\
+      \ en los 36 idiomas oficiales provenientes de los 9\ndepartamentos de Bolivia.\n\n[ROL]\nClasificador oficial, estricto\
+      \ e imparcial. Primer filtro de admisión.\n\n[ACCIÓN — Chain of Thought de 5 pasos]\n  Paso 1 (STEP-BACK). Identifica\
+      \ la NATURALEZA JURÍDICA del documento:\n          ¿iniciativa legislativa formal, petición ciudadana o acto\n     \
+      \     administrativo interinstitucional?\n  Paso 2. Verifica requisitos de forma (Ley 1630 y Art. 156 CPE):\n      \
+      \    ¿proponente identificado? ¿exposición de motivos? ¿parte\n          dispositiva articulada? ¿anexos?\n  Paso 3.\
+      \ Clasifica en UNA categoría:\n          AGENTE_REGISTRO_LEGISLATIVO | AGENTE_ATENCION_CIUDADANA |\n          AGENTE_GESTION_CORRESPONDENCIA.\n\
+      \  Paso 4. Asigna materia temática.\n  Paso 5. Genera propuesta de número correlativo de expediente.\n\n[SELF-CONSISTENCY]\n\
+      Ejecuta la clasificación DOS veces de forma independiente. Si ambas coinciden\n→ confianza ≥ 0.90. Si difieren → confianza\
+      \ ≤ 0.70 y prioridad MEDIA.\n\n[XML — delimitación de entrada]\n<documento_entrada>\n{texto_del_documento}\n</documento_entrada>\n\
+      \n[FEW-SHOT — 3 ejemplos]\nE1: \"PROYECTO DE LEY N° 042/2026. EXPOSICIÓN DE MOTIVOS: ... Art. 1 ... Art. 2...\"\n  →\
+      \ {\"categoria\":\"AGENTE_REGISTRO_LEGISLATIVO\",\"confianza\":0.96,\n     \"materia\":\"Recursos Hídricos\",\"cumple_requisitos_forma\"\
+      :true,\n     \"prioridad_sugerida\":\"ALTA\"}\nE2: \"Estimado Diputado, solicito apoyo para mi madre enferma en El Alto...\"\
+      \n  → {\"categoria\":\"AGENTE_ATENCION_CIUDADANA\",\"confianza\":0.93,\n     \"materia\":\"Asistencia Social\",\"cumple_requisitos_forma\"\
+      :false,\n     \"observaciones_forma\":[\"No es iniciativa legislativa\"],\n     \"prioridad_sugerida\":\"MEDIA\"}\n\
+      E3: \"Oficio CITE: MIN-SALUD-2026-042. De: Ministerio de Salud. A: Presidente\n    Cámara de Diputados. Ref: Remisión\
+      \ informe trimestral.\"\n  → {\"categoria\":\"AGENTE_GESTION_CORRESPONDENCIA\",\"confianza\":0.95,\n     \"materia\"\
+      :\"Trámite Administrativo\",\"cumple_requisitos_forma\":false,\n     \"prioridad_sugerida\":\"BAJA\"}\n\n[FORMATO]\n\
+      JSON estricto, sin markdown ni texto adicional, según contrato, es-BO.\n\n[NEGATIVE PROMPTING — 6 prohibiciones]\n-\
+      \ NO clasifiques como Proyecto de Ley si falta exposición de motivos o articulado.\n- NO clasifiques como registro legislativo\
+      \ una denuncia vecinal o petición individual.\n- NO inventes datos del proponente, fechas o materias.\n- NO uses lenguaje\
+      \ interpretativo ni valoraciones políticas.\n- NO respondas en idioma distinto al español boliviano.\n- NO uses markdown,\
+      \ emojis ni texto fuera del JSON.\n"
+    expected_output: "{\n  \"categoria\": \"AGENTE_REGISTRO_LEGISLATIVO | AGENTE_ATENCION_CIUDADANA | AGENTE_GESTION_CORRESPONDENCIA\"\
+      ,\n  \"confianza\": 0.95,\n  \"materia\": \"string\",\n  \"resumen_ejecutivo\": \"string\",\n  \"cumple_requisitos_forma\"\
+      : true,\n  \"observaciones_forma\": [],\n  \"prioridad_sugerida\": \"ALTA | MEDIA | BAJA\"\n}\n"
     criterios_aceptacion:
-      - "Categoría coherente con la naturaleza jurídica identificada en Paso 1."
-      - "Confianza respeta regla de self-consistency."
-      - "JSON cumple el contrato sin campos extra."
-      - "Resumen ejecutivo <= 80 palabras."
+    - Categoría coherente con la naturaleza jurídica identificada en Paso 1.
+    - Confianza respeta regla de self-consistency.
+    - JSON cumple el contrato sin campos extra.
+    - Resumen ejecutivo <= 80 palabras.
     politica_degradacion:
-      documento_ilegible: "categoria=AGENTE_ATENCION_CIUDADANA, confianza=0.0, prioridad=ALTA, observaciones_forma=['Documento ilegible']."
-      idioma_no_es: "Procesar en idioma original; traducir solo el JSON al es-BO."
-      categoria_ambigua: "confianza <= 0.70, prioridad=MEDIA, derivar a revisión humana."
+      documento_ilegible: categoria=AGENTE_ATENCION_CIUDADANA, confianza=0.0, prioridad=ALTA, observaciones_forma=['Documento
+        ilegible'].
+      idioma_no_es: Procesar en idioma original; traducir solo el JSON al es-BO.
+      categoria_ambigua: confianza <= 0.70, prioridad=MEDIA, derivar a revisión humana.
     herramientas: []
-
+    framework: CO-STAR
+    prompt_template: "[CONTEXTO] Distribuidor de la Mesa de Entradas ALP (La Paz / Sucre).\n[ROL] Clasificador oficial, estricto\
+      \ e imparcial.\n \n[XML entrada]\n<documento_entrada>{texto_del_documento}</documento_entrada>\n \n[FEW-SHOT — 3 ejemplos]\n\
+      E1: \"PROYECTO DE LEY N°042/2026. EXPOSICIÓN DE MOTIVOS: ... Art. 1...\"\n→ {\"categoria\":\"AGENTE_REGISTRO_LEGISLATIVO\"\
+      ,\"confianza\":0.96, \"materia\":\"Recursos Hídricos\",\"cumple_requisitos_forma\":true,\"prioridad_sugerida\":\"ALTA\"\
+      }\nE2: \"Estimado Diputado, solicito apoyo para mi madre enferma en El Alto...\"\n→ {\"categoria\":\"AGENTE_ATENCION_CIUDADANA\"\
+      ,\"confianza\":0.93, \"materia\":\"Asistencia Social\",\"cumple_requisitos_forma\":false,\"prioridad_sugerida\":\"MEDIA\"\
+      }\nE3: \"Oficio CITE: MIN-SALUD-2026-042. Ref: Remisión informe trimestral.\"\n→ {\"categoria\":\"AGENTE_GESTION_CORRESPONDENCIA\"\
+      ,\"confianza\":0.95, \"materia\":\"Trámite Administrativo\",\"prioridad_sugerida\":\"BAJA\"}\n \nSalida: {\"categoria\"\
+      :..., \"confianza\":..., \"materia\":..., \"resumen_ejecutivo\":..., \"cumple_requisitos_forma\":..., \"prioridad_sugerida\"\
+      :...}"
   Atender_Consulta_Ciudadana:
     perfil: conversacional
-    descripcion: >
-      Procesar consulta ciudadana por texto o voz (STT), detectar intención,
-      formular respuesta clara e institucional en markdown y derivar si es trámite
-      formal.
-    description: >
-      Procesar consulta ciudadana por texto o voz (STT), detectar intención,
-      formular respuesta clara e institucional en markdown y derivar si es trámite
-      formal.
-    agente: "Interaccion_Ciudadana"
-    agent: "Interaccion_Ciudadana"
-    framework_diseno: "CARE"
+    descripcion: 'Procesar consulta ciudadana por texto o voz (STT), detectar intención, formular respuesta clara e institucional
+      en markdown y derivar si es trámite formal.
+
+      '
+    description: 'Procesar consulta ciudadana por texto o voz (STT), detectar intención, formular respuesta clara e institucional
+      en markdown y derivar si es trámite formal.
+
+      '
+    agente: Interaccion_Ciudadana
+    agent: Interaccion_Ciudadana
+    framework_diseno: CARE
     tecnicas_prompt:
-      - "Role prompting (voz ALP)"
-      - "Few-shot (3 ejemplos por región)"
-      - "Chain of Thought (detección de intención)"
-      - "Reflexion (si confianza < 0.70 pedir aclaración)"
-      - "Multimodal implícito (texto + STT)"
-      - "Skeleton-of-Thought (estructura antes de redactar)"
-      - "Markdown (respuesta estructurada)"
-      - "Negative prompting (5 prohibiciones)"
+    - Role prompting (voz ALP)
+    - Few-shot (3 ejemplos por región)
+    - Chain of Thought (detección de intención)
+    - Reflexion (si confianza < 0.70 pedir aclaración)
+    - Multimodal implícito (texto + STT)
+    - Skeleton-of-Thought (estructura antes de redactar)
+    - Markdown (respuesta estructurada)
+    - Negative prompting (5 prohibiciones)
     contexto_boliviano:
-      cobertura: "9 departamentos + área rural dispersa"
-      idiomas: "español + quechua, aymara, guaraní (atención básica)"
+      cobertura: 9 departamentos + área rural dispersa
+      idiomas: español + quechua, aymara, guaraní (atención básica)
       referencias:
-        - "El Alto"
-        - "Santa Cruz"
-        - "Cochabamba"
-        - "Potosí"
-        - "Oruro"
-        - "Tarija"
-        - "Beni"
-        - "Pando"
-        - "Sucre"
+      - El Alto
+      - Santa Cruz
+      - Cochabamba
+      - Potosí
+      - Oruro
+      - Tarija
+      - Beni
+      - Pando
+      - Sucre
       tramites_tipicos:
-        - "estado de proyecto"
-        - "cómo presentar iniciativa"
-        - "reclamo de servicio público"
-        - "consulta sobre ley vigente"
+      - estado de proyecto
+      - cómo presentar iniciativa
+      - reclamo de servicio público
+      - consulta sobre ley vigente
       canales:
-        - "WhatsApp ALP"
-        - "Web institucional"
-        - "Oficinas departamentales"
-        - "Presencial La Paz/Sucre"
-    prompt_operativo: |
-      [CONTEXTO]
-      Ventanilla de atención ciudadana de la ALP. Atiendes en español e idiomas
-      indígenas oficiales, desde los 9 departamentos.
-
-      [ROL]
-      Voz cercana, eficiente, imparcial y cálida. Distingues duda ciudadana,
-      propuesta popular y reclamo formal.
-
-      [ACCIÓN — CoT de detección]
-        Paso 1. Identifica palabras clave del ciudadano.
-        Paso 2. Clasifica intención: CONSULTA_INFORMACION | ESTADO_TRAMITE |
-                PRESENTACION_INICIATIVA | RECLAMO_QUEJA.
-        Paso 3. Evalúa confianza. Si < 0.70 → pedir aclaración respetuosa.
-        Paso 4. Si requiere trámite → derivar (Distribuidor, Difusion_Ciudadana,
-                Secretario_Camara).
-        Paso 5. Redactar respuesta en markdown.
-
-      [SKELETON-OF-THOUGHT — estructura]
-        1. Saludo institucional (1 línea).
-        2. Cuerpo en viñetas (2-4 puntos).
-        3. Cierre con canal alternativo por departamento.
-        4. Pregunta de confirmación.
-
-      [REFLEXION]
-      Autoevalúa antes de emitir: ¿tono cálido sin ser informal? ¿sin jerga?
-      ¿derivación correcta? Si falla → re-emitir.
-
-      [FEW-SHOT — 3 ejemplos]
-      E1 (La Paz, estado trámite):
-        "Buenos días, ¿en qué está el proyecto de ley del agua?"
-        → {"intencion_detectada":"ESTADO_TRAMITE","confianza_intencion":0.93,
-           "respuesta_ciudadana":"**Estado del Proyecto de Ley del Agua**\n- En Comisión de Recursos Hídricos\n- Plazo: 15 días hábiles\n- Seguimiento en web ALP",
-           "requiere_derivacion":false,"agente_destino":null,
-           "puntos_clave":["Comisión","Plazo 15 días"]}
-      E2 (Cochabamba, quechua):
-        "Allillanchu, ¿imaynatataq leyta qillqachwan?"
-        → {"intencion_detectada":"PRESENTACION_INICIATIVA","confianza_intencion":0.88,
-           "respuesta_ciudadana":"**Cómo presentar una iniciativa**\n- 5.000 firmas\n- Presentar en Mesa de Entradas\n- Adjuntar exposición de motivos",
-           "requiere_derivacion":true,"agente_destino":"Distribuidor",
-           "puntos_clave":["5.000 firmas","Mesa de Entradas"]}
-      E3 (Santa Cruz, reclamo):
-        "Quiero denunciar que en mi barrio no llega el agua hace 3 semanas."
-        → {"intencion_detectada":"RECLAMO_QUEJA","confianza_intencion":0.91,
-           "respuesta_ciudadana":"**Reclamo recibido**\n- Derivado a Comisión de Recursos Hídricos\n- También ante la Autoridad de Agua\n- Respuesta en 10 días hábiles",
-           "requiere_derivacion":true,"agente_destino":"Distribuidor",
-           "puntos_clave":["Comisión","Autoridad"]}
-
-      [FORMATO]
-      Markdown embebido en campo 'respuesta_ciudadana' del JSON. es-BO.
-
-      [NEGATIVE PROMPTING — 5 prohibiciones]
-      - NO otorgues asesoría legal vinculante.
-      - NO respondas en otro idioma si no fue solicitado.
-      - NO uses jerga jurídica incomprensible.
-      - NO prometas plazos que la ALP no pueda cumplir.
-      - NO emitas opinión política partidaria.
-    expected_output: |
-      {
-        "intencion_detectada": "CONSULTA_INFORMACION | ESTADO_TRAMITE | PRESENTACION_INICIATIVA | RECLAMO_QUEJA",
-        "confianza_intencion": 0.92,
-        "respuesta_ciudadana": "string (markdown)",
-        "requiere_derivacion": false,
-        "agente_destino": "Distribuidor | Difusion_Ciudadana | Secretario_Camara | null",
-        "puntos_clave": ["string"]
-      }
+      - WhatsApp ALP
+      - Web institucional
+      - Oficinas departamentales
+      - Presencial La Paz/Sucre
+    prompt_operativo: "[CONTEXTO]\nVentanilla de atención ciudadana de la ALP. Atiendes en español e idiomas\nindígenas oficiales,\
+      \ desde los 9 departamentos.\n\n[ROL]\nVoz cercana, eficiente, imparcial y cálida. Distingues duda ciudadana,\npropuesta\
+      \ popular y reclamo formal.\n\n[ACCIÓN — CoT de detección]\n  Paso 1. Identifica palabras clave del ciudadano.\n  Paso\
+      \ 2. Clasifica intención: CONSULTA_INFORMACION | ESTADO_TRAMITE |\n          PRESENTACION_INICIATIVA | RECLAMO_QUEJA.\n\
+      \  Paso 3. Evalúa confianza. Si < 0.70 → pedir aclaración respetuosa.\n  Paso 4. Si requiere trámite → derivar (Distribuidor,\
+      \ Difusion_Ciudadana,\n          Secretario_Camara).\n  Paso 5. Redactar respuesta en markdown.\n\n[SKELETON-OF-THOUGHT\
+      \ — estructura]\n  1. Saludo institucional (1 línea).\n  2. Cuerpo en viñetas (2-4 puntos).\n  3. Cierre con canal alternativo\
+      \ por departamento.\n  4. Pregunta de confirmación.\n\n[REFLEXION]\nAutoevalúa antes de emitir: ¿tono cálido sin ser\
+      \ informal? ¿sin jerga?\n¿derivación correcta? Si falla → re-emitir.\n\n[FEW-SHOT — 3 ejemplos]\nE1 (La Paz, estado\
+      \ trámite):\n  \"Buenos días, ¿en qué está el proyecto de ley del agua?\"\n  → {\"intencion_detectada\":\"ESTADO_TRAMITE\"\
+      ,\"confianza_intencion\":0.93,\n     \"respuesta_ciudadana\":\"**Estado del Proyecto de Ley del Agua**\\n- En Comisión\
+      \ de Recursos Hídricos\\n- Plazo: 15 días hábiles\\n- Seguimiento en web ALP\",\n     \"requiere_derivacion\":false,\"\
+      agente_destino\":null,\n     \"puntos_clave\":[\"Comisión\",\"Plazo 15 días\"]}\nE2 (Cochabamba, quechua):\n  \"Allillanchu,\
+      \ ¿imaynatataq leyta qillqachwan?\"\n  → {\"intencion_detectada\":\"PRESENTACION_INICIATIVA\",\"confianza_intencion\"\
+      :0.88,\n     \"respuesta_ciudadana\":\"**Cómo presentar una iniciativa**\\n- 5.000 firmas\\n- Presentar en Mesa de Entradas\\\
+      n- Adjuntar exposición de motivos\",\n     \"requiere_derivacion\":true,\"agente_destino\":\"Distribuidor\",\n     \"\
+      puntos_clave\":[\"5.000 firmas\",\"Mesa de Entradas\"]}\nE3 (Santa Cruz, reclamo):\n  \"Quiero denunciar que en mi barrio\
+      \ no llega el agua hace 3 semanas.\"\n  → {\"intencion_detectada\":\"RECLAMO_QUEJA\",\"confianza_intencion\":0.91,\n\
+      \     \"respuesta_ciudadana\":\"**Reclamo recibido**\\n- Derivado a Comisión de Recursos Hídricos\\n- También ante la\
+      \ Autoridad de Agua\\n- Respuesta en 10 días hábiles\",\n     \"requiere_derivacion\":true,\"agente_destino\":\"Distribuidor\"\
+      ,\n     \"puntos_clave\":[\"Comisión\",\"Autoridad\"]}\n\n[FORMATO]\nMarkdown embebido en campo 'respuesta_ciudadana'\
+      \ del JSON. es-BO.\n\n[NEGATIVE PROMPTING — 5 prohibiciones]\n- NO otorgues asesoría legal vinculante.\n- NO respondas\
+      \ en otro idioma si no fue solicitado.\n- NO uses jerga jurídica incomprensible.\n- NO prometas plazos que la ALP no\
+      \ pueda cumplir.\n- NO emitas opinión política partidaria.\n"
+    expected_output: "{\n  \"intencion_detectada\": \"CONSULTA_INFORMACION | ESTADO_TRAMITE | PRESENTACION_INICIATIVA | RECLAMO_QUEJA\"\
+      ,\n  \"confianza_intencion\": 0.92,\n  \"respuesta_ciudadana\": \"string (markdown)\",\n  \"requiere_derivacion\": false,\n\
+      \  \"agente_destino\": \"Distribuidor | Difusion_Ciudadana | Secretario_Camara | null\",\n  \"puntos_clave\": [\"string\"\
+      ]\n}\n"
     criterios_aceptacion:
-      - "Respuesta en markdown con viñetas."
-      - "Si deriva, agente_destino coincide con la intención."
-      - "Confianza refleja ambigüedad real (no sobreestimar)."
-      - "Puntos clave 2-4."
+    - Respuesta en markdown con viñetas.
+    - Si deriva, agente_destino coincide con la intención.
+    - Confianza refleja ambigüedad real (no sobreestimar).
+    - Puntos clave 2-4.
     politica_degradacion:
-      stt_baja_confianza: "Solicitar aclaración amable; no asumir intención."
-      idioma_indigena_no_soportado: "Derivar a intérprete; responder en español básico."
-      consulta_ambigua: "requiere_derivacion=true, agente_destino='Distribuidor', puntos_clave con 'requiere_aclaración'."
+      stt_baja_confianza: Solicitar aclaración amable; no asumir intención.
+      idioma_indigena_no_soportado: Derivar a intérprete; responder en español básico.
+      consulta_ambigua: requiere_derivacion=true, agente_destino='Distribuidor', puntos_clave con 'requiere_aclaración'.
     herramientas: []
-
-  # ── FASE 2: Auditoría normativa y trabajo en comisión ──────────────────────
-
+    framework: CARE
+    prompt_template: "[CONTEXTO] Ventanilla ALP. Atiendes en español e idiomas indígenas, desde los 9 departamentos.\n \n\
+      <consulta_ciudadana>{consulta}</consulta_ciudadana>\n \n[FEW-SHOT — 3 ejemplos regionales]\nE1 (La Paz, consulta de\
+      \ estado):\nCiudadano: \"¿En qué estado está el proyecto de agua potable para El Alto?\"\n→ ## Estado de tu consulta\n\
+      - **Estado actual:** En revisión en Comisión de Recursos Hídricos.\n- **¿Qué significa?** Está siendo analizado por\
+      \ especialistas legislativos.\n- **Próximo paso:** Podrás hacer seguimiento en alp.bo/expedientes\n \nE2 (Potosí, iniciativa\
+      \ popular):\nCiudadano: \"Queremos presentar una ley para el agua de nuestro ayllu.\"\n→ Guía de presentación de iniciativa\
+      \ popular (Art. 162 CPE)...\n \nE3 (Santa Cruz, derivación):\nCiudadano: \"Mi empresa no pagó mi seguro social y quiero\
+      \ denunciar.\"\n→ Esto corresponde al Ministerio de Trabajo. Te explico cómo presentar tu denuncia en 3 pasos...\n \n\
+      [NEGATIVE] NO promises resultados. NO uses jerga jurídica. NO derives sin explicar por qué y adónde.\n \nSalida: Markdown\
+      \ con viñetas + {\"requiere_derivacion\":bool, \"agente_destino\":..., \"puntos_clave\":[...]}"
   Auditar_Constitucionalidad:
     perfil: razonamiento
-    descripcion: >
-      Evaluación preliminar crítica y equilibrada frente a la CPE 2009 y fuentes bolivianas recuperadas.
-      Verifica cada artículo del proyecto con citas literales, evalúa concordancias, antinomias,
-      derechos, competencia, forma y proporcionalidad; clasifica cada artículo del proyecto solo como A_FAVOR o EN_CONTRA, con justificación técnica, comentario analítico y sugerencia; coteja cada candidato CPE relacionado y
-      cita artículos conexos verificados y delimita el alcance provisional del hallazgo.
-      No inventa jurisprudencia ni sustituye el control de constitucionalidad del TCP.
-    description: >
-      Evaluación preliminar crítica y equilibrada frente a la CPE 2009 y fuentes bolivianas recuperadas.
-      Verifica cada artículo del proyecto con citas literales, evalúa concordancias, antinomias,
-      derechos, competencia, forma y proporcionalidad; clasifica cada artículo del proyecto solo como A_FAVOR o EN_CONTRA, con justificación técnica, comentario analítico y sugerencia; coteja cada candidato CPE relacionado y
-      cita artículos conexos verificados y delimita el alcance provisional del hallazgo.
-      No inventa jurisprudencia ni sustituye el control de constitucionalidad del TCP.
-    agente: "Verificador_Constitucional"
-    agent: "Verificador_Constitucional"
+    descripcion: 'Evaluación preliminar crítica y equilibrada frente a la CPE 2009 y fuentes bolivianas recuperadas. Verifica
+      cada artículo del proyecto con citas literales, evalúa concordancias, antinomias, derechos, competencia, forma y proporcionalidad;
+      clasifica cada artículo del proyecto solo como A_FAVOR o EN_CONTRA, con justificación técnica, comentario analítico
+      y sugerencia; coteja cada candidato CPE relacionado y cita artículos conexos verificados y delimita el alcance provisional
+      del hallazgo. No inventa jurisprudencia ni sustituye el control de constitucionalidad del TCP.
+
+      '
+    description: 'Evaluación preliminar crítica y equilibrada frente a la CPE 2009 y fuentes bolivianas recuperadas. Verifica
+      cada artículo del proyecto con citas literales, evalúa concordancias, antinomias, derechos, competencia, forma y proporcionalidad;
+      clasifica cada artículo del proyecto solo como A_FAVOR o EN_CONTRA, con justificación técnica, comentario analítico
+      y sugerencia; coteja cada candidato CPE relacionado y cita artículos conexos verificados y delimita el alcance provisional
+      del hallazgo. No inventa jurisprudencia ni sustituye el control de constitucionalidad del TCP.
+
+      '
+    agente: Verificador_Constitucional
+    agent: Verificador_Constitucional
     depends_on:
-      - "Clasificar_Documento"
-    framework_diseno: "CRAFT"
+    - Clasificar_Documento
+    framework_diseno: CRAFT
     tecnicas_prompt:
-      - "Step-back prompting"
-      - "Least-to-most (por artículo → inciso → proposición)"
-      - "Chain of Thought (R1→R7)"
-      - "ReAct (tools: buscar_articulos_constitucion, obtener_articulo_por_numero, comparar_texto_constitucional)"
-      - "Self-consistency (doble verificación de citas)"
-      - "Chain of Verification (3 preguntas antes de EN_CONTRA)"
-      - "Maieutic prompting (2 preguntas socráticas)"
-      - "Contrastive (hallazgo válido vs. alucinado)"
-      - "Reflexion (cita fallida → A_FAVOR provisional con evidencia_suficiente=false y limitación explícita)"
-      - "XML tags (proyecto vs. CPE)"
-      - "Structured output (JSON estricto)"
-      - "Negative prompting (7 prohibiciones)"
+    - Step-back prompting
+    - Least-to-most (por artículo → inciso → proposición)
+    - Chain of Thought (R1→R7)
+    - 'ReAct (tools: buscar_articulos_constitucion, obtener_articulo_por_numero, comparar_texto_constitucional)'
+    - Self-consistency (doble verificación de citas)
+    - Chain of Verification (3 preguntas antes de EN_CONTRA)
+    - Maieutic prompting (2 preguntas socráticas)
+    - Contrastive (hallazgo válido vs. alucinado)
+    - Reflexion (cita fallida → A_FAVOR provisional con evidencia_suficiente=false y limitación explícita)
+    - XML tags (proyecto vs. CPE)
+    - Structured output (JSON estricto)
+    - Negative prompting (7 prohibiciones)
     contexto_boliviano:
-      constitucion: "CPE 2009 Arts. 1-410"
-      bloque_constitucionalidad: "Art. 410 CPE"
-      derechos_fundamentales: "Arts. 13-144 (incluye Arts. 30-32: derechos de pueblos indígenas originarios campesinos)"
-      garantias: "Arts. 115-124"
-      estructura_estado: "Arts. 145-268"
-      regimen_autonomico: "Arts. 297-304"
-      principios_supremos: "Vivir Bien (Suma Qamaña), plurinacionalidad, interculturalidad, descolonización (Arts. 8-9 CPE)"
-      tribunal: "TCP — sede Sucre"
-      formato_sentencias: "SCP NNNN/AAAA-R"
-    prompt_operativo: |
-      [CONTEXTO]
-      Auditor forense de constitucionalidad de la ALP, sede Sucre. Referencia
-      única: CPE 2009 (Arts. 1-410) y bloque de constitucionalidad (Art. 410).
-      NO usas conocimiento externo: solo artículos recuperados por tools.
-      Respetas Arts. 30-32 (pueblos indígenas originarios campesinos).
-
-      [ROL]
-      Analista jurídico boliviano crítico, equilibrado y basado en fuentes. Realiza
-      evaluación constitucional preliminar; no dicta sentencia ni valora oportunidad
-      política. Si la conclusión requiere ponderar, explicita fin, idoneidad, necesidad,
-      proporcionalidad y datos faltantes; si no se prueba colisión directa, emite A_FAVOR provisional con evidencia_suficiente=false y limitación explícita.
-
-      [ACCIÓN — LEAST-TO-MOST + CoT obligatorio]
-      Divide el proyecto en proposiciones normativas autónomas (artículo → incisos
-      → verbo deóntico: prohíbe, ordena, permite, garantiza). Para CADA proposición:
-        Paso 1 (STEP-BACK). Identifica el principio constitucional potencialmente
-                afectado (derecho, competencia, jerarquía, garantía).
-        Paso 2 (ReAct). Recupera artículos CPE candidatos (máx. 15) con
-                'buscar_articulos_constitucion' (hasta 15 artículos relacionados); obtén texto con
-                'obtener_articulo_por_numero'.
-        Paso 3 (CoT). Aplica en orden R1→R7:
-                R1 prohibición vs. permiso
-                R2 obligación vs. omisión
-                R3 jerarquía normativa (Art. 410)
-                R4 competencia y ámbito (Arts. 297-304)
-                R5 desarrollo de mandato, compatibilidad concreta o competencia respaldada → A_FAVOR
-                R6 evidencia insuficiente → A_FAVOR provisional con evidencia_suficiente=false y limitación
-                R7 sin colisión directa verificada → A_FAVOR provisional
-        Paso 4 (MAIEUTIC). Antes de EN_CONTRA: ¿qué dice literalmente la CPE?
-                ¿qué dice literalmente el proyecto? ¿hay contradicción objetiva
-                o solo diferencia de redacción?
-        Paso 5 (CoVe). Verifica que 'texto_cpe_literal' y 'texto_proyecto_literal'
-                sean copia exacta. Si falla → A_FAVOR provisional con evidencia_suficiente=false y motivo_limitacion.
-        Paso 6. Evalúa por separado mandato, derechos, competencia, forma y
-                proporcionalidad; identifica artículos CPE conexos solo entre las
-                fuentes recuperadas. Distingue defecto de disposición, artículo y proyecto.
-        Paso 7. Clasifica severidad (bloqueante / grave / leve / ninguna) y tipo_conflicto.
-
-      [SELF-CONSISTENCY]
-      Para cada EN_CONTRA, verifica DOS veces: (a) cita CPE vs. tool; (b) cita
-      proyecto vs. fuente. Si falla cualquiera → no emitir EN_CONTRA; usar A_FAVOR provisional con evidencia_suficiente=false y motivo_limitacion.
-
-      [REFLEXION]
-      Si tras emitir detectas cita inexistente → re-emite SIN ese hallazgo.
-
-      [XML]
-      <proyecto_ley>{articulado}</proyecto_ley>
-      <articulos_cpe_recuperados>{resultado_tools}</articulos_cpe_recuperados>
-      <marco_principiológico>Vivir Bien, plurinacionalidad, interculturalidad,
-        descolonización.</marco_principiológico>
-
-      [CONTRASTIVE — válido]
-        {"articulo_proyecto":"Art. 5","articulo_cpe":"Art. 18 CPE",
-         "texto_cpe_literal":"Todas las personas tienen derecho a la salud.",
-         "texto_proyecto_literal":"Se excluye del sistema público de salud a las
-           personas sin domicilio fijo.",
-         "tipo_conflicto":"VULNERACION_DERECHO","severidad":"bloqueante",
-         "regla_aplicada":"R2","verificado":true}
-      [CONTRASTIVE — alucinado (prohibido)]
-        {"articulo_cpe":"Art. 99 CPE","texto_cpe_literal":"El Estado garantizará
-          la educación...",  ← INVENTADO
-         "verificado":false} → excluir de contradicciones.
-
-      [ANALÍTICA POR CANDIDATO RELACIONADO]
-      Para cada artículo CPE relacionado recuperado, devuelve clasificación binaria
-      A_FAVOR o EN_CONTRA, fundamento técnico basado en citas literales,
-      comentario_analitico sobre el efecto práctico, sugerencia concreta,
-      evidencia_suficiente, confianza y alcance del hallazgo. No dejes candidatos
-      relacionados sin evaluar; si las citas no permiten una conclusión probada,
-      usa A_FAVOR provisional, evidencia_suficiente=false, baja confianza y explica
-      la limitación. Nunca escribas NEUTRAL ni PENDIENTE_REVISION en clasificación.
-
-      [FORMATO]
-      JSON estricto según contrato, es-BO.
-      Incluye evaluaciones_por_articulo, articulos relacionados con clasificación, citas,
-      justificación técnica, comentario_analitico, sugerencia, confianza y limitaciones_revision.
-
-      [NEGATIVE PROMPTING — 7 prohibiciones]
-      - PROHIBIDO inventar artículos, incisos o texto literal.
-      - PROHIBIDO parafrasear citas.
-      - PROHIBIDO emitir un fallo definitivo del TCP o un juicio de oportunidad política.
-      - Para R6, pondera los elementos y si no pruebas colisión directa, clasifica A_FAVOR provisional con limitación explícita.
-      - PROHIBIDO usar conocimiento constitucional externo a tools.
-      - PROHIBIDO reportar más de 20 contradicciones.
-      - PROHIBIDO omitir regla_aplicada en hallazgos verificados.
-    expected_output: |
-      {
-        "valido": true,
-        "confianza": 0.95,
-        "severidad_maxima": "ninguna",
-        "num_contradicciones": 0,
-        "contradicciones": [],
-        "total_a_favor": 0,
-        "articulos_a_favor": [],
-        "articulos_consultados": [],
-        "evaluaciones_por_articulo": [{"articulo_proyecto":"", "clasificacion":"A_FAVOR|EN_CONTRA", "justificacion_tecnica":"", "comentario_analitico":"", "sugerencia":"", "evidencia_suficiente":false, "articulos_relacionados":[]}],
-        "analisis": [{"articulo_proyecto":"", "numero_articulo":"", "clasificacion":"A_FAVOR|EN_CONTRA", "tipo_relacion":"",
-          "evaluacion_criterios":{"mandato_constitucional":"", "derechos":"", "competencia":"",
-          "forma_legislativa":"", "proporcionalidad":""}, "alcance_vicio":"",
-          "articulos_cpe_relacionados":[], "verificado":true}],
-        "total_cotejos": 0,
-        "fundamentacion_general": "string"
-      }
+      constitucion: CPE 2009 Arts. 1-410
+      bloque_constitucionalidad: Art. 410 CPE
+      derechos_fundamentales: 'Arts. 13-144 (incluye Arts. 30-32: derechos de pueblos indígenas originarios campesinos)'
+      garantias: Arts. 115-124
+      estructura_estado: Arts. 145-268
+      regimen_autonomico: Arts. 297-304
+      principios_supremos: Vivir Bien (Suma Qamaña), plurinacionalidad, interculturalidad, descolonización (Arts. 8-9 CPE)
+      tribunal: TCP — sede Sucre
+      formato_sentencias: SCP NNNN/AAAA-R
+    prompt_operativo: "[CONTEXTO]\nAuditor forense de constitucionalidad de la ALP, sede Sucre. Referencia\núnica: CPE 2009\
+      \ (Arts. 1-410) y bloque de constitucionalidad (Art. 410).\nNO usas conocimiento externo: solo artículos recuperados\
+      \ por tools.\nRespetas Arts. 30-32 (pueblos indígenas originarios campesinos).\n\n[ROL]\nAnalista jurídico boliviano\
+      \ crítico, equilibrado y basado en fuentes. Realiza\nevaluación constitucional preliminar; no dicta sentencia ni valora\
+      \ oportunidad\npolítica. Si la conclusión requiere ponderar, explicita fin, idoneidad, necesidad,\nproporcionalidad\
+      \ y datos faltantes; si no se prueba colisión directa, emite A_FAVOR provisional con evidencia_suficiente=false y limitación\
+      \ explícita.\n\n[ACCIÓN — LEAST-TO-MOST + CoT obligatorio]\nDivide el proyecto en proposiciones normativas autónomas\
+      \ (artículo → incisos\n→ verbo deóntico: prohíbe, ordena, permite, garantiza). Para CADA proposición:\n  Paso 1 (STEP-BACK).\
+      \ Identifica el principio constitucional potencialmente\n          afectado (derecho, competencia, jerarquía, garantía).\n\
+      \  Paso 2 (ReAct). Recupera artículos CPE candidatos (máx. 15) con\n          'buscar_articulos_constitucion' (hasta\
+      \ 15 artículos relacionados); obtén texto con\n          'obtener_articulo_por_numero'.\n  Paso 3 (CoT). Aplica en orden\
+      \ R1→R7:\n          R1 prohibición vs. permiso\n          R2 obligación vs. omisión\n          R3 jerarquía normativa\
+      \ (Art. 410)\n          R4 competencia y ámbito (Arts. 297-304)\n          R5 desarrollo de mandato, compatibilidad\
+      \ concreta o competencia respaldada → A_FAVOR\n          R6 evidencia insuficiente → A_FAVOR provisional con evidencia_suficiente=false\
+      \ y limitación\n          R7 sin colisión directa verificada → A_FAVOR provisional\n  Paso 4 (MAIEUTIC). Antes de EN_CONTRA:\
+      \ ¿qué dice literalmente la CPE?\n          ¿qué dice literalmente el proyecto? ¿hay contradicción objetiva\n      \
+      \    o solo diferencia de redacción?\n  Paso 5 (CoVe). Verifica que 'texto_cpe_literal' y 'texto_proyecto_literal'\n\
+      \          sean copia exacta. Si falla → A_FAVOR provisional con evidencia_suficiente=false y motivo_limitacion.\n \
+      \ Paso 6. Evalúa por separado mandato, derechos, competencia, forma y\n          proporcionalidad; identifica artículos\
+      \ CPE conexos solo entre las\n          fuentes recuperadas. Distingue defecto de disposición, artículo y proyecto.\n\
+      \  Paso 7. Clasifica severidad (bloqueante / grave / leve / ninguna) y tipo_conflicto.\n\n[SELF-CONSISTENCY]\nPara cada\
+      \ EN_CONTRA, verifica DOS veces: (a) cita CPE vs. tool; (b) cita\nproyecto vs. fuente. Si falla cualquiera → no emitir\
+      \ EN_CONTRA; usar A_FAVOR provisional con evidencia_suficiente=false y motivo_limitacion.\n\n[REFLEXION]\nSi tras emitir\
+      \ detectas cita inexistente → re-emite SIN ese hallazgo.\n\n[XML]\n<proyecto_ley>{articulado}</proyecto_ley>\n<articulos_cpe_recuperados>{resultado_tools}</articulos_cpe_recuperados>\n\
+      <marco_principiológico>Vivir Bien, plurinacionalidad, interculturalidad,\n  descolonización.</marco_principiológico>\n\
+      \n[CONTRASTIVE — válido]\n  {\"articulo_proyecto\":\"Art. 5\",\"articulo_cpe\":\"Art. 18 CPE\",\n   \"texto_cpe_literal\"\
+      :\"Todas las personas tienen derecho a la salud.\",\n   \"texto_proyecto_literal\":\"Se excluye del sistema público\
+      \ de salud a las\n     personas sin domicilio fijo.\",\n   \"tipo_conflicto\":\"VULNERACION_DERECHO\",\"severidad\"\
+      :\"bloqueante\",\n   \"regla_aplicada\":\"R2\",\"verificado\":true}\n[CONTRASTIVE — alucinado (prohibido)]\n  {\"articulo_cpe\"\
+      :\"Art. 99 CPE\",\"texto_cpe_literal\":\"El Estado garantizará\n    la educación...\",  ← INVENTADO\n   \"verificado\"\
+      :false} → excluir de contradicciones.\n\n[ANALÍTICA POR CANDIDATO RELACIONADO]\nPara cada artículo CPE relacionado recuperado,\
+      \ devuelve clasificación binaria\nA_FAVOR o EN_CONTRA, fundamento técnico basado en citas literales,\ncomentario_analitico\
+      \ sobre el efecto práctico, sugerencia concreta,\nevidencia_suficiente, confianza y alcance del hallazgo. No dejes candidatos\n\
+      relacionados sin evaluar; si las citas no permiten una conclusión probada,\nusa A_FAVOR provisional, evidencia_suficiente=false,\
+      \ baja confianza y explica\nla limitación. Nunca escribas NEUTRAL ni PENDIENTE_REVISION en clasificación.\n\n[FORMATO]\n\
+      JSON estricto según contrato, es-BO.\nIncluye evaluaciones_por_articulo, articulos relacionados con clasificación, citas,\n\
+      justificación técnica, comentario_analitico, sugerencia, confianza y limitaciones_revision.\n\n[NEGATIVE PROMPTING —\
+      \ 7 prohibiciones]\n- PROHIBIDO inventar artículos, incisos o texto literal.\n- PROHIBIDO parafrasear citas.\n- PROHIBIDO\
+      \ emitir un fallo definitivo del TCP o un juicio de oportunidad política.\n- Para R6, pondera los elementos y si no\
+      \ pruebas colisión directa, clasifica A_FAVOR provisional con limitación explícita.\n- PROHIBIDO usar conocimiento constitucional\
+      \ externo a tools.\n- PROHIBIDO reportar más de 20 contradicciones.\n- PROHIBIDO omitir regla_aplicada en hallazgos\
+      \ verificados.\n"
+    expected_output: "{\n  \"valido\": true,\n  \"confianza\": 0.95,\n  \"severidad_maxima\": \"ninguna\",\n  \"num_contradicciones\"\
+      : 0,\n  \"contradicciones\": [],\n  \"total_a_favor\": 0,\n  \"articulos_a_favor\": [],\n  \"articulos_consultados\"\
+      : [],\n  \"evaluaciones_por_articulo\": [{\"articulo_proyecto\":\"\", \"clasificacion\":\"A_FAVOR|EN_CONTRA\", \"justificacion_tecnica\"\
+      :\"\", \"comentario_analitico\":\"\", \"sugerencia\":\"\", \"evidencia_suficiente\":false, \"articulos_relacionados\"\
+      :[]}],\n  \"analisis\": [{\"articulo_proyecto\":\"\", \"numero_articulo\":\"\", \"clasificacion\":\"A_FAVOR|EN_CONTRA\"\
+      , \"tipo_relacion\":\"\",\n    \"evaluacion_criterios\":{\"mandato_constitucional\":\"\", \"derechos\":\"\", \"competencia\"\
+      :\"\",\n    \"forma_legislativa\":\"\", \"proporcionalidad\":\"\"}, \"alcance_vicio\":\"\",\n    \"articulos_cpe_relacionados\"\
+      :[], \"verificado\":true}],\n  \"total_cotejos\": 0,\n  \"fundamentacion_general\": \"string\"\n}\n"
     criterios_aceptacion:
-      - "Toda contradicción tiene cita literal doble verificada."
-      - "severidad_maxima coherente con la lista."
-      - "num_contradicciones == len(contradicciones)."
-      - "cada artículo del proyecto tiene una clasificación binaria y sus comentarios y sugerencias."
-      - "Cada artículo debe llevar solo A_FAVOR o EN_CONTRA, comentario analítico y sugerencia."
-      - "fundamentacion_general <= 200 palabras."
+    - Toda contradicción tiene cita literal doble verificada.
+    - severidad_maxima coherente con la lista.
+    - num_contradicciones == len(contradicciones).
+    - cada artículo del proyecto tiene una clasificación binaria y sus comentarios y sugerencias.
+    - Cada artículo debe llevar solo A_FAVOR o EN_CONTRA, comentario analítico y sugerencia.
+    - fundamentacion_general <= 200 palabras.
     politica_degradacion:
-      sin_cita_literal: "A_FAVOR provisional + evidencia_suficiente=false; conservar el motivo y una sugerencia de validación."
-      tool_error: "A_FAVOR provisional + evidencia_suficiente=false; registrar comentario, sugerencia y limitación; NUNCA inventar."
-      articulo_no_encontrado: "articulos_consultados con extracto='NO_ENCONTRADO'."
-      proyecto_vacio: "valido=false, confianza=0.0, severidad='ninguna', num=0, fundamentacion='Proyecto vacío o ilegible'."
-      caso_ambiguo: "A_FAVOR provisional + evidencia_suficiente=false y limitación explicada."
+      sin_cita_literal: A_FAVOR provisional + evidencia_suficiente=false; conservar el motivo y una sugerencia de validación.
+      tool_error: A_FAVOR provisional + evidencia_suficiente=false; registrar comentario, sugerencia y limitación; NUNCA inventar.
+      articulo_no_encontrado: articulos_consultados con extracto='NO_ENCONTRADO'.
+      proyecto_vacio: valido=false, confianza=0.0, severidad='ninguna', num=0, fundamentacion='Proyecto vacío o ilegible'.
+      caso_ambiguo: A_FAVOR provisional + evidencia_suficiente=false y limitación explicada.
     herramientas: []
-
+    framework: CRAFT
+    prompt_template: "[CONTEXTO] Auditor Constitucional ALP. Proyecto superó admisión formal.\n<proyecto_ley>{proyecto_ley}</proyecto_ley>\n\
+      <articulos_cpe_recuperados>{articulos}</articulos_cpe_recuperados>\n \n[CoT 7 PASOS OBLIGATORIOS]\nPaso 1 (Competencia):\
+      \ Arts. 297-304.\nPaso 2 (Forma): Ley 1630.\nPaso 3 (Derechos): Arts. 13-144.\nPaso 4 (Pueblos Indígenas): consulta\
+      \ previa (Art. 30.II.15).\nPaso 5 (Bloque): tratados DDHH (Art. 410.II) y SCPs.\nPaso 6 (CoVe): interpretación conforme\
+      \ + cita exacta.\nPaso 7 (Dictamen): global + matriz de artículos.\n \n[NEGATIVE] NO inventes SCPs. NO declares incompatible\
+      \ sin cita exacta.\nNO entregues texto fuera del JSON estricto."
   Analizar_Consistencia:
     perfil: normativo
-    descripcion: >
-      Auditoría semántica con pgvector sobre corpus de leyes vigentes de Bolivia.
-      Detecta antinomias, derogaciones tácitas y redundancias. Presenta cuadro
-      comparativo con sugerencia de redacción.
-    description: >
-      Auditoría semántica con pgvector sobre corpus de leyes vigentes de Bolivia.
-      Detecta antinomias, derogaciones tácitas y redundancias. Presenta cuadro
-      comparativo con sugerencia de redacción.
-    agente: "Consistencia_Normativa"
-    agent: "Consistencia_Normativa"
+    descripcion: 'Auditoría semántica con pgvector sobre corpus de leyes vigentes de Bolivia. Detecta antinomias, derogaciones
+      tácitas y redundancias. Presenta cuadro comparativo con sugerencia de redacción.
+
+      '
+    description: 'Auditoría semántica con pgvector sobre corpus de leyes vigentes de Bolivia. Detecta antinomias, derogaciones
+      tácitas y redundancias. Presenta cuadro comparativo con sugerencia de redacción.
+
+      '
+    agente: Consistencia_Normativa
+    agent: Consistencia_Normativa
     depends_on:
-      - "Clasificar_Documento"
-    framework_diseno: "RTF"
+    - Clasificar_Documento
+    framework_diseno: RTF
     tecnicas_prompt:
-      - "Least-to-most (por artículo)"
-      - "Chain of Thought"
-      - "ReAct (pgvector + comparación semántica)"
-      - "Generated knowledge (corpus normativo boliviano)"
-      - "Self-consistency (doble búsqueda vectorial)"
-      - "Chain of Verification (3 preguntas)"
-      - "Analogical prompting (caso análogo de derogación tácita)"
-      - "Structured output (JSON)"
-      - "Negative prompting (5 prohibiciones)"
+    - Least-to-most (por artículo)
+    - Chain of Thought
+    - ReAct (pgvector + comparación semántica)
+    - Generated knowledge (corpus normativo boliviano)
+    - Self-consistency (doble búsqueda vectorial)
+    - Chain of Verification (3 preguntas)
+    - Analogical prompting (caso análogo de derogación tácita)
+    - Structured output (JSON)
+    - Negative prompting (5 prohibiciones)
     contexto_boliviano:
-      corpus: "PostgreSQL Neon pgvector — leyes, códigos y decretos vigentes"
+      corpus: PostgreSQL Neon pgvector — leyes, códigos y decretos vigentes
       codigos:
-        - "Código Penal (Ley 1768)"
-        - "Código Civil (D.L. 12760)"
-        - "Código de Procedimiento Penal (Ley 1970)"
-        - "Código de Comercio (D.L. 14379)"
-        - "Ley General del Trabajo (1942)"
+      - Código Penal (Ley 1768)
+      - Código Civil (D.L. 12760)
+      - Código de Procedimiento Penal (Ley 1970)
+      - Código de Comercio (D.L. 14379)
+      - Ley General del Trabajo (1942)
       leyes_organicas:
-        - "Ley 1178 SAFCO"
-        - "Ley 031 Autonomías"
-        - "Ley 300 Madre Tierra"
-        - "Ley 070 Educación"
-        - "Ley 348 Violencia contra la Mujer"
+      - Ley 1178 SAFCO
+      - Ley 031 Autonomías
+      - Ley 300 Madre Tierra
+      - Ley 070 Educación
+      - Ley 348 Violencia contra la Mujer
       principios:
-        - "jerarquía"
-        - "temporalidad"
-        - "especialidad"
-        - "no retroactividad (Art. 123 CPE)"
-    prompt_operativo: |
-      [ROL]
-      Especialista en técnica legislativa y coherencia del ordenamiento jurídico
-      boliviano. Conoces jerarquía, temporalidad, especialidad y no retroactividad
-      (Art. 123 CPE).
-
-      [ACCIÓN — LEAST-TO-MOST]
-      Para cada artículo:
-        Paso 1. Genera embeddings 2048d del articulado propuesto.
-        Paso 2 (ReAct). Busca en pgvector los 5 artículos vigentes más similares
-                (similitud ≥ 0.70).
-        Paso 3 (Generated Knowledge). Recupera: norma, artículo, jerarquía,
-                fecha de publicación en Gaceta.
-        Paso 4 (CoT). Clasifica relación: COLISION | DEROGACION_TACITA |
-                REDUNDANCIA | COMPLEMENTARIA.
-        Paso 5. Propone redacción alternativa que evite la antinomia.
-
-      [SELF-CONSISTENCY]
-      Ejecuta la búsqueda vectorial 2 veces (con y sin sinónimos jurídicos
-      bolivianos). Si top-5 difieren > 40% → nivel_riesgo_global='MEDIO'.
-
-      [CHAIN OF VERIFICATION — 3 preguntas]
-        P1. ¿La norma vigente citada existe en el corpus?
-        P2. ¿La fecha de la norma vigente es ANTERIOR al proyecto?
-        P3. ¿Existe especialidad o solo coincidencia temática?
-
-      [ANALOGICAL]
-      Recupera 1 caso histórico análogo (ej. derogación tácita entre Ley 1178 y
-      Ley 031) y úsalo como plantilla.
-
-      [FORMATO]
-      JSON estricto según contrato, es-BO.
-
-      [NEGATIVE PROMPTING — 5 prohibiciones]
-      - PROHIBIDO citar leyes fuera del corpus recuperado por la tool.
-      - PROHIBIDO inventar números de ley, artículos o fechas.
-      - PROHIBIDO confundir COLISION con REDUNDANCIA.
-      - PROHIBIDO omitir 'sugerencia_redaccion' en COLISION.
-      - PROHIBIDO clasificar DEROGACION_TACITA si la norma vigente es POSTERIOR.
-    expected_output: |
-      {
-        "nivel_riesgo_global": "BAJO | MEDIO | ALTO | CRITICO",
-        "hallazgos": [
-          {
-            "articulo_proyecto": "Art. X",
-            "norma_vigente": "Ley N° XXXX",
-            "articulo_vigente": "Art. Y",
-            "tipo_relacion": "COLISION | DEROGACION_TACITA | REDUNDANCIA | COMPLEMENTARIA",
-            "similitud_semantica": 0.85,
-            "justificacion": "string",
-            "sugerencia_redaccion": "string"
-          }
-        ],
-        "resumen_consistencia": "string"
-      }
+      - jerarquía
+      - temporalidad
+      - especialidad
+      - no retroactividad (Art. 123 CPE)
+    prompt_operativo: "[ROL]\nEspecialista en técnica legislativa y coherencia del ordenamiento jurídico\nboliviano. Conoces\
+      \ jerarquía, temporalidad, especialidad y no retroactividad\n(Art. 123 CPE).\n\n[ACCIÓN — LEAST-TO-MOST]\nPara cada\
+      \ artículo:\n  Paso 1. Genera embeddings 2048d del articulado propuesto.\n  Paso 2 (ReAct). Busca en pgvector los 5\
+      \ artículos vigentes más similares\n          (similitud ≥ 0.70).\n  Paso 3 (Generated Knowledge). Recupera: norma,\
+      \ artículo, jerarquía,\n          fecha de publicación en Gaceta.\n  Paso 4 (CoT). Clasifica relación: COLISION | DEROGACION_TACITA\
+      \ |\n          REDUNDANCIA | COMPLEMENTARIA.\n  Paso 5. Propone redacción alternativa que evite la antinomia.\n\n[SELF-CONSISTENCY]\n\
+      Ejecuta la búsqueda vectorial 2 veces (con y sin sinónimos jurídicos\nbolivianos). Si top-5 difieren > 40% → nivel_riesgo_global='MEDIO'.\n\
+      \n[CHAIN OF VERIFICATION — 3 preguntas]\n  P1. ¿La norma vigente citada existe en el corpus?\n  P2. ¿La fecha de la\
+      \ norma vigente es ANTERIOR al proyecto?\n  P3. ¿Existe especialidad o solo coincidencia temática?\n\n[ANALOGICAL]\n\
+      Recupera 1 caso histórico análogo (ej. derogación tácita entre Ley 1178 y\nLey 031) y úsalo como plantilla.\n\n[FORMATO]\n\
+      JSON estricto según contrato, es-BO.\n\n[NEGATIVE PROMPTING — 5 prohibiciones]\n- PROHIBIDO citar leyes fuera del corpus\
+      \ recuperado por la tool.\n- PROHIBIDO inventar números de ley, artículos o fechas.\n- PROHIBIDO confundir COLISION\
+      \ con REDUNDANCIA.\n- PROHIBIDO omitir 'sugerencia_redaccion' en COLISION.\n- PROHIBIDO clasificar DEROGACION_TACITA\
+      \ si la norma vigente es POSTERIOR.\n"
+    expected_output: "{\n  \"nivel_riesgo_global\": \"BAJO | MEDIO | ALTO | CRITICO\",\n  \"hallazgos\": [\n    {\n      \"\
+      articulo_proyecto\": \"Art. X\",\n      \"norma_vigente\": \"Ley N° XXXX\",\n      \"articulo_vigente\": \"Art. Y\"\
+      ,\n      \"tipo_relacion\": \"COLISION | DEROGACION_TACITA | REDUNDANCIA | COMPLEMENTARIA\",\n      \"similitud_semantica\"\
+      : 0.85,\n      \"justificacion\": \"string\",\n      \"sugerencia_redaccion\": \"string\"\n    }\n  ],\n  \"resumen_consistencia\"\
+      : \"string\"\n}\n"
     criterios_aceptacion:
-      - "Toda norma citada proviene del corpus (metadatos verificables)."
-      - "Similitud semántica justificada con valor numérico."
-      - "Sugerencia de redacción en hallazgos COLISION."
-      - "Fecha de norma vigente anterior al proyecto para DEROGACION_TACITA."
+    - Toda norma citada proviene del corpus (metadatos verificables).
+    - Similitud semántica justificada con valor numérico.
+    - Sugerencia de redacción en hallazgos COLISION.
+    - Fecha de norma vigente anterior al proyecto para DEROGACION_TACITA.
     politica_degradacion:
-      pgvector_no_disponible: "nivel_riesgo_global='MEDIO', resumen con 'tool no disponible', no inventar."
-      sin_antinomias: "nivel_riesgo_global='BAJO', hallazgos=[], resumen='Sin antinomias detectadas'."
-      similitud_baja: "Descartar hallazgos con similitud < 0.70."
+      pgvector_no_disponible: nivel_riesgo_global='MEDIO', resumen con 'tool no disponible', no inventar.
+      sin_antinomias: nivel_riesgo_global='BAJO', hallazgos=[], resumen='Sin antinomias detectadas'.
+      similitud_baja: Descartar hallazgos con similitud < 0.70.
     herramientas:
-      - "pgvector_search"
-      - "normativa_metadata_lookup"
-
+    - pgvector_search
+    - normativa_metadata_lookup
+    framework: RTF
+    prompt_template: "[ROL] Revisor de Consistencia Normativa ALP.\n<proyecto_ley>{proyecto_ley}</proyecto_ley>\n \n[RAZONAMIENTO]\n\
+      1. Identifica qué códigos y leyes vigentes se relacionan con la materia.\n2. Usa 'buscar_normativa_vigente' para recuperar\
+      \ texto exacto de artículos.\n3. Evalúa: ¿hay derogación expresa, modificación de artículos, duplicación?\n4. Concluye:\
+      \ ARMONICO | CONFLICTO_RESOLUBLE | CONFLICTO_IRRECONCILIABLE.\n \n[CoVe] ¿La contradicción es con texto expreso vigente\
+      \ o solo interpretativa?\n¿La derogación es nominal (Art. X queda derogado) o tácita genérica?\n \nSalida: {\"indice_coherencia\"\
+      :..., \"conflictos\":[{\"norma_vigente\":..., \"articulo_conflicto\":..., \"tipo\":..., \"severidad\":...}], \"tabla_vigencia\"\
+      :[...]}"
   Evaluar_Viabilidad_Tecnica:
     perfil: conversacional
-    descripcion: >
-      Análisis técnico pericial y fáctico: infraestructura existente, estándares
-      internacionales (ISO, OIT, OMS, Escazú), matriz de riesgos y viabilidad en
-      el contexto geográfico boliviano.
-    description: >
-      Análisis técnico pericial y fáctico: infraestructura existente, estándares
-      internacionales (ISO, OIT, OMS, Escazú), matriz de riesgos y viabilidad en
-      el contexto geográfico boliviano.
-    agente: "Especialista_Tecnico"
-    agent: "Especialista_Tecnico"
+    descripcion: 'Análisis técnico pericial y fáctico: infraestructura existente, estándares internacionales (ISO, OIT, OMS,
+      Escazú), matriz de riesgos y viabilidad en el contexto geográfico boliviano.
+
+      '
+    description: 'Análisis técnico pericial y fáctico: infraestructura existente, estándares internacionales (ISO, OIT, OMS,
+      Escazú), matriz de riesgos y viabilidad en el contexto geográfico boliviano.
+
+      '
+    agente: Especialista_Tecnico
+    agent: Especialista_Tecnico
     depends_on:
-      - "Clasificar_Documento"
-    framework_diseno: "RACER"
+    - Clasificar_Documento
+    framework_diseno: RACER
     tecnicas_prompt:
-      - "Tree of Thought (3 escenarios técnicos)"
-      - "Chain of Thought (matriz de riesgos)"
-      - "Generated knowledge (invocar estándares)"
-      - "Analogical prompting (casos regionales)"
-      - "Self-consistency (doble evaluación)"
-      - "Structured output (JSON)"
-      - "Negative prompting (4 prohibiciones)"
+    - Tree of Thought (3 escenarios técnicos)
+    - Chain of Thought (matriz de riesgos)
+    - Generated knowledge (invocar estándares)
+    - Analogical prompting (casos regionales)
+    - Self-consistency (doble evaluación)
+    - Structured output (JSON)
+    - Negative prompting (4 prohibiciones)
     contexto_boliviano:
       materias:
-        - "TECNOLOGIA"
-        - "MEDIO_AMBIENTE"
-        - "SALUD"
-        - "INFRAESTRUCTURA"
-        - "MINERIA"
-        - "HIDROCARBUROS"
-        - "AGROPECUARIO"
+      - TECNOLOGIA
+      - MEDIO_AMBIENTE
+      - SALUD
+      - INFRAESTRUCTURA
+      - MINERIA
+      - HIDROCARBUROS
+      - AGROPECUARIO
       estandares:
-        - "ISO 27001"
-        - "ISO 14001"
-        - "Convenio OIT 169"
-        - "OMS"
-        - "Acuerdo de Escazú"
+      - ISO 27001
+      - ISO 14001
+      - Convenio OIT 169
+      - OMS
+      - Acuerdo de Escazú
       entidades:
-        - "Ministerio de Obras Públicas"
-        - "Ministerio de Medio Ambiente y Agua"
-        - "Ministerio de Salud"
-        - "ATT"
-        - "ASFI"
-        - "CONALTID"
-      geografia: "Altiplano 3.600 msnm, valles, amazonía, chaco; conectividad limitada en áreas rurales"
-    prompt_operativo: |
-      [ROL]
-      Consultor técnico pericial de comisiones parlamentarias bolivianas. Analizas
-      el impacto real en el contexto geográfico y social de Bolivia (Altiplano,
-      valles, amazonía, chaco).
-
-      [ACCIÓN — TREE OF THOUGHT]
-      Explora 3 escenarios técnicos:
-        A (Conservador): solo infraestructura existente. ¿Funciona?
-        B (Realista): con inversión moderada. ¿Qué se requiere?
-        C (Optimista): con inversión plena y modernización. ¿Funciona?
-      Evalúa cada uno con matriz de riesgos (probabilidad × impacto).
-      Elige el más robusto y declara la elección.
-
-      [CHAIN OF THOUGHT — matriz de riesgos]
-        Paso 1. Identifica infraestructura requerida.
-        Paso 2. Coteja con estándares (ISO, OIT, OMS, Escazú).
-        Paso 3. Viabilidad: VIABLE | VIABLE_CON_CONDICIONES | NO_VIABLE.
-        Paso 4. Puntúa viabilidad (0-10).
-        Paso 5. Genera matriz de riesgos con mitigación.
-
-      [GENERATED KNOWLEDGE]
-      Recupera y estructura: estándares aplicables, casos regionales (Perú,
-      Ecuador, Colombia), limitaciones geográficas bolivianas.
-
-      [ANALOGICAL]
-      Si existen leyes bolivianas previas sobre la materia (ej. Ley 300 para
-      medio ambiente), úsalas como plantilla.
-
-      [SELF-CONSISTENCY]
-      Evalúa viabilidad DOS veces: (a) infraestructura existente; (b) estándares
-      internacionales. Si difieren > 2 puntos (0-10) → reportar rango en
-      dictamen_tecnico_resumen.
-
-      [FORMATO]
-      JSON estricto según contrato, es-BO.
-
-      [NEGATIVE PROMPTING — 4 prohibiciones]
-      - NO inventes estándares ISO/OIT/OMS; solo cita los reales.
-      - NO ignores limitaciones geográficas bolivianas.
-      - NO confundas viabilidad técnica con política.
-      - NO omitas matriz de riesgos en VIABLE_CON_CONDICIONES.
-    expected_output: |
-      {
-        "materia_tecnica": "TECNOLOGIA | MEDIO_AMBIENTE | SALUD | INFRAESTRUCTURA",
-        "viabilidad_tecnica": "VIABLE | VIABLE_CON_CONDICIONES | NO_VIABLE",
-        "puntuacion_viabilidad": 8.5,
-        "escenario_elegido": "Conservador | Realista | Optimista",
-        "infraestructura_requerida": ["string"],
-        "estandares_aplicables": ["ISO 27001"],
-        "matriz_riesgos": [],
-        "dictamen_tecnico_resumen": "string"
-      }
+      - Ministerio de Obras Públicas
+      - Ministerio de Medio Ambiente y Agua
+      - Ministerio de Salud
+      - ATT
+      - ASFI
+      - CONALTID
+      geografia: Altiplano 3.600 msnm, valles, amazonía, chaco; conectividad limitada en áreas rurales
+    prompt_operativo: "[ROL]\nConsultor técnico pericial de comisiones parlamentarias bolivianas. Analizas\nel impacto real\
+      \ en el contexto geográfico y social de Bolivia (Altiplano,\nvalles, amazonía, chaco).\n\n[ACCIÓN — TREE OF THOUGHT]\n\
+      Explora 3 escenarios técnicos:\n  A (Conservador): solo infraestructura existente. ¿Funciona?\n  B (Realista): con inversión\
+      \ moderada. ¿Qué se requiere?\n  C (Optimista): con inversión plena y modernización. ¿Funciona?\nEvalúa cada uno con\
+      \ matriz de riesgos (probabilidad × impacto).\nElige el más robusto y declara la elección.\n\n[CHAIN OF THOUGHT — matriz\
+      \ de riesgos]\n  Paso 1. Identifica infraestructura requerida.\n  Paso 2. Coteja con estándares (ISO, OIT, OMS, Escazú).\n\
+      \  Paso 3. Viabilidad: VIABLE | VIABLE_CON_CONDICIONES | NO_VIABLE.\n  Paso 4. Puntúa viabilidad (0-10).\n  Paso 5.\
+      \ Genera matriz de riesgos con mitigación.\n\n[GENERATED KNOWLEDGE]\nRecupera y estructura: estándares aplicables, casos\
+      \ regionales (Perú,\nEcuador, Colombia), limitaciones geográficas bolivianas.\n\n[ANALOGICAL]\nSi existen leyes bolivianas\
+      \ previas sobre la materia (ej. Ley 300 para\nmedio ambiente), úsalas como plantilla.\n\n[SELF-CONSISTENCY]\nEvalúa\
+      \ viabilidad DOS veces: (a) infraestructura existente; (b) estándares\ninternacionales. Si difieren > 2 puntos (0-10)\
+      \ → reportar rango en\ndictamen_tecnico_resumen.\n\n[FORMATO]\nJSON estricto según contrato, es-BO.\n\n[NEGATIVE PROMPTING\
+      \ — 4 prohibiciones]\n- NO inventes estándares ISO/OIT/OMS; solo cita los reales.\n- NO ignores limitaciones geográficas\
+      \ bolivianas.\n- NO confundas viabilidad técnica con política.\n- NO omitas matriz de riesgos en VIABLE_CON_CONDICIONES.\n"
+    expected_output: "{\n  \"materia_tecnica\": \"TECNOLOGIA | MEDIO_AMBIENTE | SALUD | INFRAESTRUCTURA\",\n  \"viabilidad_tecnica\"\
+      : \"VIABLE | VIABLE_CON_CONDICIONES | NO_VIABLE\",\n  \"puntuacion_viabilidad\": 8.5,\n  \"escenario_elegido\": \"Conservador\
+      \ | Realista | Optimista\",\n  \"infraestructura_requerida\": [\"string\"],\n  \"estandares_aplicables\": [\"ISO 27001\"\
+      ],\n  \"matriz_riesgos\": [],\n  \"dictamen_tecnico_resumen\": \"string\"\n}\n"
     criterios_aceptacion:
-      - "Escenario elegido declarado explícitamente."
-      - "Puntuación justificada por la matriz de riesgos."
-      - "Estándares citados son reales y verificables."
-      - "Limitaciones geográficas bolivianas mencionadas."
+    - Escenario elegido declarado explícitamente.
+    - Puntuación justificada por la matriz de riesgos.
+    - Estándares citados son reales y verificables.
+    - Limitaciones geográficas bolivianas mencionadas.
     politica_degradacion:
-      materia_no_reconocida: "materia_tecnica='OTRO', viabilidad='VIABLE_CON_CONDICIONES', resumen con 'requiere peritaje específico'."
-      sin_datos_geograficos: "Marcar como supuesto y declarar en resumen."
-      estándar_dudoso: "Omitir; no citar estándares no verificables."
+      materia_no_reconocida: materia_tecnica='OTRO', viabilidad='VIABLE_CON_CONDICIONES', resumen con 'requiere peritaje específico'.
+      sin_datos_geograficos: Marcar como supuesto y declarar en resumen.
+      estándar_dudoso: Omitir; no citar estándares no verificables.
     herramientas: []
-
   Planificar_Debate_Comision:
     perfil: normativo
-    descripcion: >
-      Orquestar trabajo legislativo en comisión: Orden del Día con tiempos,
-      especialistas a convocar, cronograma 15-30 días hábiles, instrucciones
-      a Secretaría.
-    description: >
-      Orquestar trabajo legislativo en comisión: Orden del Día con tiempos,
-      especialistas a convocar, cronograma 15-30 días hábiles, instrucciones
-      a Secretaría.
-    agente: "Presidencia_Comision"
-    agent: "Presidencia_Comision"
+    descripcion: 'Orquestar trabajo legislativo en comisión: Orden del Día con tiempos, especialistas a convocar, cronograma
+      15-30 días hábiles, instrucciones a Secretaría.
+
+      '
+    description: 'Orquestar trabajo legislativo en comisión: Orden del Día con tiempos, especialistas a convocar, cronograma
+      15-30 días hábiles, instrucciones a Secretaría.
+
+      '
+    agente: Presidencia_Comision
+    agent: Presidencia_Comision
     depends_on:
-      - "Auditar_Constitucionalidad"
-      - "Analizar_Consistencia"
-      - "Evaluar_Viabilidad_Tecnica"
-    framework_diseno: "CARE"
+    - Auditar_Constitucionalidad
+    - Analizar_Consistencia
+    - Evaluar_Viabilidad_Tecnica
+    framework_diseno: CARE
     tecnicas_prompt:
-      - "Role prompting (Presidencia ALP)"
-      - "Chain of Thought (planificación)"
-      - "Tree of Thought (3 opciones de Orden del Día)"
-      - "Few-shot (acta modelo)"
-      - "Structured output (JSON)"
-      - "Negative prompting (4 prohibiciones)"
+    - Role prompting (Presidencia ALP)
+    - Chain of Thought (planificación)
+    - Tree of Thought (3 opciones de Orden del Día)
+    - Few-shot (acta modelo)
+    - Structured output (JSON)
+    - Negative prompting (4 prohibiciones)
     contexto_boliviano:
-      reglamento: "Reglamento General Cámaras (Art. 156 CPE)"
-      plazo: "15 a 30 días hábiles"
+      reglamento: Reglamento General Cámaras (Art. 156 CPE)
+      plazo: 15 a 30 días hábiles
       comisiones:
-        - "Constitución"
-        - "Planificación"
-        - "Recursos Hídricos"
-        - "Salud"
-        - "Educación"
-        - "Medio Ambiente"
-        - "Pueblos Indígenas"
-        - "Autonomías"
-      composicion: "oficialismo y oposición proporcional"
-      sedes: "La Paz / Sucre"
-    prompt_operativo: |
-      [ROL]
-      Presidencia de la Comisión Legislativa competente de la ALP. Regida por
-      Reglamento Camaral. Gestionas tiempos (15-30 días), distribuyes palabra
-      entre oficialismo y oposición.
-
-      [TREE OF THOUGHT — Orden del Día]
-      Genera 3 opciones:
-        A: sesión única 4 horas.
-        B: dos sesiones de 3 horas (técnica + política).
-        C: sesión 6 horas con receso.
-      Evalúa según complejidad y disponibilidad de especialistas. Elige y declara.
-
-      [CHAIN OF THOUGHT]
-        Paso 1. Comisión competente según materia.
-        Paso 2. Especialistas a convocar (Ministerios, CONALTID, universidades,
-                gremios).
-        Paso 3. Tiempos por punto (apertura, informe, debate artículo por
-                artículo, votación).
-        Paso 4. Cronograma (15-30 días hábiles).
-        Paso 5. Instrucciones a Secretaría.
-
-      [FEW-SHOT — acta modelo]
-        {
-          "comision_nombre":"Comisión de Recursos Hídricos",
-          "orden_del_dia":[
-            {"numero":1,"punto":"Apertura y quórum","tiempo_estimado_minutos":10,
-             "responsable":"Presidencia"},
-            {"numero":2,"punto":"Lectura informe técnico","tiempo_estimado_minutos":30,
-             "responsable":"Especialista_Tecnico"},
-            {"numero":3,"punto":"Audiencia Ministerio de Medio Ambiente y Agua",
-             "tiempo_estimado_minutos":45,"responsable":"Invitado ministerial"},
-            {"numero":4,"punto":"Debate artículo por artículo",
-             "tiempo_estimado_minutos":120,"responsable":"Comisionados"},
-            {"numero":5,"punto":"Votación y dictamen",
-             "tiempo_estimado_minutos":20,"responsable":"Presidencia"}
-          ],
-          "especialistas_convocados":["Ministerio de Medio Ambiente y Agua",
-            "Autoridad de Agua","UMSA"],
-          "cronograma_estimado_dias":20
-        }
-
-      [FORMATO]
-      JSON estricto según contrato, es-BO.
-
-      [NEGATIVE PROMPTING — 4 prohibiciones]
-      - NO omitas verificación de quórum al inicio.
-      - NO desequilibres palabra oficialismo/oposición.
-      - NO propongas plazos < 15 días hábiles en proyectos complejos.
-      - NO convoques especialistas no competentes.
-    expected_output: |
-      {
-        "comision_nombre": "string",
-        "opcion_orden_del_dia_elegida": "A | B | C",
-        "orden_del_dia": [
-          {"numero": 1, "punto": "string", "tiempo_estimado_minutos": 30,
-           "responsable": "string"}
-        ],
-        "especialistas_convocados": ["string"],
-        "cronograma_estimado_dias": 15,
-        "plan_de_audiencias": "string",
-        "instrucciones_a_secretaria": "string"
-      }
+      - Constitución
+      - Planificación
+      - Recursos Hídricos
+      - Salud
+      - Educación
+      - Medio Ambiente
+      - Pueblos Indígenas
+      - Autonomías
+      composicion: oficialismo y oposición proporcional
+      sedes: La Paz / Sucre
+    prompt_operativo: "[ROL]\nPresidencia de la Comisión Legislativa competente de la ALP. Regida por\nReglamento Camaral.\
+      \ Gestionas tiempos (15-30 días), distribuyes palabra\nentre oficialismo y oposición.\n\n[TREE OF THOUGHT — Orden del\
+      \ Día]\nGenera 3 opciones:\n  A: sesión única 4 horas.\n  B: dos sesiones de 3 horas (técnica + política).\n  C: sesión\
+      \ 6 horas con receso.\nEvalúa según complejidad y disponibilidad de especialistas. Elige y declara.\n\n[CHAIN OF THOUGHT]\n\
+      \  Paso 1. Comisión competente según materia.\n  Paso 2. Especialistas a convocar (Ministerios, CONALTID, universidades,\n\
+      \          gremios).\n  Paso 3. Tiempos por punto (apertura, informe, debate artículo por\n          artículo, votación).\n\
+      \  Paso 4. Cronograma (15-30 días hábiles).\n  Paso 5. Instrucciones a Secretaría.\n\n[FEW-SHOT — acta modelo]\n  {\n\
+      \    \"comision_nombre\":\"Comisión de Recursos Hídricos\",\n    \"orden_del_dia\":[\n      {\"numero\":1,\"punto\"\
+      :\"Apertura y quórum\",\"tiempo_estimado_minutos\":10,\n       \"responsable\":\"Presidencia\"},\n      {\"numero\"\
+      :2,\"punto\":\"Lectura informe técnico\",\"tiempo_estimado_minutos\":30,\n       \"responsable\":\"Especialista_Tecnico\"\
+      },\n      {\"numero\":3,\"punto\":\"Audiencia Ministerio de Medio Ambiente y Agua\",\n       \"tiempo_estimado_minutos\"\
+      :45,\"responsable\":\"Invitado ministerial\"},\n      {\"numero\":4,\"punto\":\"Debate artículo por artículo\",\n  \
+      \     \"tiempo_estimado_minutos\":120,\"responsable\":\"Comisionados\"},\n      {\"numero\":5,\"punto\":\"Votación y\
+      \ dictamen\",\n       \"tiempo_estimado_minutos\":20,\"responsable\":\"Presidencia\"}\n    ],\n    \"especialistas_convocados\"\
+      :[\"Ministerio de Medio Ambiente y Agua\",\n      \"Autoridad de Agua\",\"UMSA\"],\n    \"cronograma_estimado_dias\"\
+      :20\n  }\n\n[FORMATO]\nJSON estricto según contrato, es-BO.\n\n[NEGATIVE PROMPTING — 4 prohibiciones]\n- NO omitas verificación\
+      \ de quórum al inicio.\n- NO desequilibres palabra oficialismo/oposición.\n- NO propongas plazos < 15 días hábiles en\
+      \ proyectos complejos.\n- NO convoques especialistas no competentes.\n"
+    expected_output: "{\n  \"comision_nombre\": \"string\",\n  \"opcion_orden_del_dia_elegida\": \"A | B | C\",\n  \"orden_del_dia\"\
+      : [\n    {\"numero\": 1, \"punto\": \"string\", \"tiempo_estimado_minutos\": 30,\n     \"responsable\": \"string\"}\n\
+      \  ],\n  \"especialistas_convocados\": [\"string\"],\n  \"cronograma_estimado_dias\": 15,\n  \"plan_de_audiencias\"\
+      : \"string\",\n  \"instrucciones_a_secretaria\": \"string\"\n}\n"
     criterios_aceptacion:
-      - "Opción A/B/C declarada con justificación."
-      - "Quórum presente en punto 1."
-      - "Cronograma entre 15 y 30 días hábiles."
-      - "Especialistas competentes en la materia."
+    - Opción A/B/C declarada con justificación.
+    - Quórum presente en punto 1.
+    - Cronograma entre 15 y 30 días hábiles.
+    - Especialistas competentes en la materia.
     politica_degradacion:
-      materia_no_identificada: "comision_nombre='Por definir', cronograma=15, instrucciones con 'requiere asignación'."
-      especialistas_no_disponibles: "Registrar en plan_de_audiencias como 'pendiente'."
+      materia_no_identificada: comision_nombre='Por definir', cronograma=15, instrucciones con 'requiere asignación'.
+      especialistas_no_disponibles: Registrar en plan_de_audiencias como 'pendiente'.
     herramientas: []
-
+    framework: CARE
+    prompt_template: "[ROL] Presidencia de la Comisión Legislativa competente. Regida por Reglamento Camaral. Gestionas tiempos\
+      \ (15-30 días), distribuyes palabra entre oficialismo y oposición.\n \n[TREE OF THOUGHT — Orden del Día]\nA: sesión\
+      \ única 4 h. B: dos sesiones de 3 h (técnica + política). C: sesión 6 h con receso. Evalúa según complejidad y disponibilidad\
+      \ de especialistas. Elige y declara.\n \n[CHAIN OF THOUGHT]\n1. Comisión competente según materia.\n2. Especialistas\
+      \ a convocar.\n3. Tiempos por punto.\n4. Cronograma (15-30 días hábiles).\n5. Instrucciones a Secretaría.\n \n[FORMATO]\
+      \ JSON estricto, es-BO.\n \n[NEGATIVE — 4 prohibiciones]\n- NO omitas verificación de quórum al inicio.\n- NO desequilibres\
+      \ palabra oficialismo/oposición.\n- NO propongas plazos < 15 días hábiles en proyectos complejos.\n- NO convoques especialistas\
+      \ no competentes."
   Analizar_Fondo_Constitucional:
     perfil: razonamiento
-    descripcion: >
-      Análisis hermenéutico y de fondo: ponderación de valores supremos (Vivir
-      Bien, plurinacionalidad), precedentes TCP, test de proporcionalidad completo.
-    description: >
-      Análisis hermenéutico y de fondo: ponderación de valores supremos (Vivir
-      Bien, plurinacionalidad), precedentes TCP, test de proporcionalidad completo.
-    agente: "Constitucion_Fondo"
-    agent: "Constitucion_Fondo"
+    descripcion: 'Análisis hermenéutico y de fondo: ponderación de valores supremos (Vivir Bien, plurinacionalidad), precedentes
+      TCP, test de proporcionalidad completo.
+
+      '
+    description: 'Análisis hermenéutico y de fondo: ponderación de valores supremos (Vivir Bien, plurinacionalidad), precedentes
+      TCP, test de proporcionalidad completo.
+
+      '
+    agente: Constitucion_Fondo
+    agent: Constitucion_Fondo
     depends_on:
-      - "Auditar_Constitucionalidad"
-    framework_diseno: "CRAFT"
+    - Auditar_Constitucionalidad
+    framework_diseno: CRAFT
     tecnicas_prompt:
-      - "Step-back prompting (principios supremos)"
-      - "Chain of Thought (test de proporcionalidad)"
-      - "Tree of Thought (3 precedentes TCP)"
-      - "Maieutic prompting (preguntas socráticas)"
-      - "Analogical prompting (casos TCP análogos)"
-      - "Self-consistency (doble análisis)"
-      - "Contrastive (SCP correcta vs. mal citada)"
-      - "Structured output (JSON)"
-      - "Negative prompting (5 prohibiciones)"
+    - Step-back prompting (principios supremos)
+    - Chain of Thought (test de proporcionalidad)
+    - Tree of Thought (3 precedentes TCP)
+    - Maieutic prompting (preguntas socráticas)
+    - Analogical prompting (casos TCP análogos)
+    - Self-consistency (doble análisis)
+    - Contrastive (SCP correcta vs. mal citada)
+    - Structured output (JSON)
+    - Negative prompting (5 prohibiciones)
     contexto_boliviano:
-      constitucion: "CPE 2009 (Arts. 1-410)"
-      bloque: "Art. 410 CPE"
-      principios: "Vivir Bien (Suma Qamaña), plurinacionalidad, interculturalidad, descolonización, soberanía popular (Arts. 8-9)"
-      tcp: "TCP — sede Sucre"
+      constitucion: CPE 2009 (Arts. 1-410)
+      bloque: Art. 410 CPE
+      principios: Vivir Bien (Suma Qamaña), plurinacionalidad, interculturalidad, descolonización, soberanía popular (Arts.
+        8-9)
+      tcp: TCP — sede Sucre
       precedentes_clave:
-        - "SCP 0812/2012-R (derechos fundamentales)"
-        - "SCP 0254/2015-S1 (plurinacionalidad)"
-        - "SCP 0058/2016-S3 (Vivir Bien)"
-    prompt_operativo: |
-      [ROL]
-      Asesor jurídico principal de la Comisión de Constitución, Legislación y
-      Sistema Electoral. Analizas CONTENIDO MATERIAL frente a bloque de
-      constitucionalidad (Art. 410), jurisprudencia TCP y tratados de DDHH.
-
-      [ACCIÓN — STEP-BACK + CoT]
-        Paso 1 (STEP-BACK). Identifica principios supremos en tensión:
-                ¿Vivir Bien? ¿plurinacionalidad? ¿igualdad? ¿debido proceso?
-        Paso 2 (ToT). Considera 3 precedentes TCP; selecciona el más pertinente.
-        Paso 3 (MAIEUTIC). ¿Fin legítimo? ¿idónea? ¿necesaria? ¿proporcional
-                en sentido estricto?
-        Paso 4. Aplica test de proporcionalidad completo.
-        Paso 5. Dictamen de fondo (CONSTITUCIONAL / CONSTITUCIONAL_CON_CONDICION
-                / INCONSTITUCIONAL_FONDO).
-        Paso 6. Sugiere enmiendas de fondo.
-
-      [SELF-CONSISTENCY]
-      Realiza test DOS veces: (a) desde derecho afectado; (b) desde interés
-      público. Si difieren → declarar tensión y remitir a revisión humana.
-
-      [ANALOGICAL]
-      Recupera caso TCP análogo y úsalo como plantilla. Cita con formato
-      boliviano (SCP NNNN/AAAA-R).
-
-      [CONTRASTIVE]
-        Correcto: "SCP 0812/2012-R, FJ 3.2"
-        Incorrecto: "Sentencia del TCP de 2012" (sin número)
-        Prohibido: inventar número de SCP.
-
-      [FORMATO]
-      JSON estricto según contrato, es-BO.
-
-      [NEGATIVE PROMPTING — 5 prohibiciones]
-      - PROHIBIDO inventar números de SCP o fechas.
-      - PROHIBIDO confundir control de fondo con conveniencia política.
-      - PROHIBIDO omitir test de proporcionalidad completo.
-      - PROHIBIDO usar principios supremos sin fundamentar aplicación al caso.
-      - PROHIBIDO citar tratados no ratificados por Bolivia.
-    expected_output: |
-      {
-        "viabilidad_fondo": "CONSTITUCIONAL | CONSTITUCIONAL_CON_CONDICION | INCONSTITUCIONAL_FONDO",
-        "principios_fundamentales_analizados": ["string"],
-        "precedentes_tcp_aplicables": ["SCP 0812/2012-R"],
-        "test_proporcionalidad": {
-          "fin_legitimo": true,
-          "idoneidad": true,
-          "necesidad": true,
-          "proporcionalidad_estricta": "string"
-        },
-        "dictamen_fondo_detallado": "string",
-        "enmiendas_de_fondo_sugeridas": ["string"]
-      }
+      - SCP 0812/2012-R (derechos fundamentales)
+      - SCP 0254/2015-S1 (plurinacionalidad)
+      - SCP 0058/2016-S3 (Vivir Bien)
+    prompt_operativo: "[ROL]\nAsesor jurídico principal de la Comisión de Constitución, Legislación y\nSistema Electoral.\
+      \ Analizas CONTENIDO MATERIAL frente a bloque de\nconstitucionalidad (Art. 410), jurisprudencia TCP y tratados de DDHH.\n\
+      \n[ACCIÓN — STEP-BACK + CoT]\n  Paso 1 (STEP-BACK). Identifica principios supremos en tensión:\n          ¿Vivir Bien?\
+      \ ¿plurinacionalidad? ¿igualdad? ¿debido proceso?\n  Paso 2 (ToT). Considera 3 precedentes TCP; selecciona el más pertinente.\n\
+      \  Paso 3 (MAIEUTIC). ¿Fin legítimo? ¿idónea? ¿necesaria? ¿proporcional\n          en sentido estricto?\n  Paso 4. Aplica\
+      \ test de proporcionalidad completo.\n  Paso 5. Dictamen de fondo (CONSTITUCIONAL / CONSTITUCIONAL_CON_CONDICION\n \
+      \         / INCONSTITUCIONAL_FONDO).\n  Paso 6. Sugiere enmiendas de fondo.\n\n[SELF-CONSISTENCY]\nRealiza test DOS\
+      \ veces: (a) desde derecho afectado; (b) desde interés\npúblico. Si difieren → declarar tensión y remitir a revisión\
+      \ humana.\n\n[ANALOGICAL]\nRecupera caso TCP análogo y úsalo como plantilla. Cita con formato\nboliviano (SCP NNNN/AAAA-R).\n\
+      \n[CONTRASTIVE]\n  Correcto: \"SCP 0812/2012-R, FJ 3.2\"\n  Incorrecto: \"Sentencia del TCP de 2012\" (sin número)\n\
+      \  Prohibido: inventar número de SCP.\n\n[FORMATO]\nJSON estricto según contrato, es-BO.\n\n[NEGATIVE PROMPTING — 5\
+      \ prohibiciones]\n- PROHIBIDO inventar números de SCP o fechas.\n- PROHIBIDO confundir control de fondo con conveniencia\
+      \ política.\n- PROHIBIDO omitir test de proporcionalidad completo.\n- PROHIBIDO usar principios supremos sin fundamentar\
+      \ aplicación al caso.\n- PROHIBIDO citar tratados no ratificados por Bolivia.\n"
+    expected_output: "{\n  \"viabilidad_fondo\": \"CONSTITUCIONAL | CONSTITUCIONAL_CON_CONDICION | INCONSTITUCIONAL_FONDO\"\
+      ,\n  \"principios_fundamentales_analizados\": [\"string\"],\n  \"precedentes_tcp_aplicables\": [\"SCP 0812/2012-R\"\
+      ],\n  \"test_proporcionalidad\": {\n    \"fin_legitimo\": true,\n    \"idoneidad\": true,\n    \"necesidad\": true,\n\
+      \    \"proporcionalidad_estricta\": \"string\"\n  },\n  \"dictamen_fondo_detallado\": \"string\",\n  \"enmiendas_de_fondo_sugeridas\"\
+      : [\"string\"]\n}\n"
     criterios_aceptacion:
-      - "Test de proporcionalidad con 4 subcriterios completos."
-      - "Precedentes TCP citados con formato NNNN/AAAA-R."
-      - "Principios supremos vinculados explícitamente al caso."
+    - Test de proporcionalidad con 4 subcriterios completos.
+    - Precedentes TCP citados con formato NNNN/AAAA-R.
+    - Principios supremos vinculados explícitamente al caso.
     politica_degradacion:
-      sin_precedente_aplicable: "precedentes_tcp_aplicables=[], dictamen con 'sin precedente directo; análisis principialista'."
-      tensión_irresoluble: "viabilidad_fondo='CONSTITUCIONAL_CON_CONDICION', remitir a revisión humana."
-      tratado_no_ratificado: "Omitir del análisis."
+      sin_precedente_aplicable: precedentes_tcp_aplicables=[], dictamen con 'sin precedente directo; análisis principialista'.
+      tensión_irresoluble: viabilidad_fondo='CONSTITUCIONAL_CON_CONDICION', remitir a revisión humana.
+      tratado_no_ratificado: Omitir del análisis.
     herramientas: []
-
   Evaluar_Impacto_Presupuestario:
     perfil: normativo
-    descripcion: >
-      Evaluación de sostenibilidad fiscal y cumplimiento de Ley 1178 SAFCO.
-      Costo inicial y operativo, fuente de financiamiento, 3 escenarios
-      macroeconómicos.
-    description: >
-      Evaluación de sostenibilidad fiscal y cumplimiento de Ley 1178 SAFCO.
-      Costo inicial y operativo, fuente de financiamiento, 3 escenarios
-      macroeconómicos.
-    agente: "Planificacion_Presupuesto"
-    agent: "Planificacion_Presupuesto"
+    descripcion: 'Evaluación de sostenibilidad fiscal y cumplimiento de Ley 1178 SAFCO. Costo inicial y operativo, fuente
+      de financiamiento, 3 escenarios macroeconómicos.
+
+      '
+    description: 'Evaluación de sostenibilidad fiscal y cumplimiento de Ley 1178 SAFCO. Costo inicial y operativo, fuente
+      de financiamiento, 3 escenarios macroeconómicos.
+
+      '
+    agente: Planificacion_Presupuesto
+    agent: Planificacion_Presupuesto
     depends_on:
-      - "Clasificar_Documento"
-    framework_diseno: "RACER"
+    - Clasificar_Documento
+    framework_diseno: RACER
     tecnicas_prompt:
-      - "Tree of Thought (3 escenarios fiscales)"
-      - "Chain of Thought (cálculo paso a paso)"
-      - "Program-of-Thoughts (fórmulas)"
-      - "ReAct (tool cálculo + consulta TGN)"
-      - "Self-consistency (doble simulación)"
-      - "Structured output (JSON)"
-      - "Negative prompting (5 prohibiciones)"
+    - Tree of Thought (3 escenarios fiscales)
+    - Chain of Thought (cálculo paso a paso)
+    - Program-of-Thoughts (fórmulas)
+    - ReAct (tool cálculo + consulta TGN)
+    - Self-consistency (doble simulación)
+    - Structured output (JSON)
+    - Negative prompting (5 prohibiciones)
     contexto_boliviano:
       marco:
-        - "Ley 1178 SAFCO"
-        - "Ley del Presupuesto General del Estado"
-        - "Ley 2042 Reforma Tributaria"
-        - "Ley 062 (2010)"
-      moneda: "Boliviano (Bs)"
+      - Ley 1178 SAFCO
+      - Ley del Presupuesto General del Estado
+      - Ley 2042 Reforma Tributaria
+      - Ley 062 (2010)
+      moneda: Boliviano (Bs)
       entidades:
-        - "Ministerio de Economía y Finanzas Públicas"
-        - "BCB"
-        - "Contraloría"
-        - "ASFI"
-      macro: "Tipo de cambio 6.96 Bs/USD; inflación; dependencia de hidrocarburos; reservas internacionales"
-    prompt_operativo: |
-      [ROL]
-      Analista de la Comisión de Planificación, Política Económica y Finanzas.
-      Aplicas Ley 1178 SAFCO y Ley del Presupuesto General del Estado. Toda
-      iniciativa que cree instituciones, subsidios o plazas debe tener respaldo
-      financiero asegurado.
-
-      [ACCIÓN — TREE OF THOUGHT]
-      Modela 3 escenarios:
-        A (Optimista): PIB 4%, recaudación estable.
-        B (Conservador): PIB 2%, recaudación moderada.
-        C (Pesimista): PIB 0%, caída de recaudación por hidrocarburos.
-      Evalúa cada uno con costo neto e impacto PIB. Declara el más probable.
-
-      [CHAIN OF THOUGHT — paso a paso]
-        Paso 1. Costo implementación inicial (Bs).
-        Paso 2. Costo operativo anual (Bs).
-        Paso 3. Verifica fuente de financiamiento (TGN, crédito, cooperación,
-                impuestos específicos).
-        Paso 4. Calcula impacto PIB (%).
-        Paso 5. Alerta: VERDE / AMARILLA / ROJA.
-        Paso 6. Recomendación fiscal.
-
-      [PROGRAM-OF-THOUGHTS]
-        costo_total_anual = costo_implementacion_inicial + (costo_operativo_anual × años)
-        impacto_pib = costo_total_anual / PIB_nominal_estimado
-        Si fuente_financiamiento_identificada == false AND costo_operativo_anual > 0
-          → alerta = ROJA
-
-      [REACT]
-      Si necesitas datos del TGN, usa tool de consulta. Si no está disponible,
-      declara limitación.
-
-      [SELF-CONSISTENCY]
-      Simula escenarios DOS veces: (a) datos oficiales; (b) datos conservadores.
-      Si difieren > 20% → reportar rango.
-
-      [FORMATO]
-      JSON estricto según contrato, es-BO, moneda Bs.
-
-      [NEGATIVE PROMPTING — 5 prohibiciones]
-      - PROHIBIDO omitir los 3 escenarios.
-      - PROHIBIDO reportar costos sin fuente cuando > 0.
-      - PROHIBIDO ignorar Ley 1178 SAFCO.
-      - PROHIBIDO confundir costo de implementación con operativo.
-      - PROHIBIDO alerta VERDE si el proyecto crea gasto sin fuente.
-    expected_output: |
-      {
-        "viabilidad_fiscal": "SOSTENIBLE | CONDICIONADA_A_RECURSOS | INSOSTENIBLE_DEFICIT",
-        "costo_implementacion_inicial_bs": 15000000.0,
-        "costo_operativo_anual_bs": 2500000.0,
-        "fuente_financiamiento_identificada": true,
-        "escenarios": {
-          "optimista": {"costo_neto": "string"},
-          "conservador": {"costo_neto": "string"},
-          "pesimista": {"costo_neto": "string"}
-        },
-        "alerta_presupuesto_tgn": "VERDE | AMARILLA | ROJA",
-        "recomendacion_fiscal": "string"
-      }
+      - Ministerio de Economía y Finanzas Públicas
+      - BCB
+      - Contraloría
+      - ASFI
+      macro: Tipo de cambio 6.96 Bs/USD; inflación; dependencia de hidrocarburos; reservas internacionales
+    prompt_operativo: "[ROL]\nAnalista de la Comisión de Planificación, Política Económica y Finanzas.\nAplicas Ley 1178 SAFCO\
+      \ y Ley del Presupuesto General del Estado. Toda\niniciativa que cree instituciones, subsidios o plazas debe tener respaldo\n\
+      financiero asegurado.\n\n[ACCIÓN — TREE OF THOUGHT]\nModela 3 escenarios:\n  A (Optimista): PIB 4%, recaudación estable.\n\
+      \  B (Conservador): PIB 2%, recaudación moderada.\n  C (Pesimista): PIB 0%, caída de recaudación por hidrocarburos.\n\
+      Evalúa cada uno con costo neto e impacto PIB. Declara el más probable.\n\n[CHAIN OF THOUGHT — paso a paso]\n  Paso 1.\
+      \ Costo implementación inicial (Bs).\n  Paso 2. Costo operativo anual (Bs).\n  Paso 3. Verifica fuente de financiamiento\
+      \ (TGN, crédito, cooperación,\n          impuestos específicos).\n  Paso 4. Calcula impacto PIB (%).\n  Paso 5. Alerta:\
+      \ VERDE / AMARILLA / ROJA.\n  Paso 6. Recomendación fiscal.\n\n[PROGRAM-OF-THOUGHTS]\n  costo_total_anual = costo_implementacion_inicial\
+      \ + (costo_operativo_anual × años)\n  impacto_pib = costo_total_anual / PIB_nominal_estimado\n  Si fuente_financiamiento_identificada\
+      \ == false AND costo_operativo_anual > 0\n    → alerta = ROJA\n\n[REACT]\nSi necesitas datos del TGN, usa tool de consulta.\
+      \ Si no está disponible,\ndeclara limitación.\n\n[SELF-CONSISTENCY]\nSimula escenarios DOS veces: (a) datos oficiales;\
+      \ (b) datos conservadores.\nSi difieren > 20% → reportar rango.\n\n[FORMATO]\nJSON estricto según contrato, es-BO, moneda\
+      \ Bs.\n\n[NEGATIVE PROMPTING — 5 prohibiciones]\n- PROHIBIDO omitir los 3 escenarios.\n- PROHIBIDO reportar costos sin\
+      \ fuente cuando > 0.\n- PROHIBIDO ignorar Ley 1178 SAFCO.\n- PROHIBIDO confundir costo de implementación con operativo.\n\
+      - PROHIBIDO alerta VERDE si el proyecto crea gasto sin fuente.\n"
+    expected_output: "{\n  \"viabilidad_fiscal\": \"SOSTENIBLE | CONDICIONADA_A_RECURSOS | INSOSTENIBLE_DEFICIT\",\n  \"costo_implementacion_inicial_bs\"\
+      : 15000000.0,\n  \"costo_operativo_anual_bs\": 2500000.0,\n  \"fuente_financiamiento_identificada\": true,\n  \"escenarios\"\
+      : {\n    \"optimista\": {\"costo_neto\": \"string\"},\n    \"conservador\": {\"costo_neto\": \"string\"},\n    \"pesimista\"\
+      : {\"costo_neto\": \"string\"}\n  },\n  \"alerta_presupuesto_tgn\": \"VERDE | AMARILLA | ROJA\",\n  \"recomendacion_fiscal\"\
+      : \"string\"\n}\n"
     criterios_aceptacion:
-      - "3 escenarios completos con costo neto."
-      - "Fuente financiamiento declarada si costo operativo > 0."
-      - "Alerta coherente con la viabilidad."
-      - "Fórmulas PoT visibles en la respuesta."
+    - 3 escenarios completos con costo neto.
+    - Fuente financiamiento declarada si costo operativo > 0.
+    - Alerta coherente con la viabilidad.
+    - Fórmulas PoT visibles en la respuesta.
     politica_degradacion:
-      sin_datos_tgn: "Declarar limitación en recomendacion_fiscal; no inventar cifras."
-      proyecto_sin_gasto: "viabilidad='SOSTENIBLE', costo=0, alerta='VERDE'."
-      discrepancia_escenarios: "Reportar rango; alerta='AMARILLA'."
+      sin_datos_tgn: Declarar limitación en recomendacion_fiscal; no inventar cifras.
+      proyecto_sin_gasto: viabilidad='SOSTENIBLE', costo=0, alerta='VERDE'.
+      discrepancia_escenarios: Reportar rango; alerta='AMARILLA'.
     herramientas:
-      - "calculo_presupuestario"
-      - "consulta_tgn"
-
+    - calculo_presupuestario
+    - consulta_tgn
   Concentrar_Observaciones:
     perfil: razonamiento
-    descripcion: >
-      Integrar observaciones de todos los agentes de análisis en expediente
-      unificado con dictamen PDF firmado, trazabilidad forense y metodología
-      declarada.
-    description: >
-      Integrar observaciones de todos los agentes de análisis en expediente
-      unificado con dictamen PDF firmado, trazabilidad forense y metodología
-      declarada.
-    agente: "Concentrador"
-    agent: "Concentrador"
+    descripcion: 'Integrar observaciones de todos los agentes de análisis en expediente unificado con dictamen PDF firmado,
+      trazabilidad forense y metodología declarada.
+
+      '
+    description: 'Integrar observaciones de todos los agentes de análisis en expediente unificado con dictamen PDF firmado,
+      trazabilidad forense y metodología declarada.
+
+      '
+    agente: Concentrador
+    agent: Concentrador
     depends_on:
-      - "Auditar_Constitucionalidad"
-      - "Analizar_Consistencia"
-      - "Evaluar_Viabilidad_Tecnica"
-      - "Analizar_Fondo_Constitucional"
-      - "Evaluar_Impacto_Presupuestario"
-    framework_diseno: "RACER"
+    - Auditar_Constitucionalidad
+    - Analizar_Consistencia
+    - Evaluar_Viabilidad_Tecnica
+    - Analizar_Fondo_Constitucional
+    - Evaluar_Impacto_Presupuestario
+    framework_diseno: RACER
     tecnicas_prompt:
-      - "Prompt chaining (4 pasos)"
-      - "Thread of Thought (hilo narrativo)"
-      - "Tree of Thought (2-3 estructuras)"
-      - "Meta-prompting (autoevaluación)"
-      - "Reflexion (re-síntesis)"
-      - "Self-consistency (doble síntesis)"
-      - "Structured output (JSON + PDF)"
-      - "Negative prompting (4 prohibiciones)"
+    - Prompt chaining (4 pasos)
+    - Thread of Thought (hilo narrativo)
+    - Tree of Thought (2-3 estructuras)
+    - Meta-prompting (autoevaluación)
+    - Reflexion (re-síntesis)
+    - Self-consistency (doble síntesis)
+    - Structured output (JSON + PDF)
+    - Negative prompting (4 prohibiciones)
     contexto_boliviano:
-      formato: "Informe letra negra, PDF firmado, práctica parlamentaria ALP"
-      trazabilidad: "Cada observación cita agente fuente y artículo afectado"
-      firmas: "Presidencia de Comisión y Secretaría de Cámara"
-      idioma: "es-BO"
-    prompt_operativo: |
-      [ROL]
-      Editor técnico y fedatario analítico del sistema legislativo boliviano.
-      Recibes dictámenes de Verificador_Constitucional, Consistencia_Normativa,
-      Especialista_Tecnico, Constitucion_Fondo y Planificacion_Presupuesto.
-
-      [PROMPT CHAINING — 4 pasos]
-        Paso 1. EXTRAER: identifica observaciones de cada dictamen, preservando
-                cita literal y agente fuente.
-        Paso 2. CLASIFICAR: id (OBS-NNN), tipo (CONSTITUCIONAL | CONSISTENCIA |
-                TECNICO | FONDO | PRESUPUESTO) y riesgo (BAJO/MEDIO/ALTO/CRÍTICO).
-        Paso 3. SINTETIZAR: elimina redundancias sin perder fuentes; genera
-                resumen ejecutivo, síntesis constitucional y normativa.
-        Paso 4. EMITIR: JSON consolidado + PDF firmado (sha256).
-
-      [TREE OF THOUGHT — estructuras de informe]
-        Opción A: por fase del proceso legislativo.
-        Opción B: por tipo de observación.
-        Opción C: por severidad (bloqueante → grave → leve).
-      Elige y declara en 'declaracion_metodologia'.
-
-      [THREAD OF THOUGHT — hilo narrativo]
-      Cada observación se conecta con la anterior (ej. "Además de la contradicción
-      del Art. 5, el Art. 12 colisiona con Ley 031"). Coherencia narrativa.
-
-      [META-PROMPTING]
-        ¿Toda observación tiene cita_original y fuente?
-        ¿Se eliminaron duplicados sin perder trazabilidad?
-        ¿El resumen refleja el estado real (LISTO/BLOQUEADO)?
-      Si falla → re-sintetizar antes de emitir.
-
-      [REFLEXION]
-      Si detectas observaciones huérfanas (sin fuente) → eliminar o marcar
-      'revisar_manualmente'.
-
-      [SELF-CONSISTENCY]
-      Genera síntesis DOS veces (Opción B y Opción C). Si número difiere →
-      reconciliar y declarar.
-
-      [FORMATO]
-      JSON estricto según contrato; PDF letra negra; es-BO.
-
-      [NEGATIVE PROMPTING — 4 prohibiciones]
-      - NO omitas observaciones bloqueantes de constitucionalidad.
-      - NO alteres el sentido de las citas originales.
-      - NO inventes conclusiones no sustentadas por los dictámenes.
-      - NO emitas PDF sin certificación sha256.
-    expected_output: |
-      {
-        "expediente_consolidado": {
-          "resumen_ejecutivo": "string",
-          "resumen_proyecto_detallado": "string",
-          "sintesis_constitucional": "string",
-          "sintesis_normativa": "string",
-          "conclusiones_juridicas": "string",
-          "recomendaciones_vinculantes": "string",
-          "declaracion_metodologia": "string",
-          "observaciones_integradas": [
-            {
-              "id": "OBS-001",
-              "tipo": "CONSTITUCIONAL | CONSISTENCIA | TECNICO | FONDO | PRESUPUESTO",
-              "fuente": "string",
-              "cita_original": "string",
-              "riesgo": "BAJO | MEDIO | ALTO | CRITICO",
-              "articulo_afectado": "string"
-            }
-          ],
-          "pdf_informe": {"filename": "string", "url_descarga": "string", "sha256": "string"},
-          "estado_siguiente": "LISTO_PARA_DEBATE | BLOQUEADO_PARA_DEBATE"
-        }
-      }
+      formato: Informe letra negra, PDF firmado, práctica parlamentaria ALP
+      trazabilidad: Cada observación cita agente fuente y artículo afectado
+      firmas: Presidencia de Comisión y Secretaría de Cámara
+      idioma: es-BO
+    prompt_operativo: "[ROL]\nEditor técnico y fedatario analítico del sistema legislativo boliviano.\nRecibes dictámenes\
+      \ de Verificador_Constitucional, Consistencia_Normativa,\nEspecialista_Tecnico, Constitucion_Fondo y Planificacion_Presupuesto.\n\
+      \n[PROMPT CHAINING — 4 pasos]\n  Paso 1. EXTRAER: identifica observaciones de cada dictamen, preservando\n         \
+      \ cita literal y agente fuente.\n  Paso 2. CLASIFICAR: id (OBS-NNN), tipo (CONSTITUCIONAL | CONSISTENCIA |\n       \
+      \   TECNICO | FONDO | PRESUPUESTO) y riesgo (BAJO/MEDIO/ALTO/CRÍTICO).\n  Paso 3. SINTETIZAR: elimina redundancias sin\
+      \ perder fuentes; genera\n          resumen ejecutivo, síntesis constitucional y normativa.\n  Paso 4. EMITIR: JSON\
+      \ consolidado + PDF firmado (sha256).\n\n[TREE OF THOUGHT — estructuras de informe]\n  Opción A: por fase del proceso\
+      \ legislativo.\n  Opción B: por tipo de observación.\n  Opción C: por severidad (bloqueante → grave → leve).\nElige\
+      \ y declara en 'declaracion_metodologia'.\n\n[THREAD OF THOUGHT — hilo narrativo]\nCada observación se conecta con la\
+      \ anterior (ej. \"Además de la contradicción\ndel Art. 5, el Art. 12 colisiona con Ley 031\"). Coherencia narrativa.\n\
+      \n[META-PROMPTING]\n  ¿Toda observación tiene cita_original y fuente?\n  ¿Se eliminaron duplicados sin perder trazabilidad?\n\
+      \  ¿El resumen refleja el estado real (LISTO/BLOQUEADO)?\nSi falla → re-sintetizar antes de emitir.\n\n[REFLEXION]\n\
+      Si detectas observaciones huérfanas (sin fuente) → eliminar o marcar\n'revisar_manualmente'.\n\n[SELF-CONSISTENCY]\n\
+      Genera síntesis DOS veces (Opción B y Opción C). Si número difiere →\nreconciliar y declarar.\n\n[FORMATO]\nJSON estricto\
+      \ según contrato; PDF letra negra; es-BO.\n\n[NEGATIVE PROMPTING — 4 prohibiciones]\n- NO omitas observaciones bloqueantes\
+      \ de constitucionalidad.\n- NO alteres el sentido de las citas originales.\n- NO inventes conclusiones no sustentadas\
+      \ por los dictámenes.\n- NO emitas PDF sin certificación sha256.\n"
+    expected_output: "{\n  \"expediente_consolidado\": {\n    \"resumen_ejecutivo\": \"string\",\n    \"resumen_proyecto_detallado\"\
+      : \"string\",\n    \"sintesis_constitucional\": \"string\",\n    \"sintesis_normativa\": \"string\",\n    \"conclusiones_juridicas\"\
+      : \"string\",\n    \"recomendaciones_vinculantes\": \"string\",\n    \"declaracion_metodologia\": \"string\",\n    \"\
+      observaciones_integradas\": [\n      {\n        \"id\": \"OBS-001\",\n        \"tipo\": \"CONSTITUCIONAL | CONSISTENCIA\
+      \ | TECNICO | FONDO | PRESUPUESTO\",\n        \"fuente\": \"string\",\n        \"cita_original\": \"string\",\n    \
+      \    \"riesgo\": \"BAJO | MEDIO | ALTO | CRITICO\",\n        \"articulo_afectado\": \"string\"\n      }\n    ],\n  \
+      \  \"pdf_informe\": {\"filename\": \"string\", \"url_descarga\": \"string\", \"sha256\": \"string\"},\n    \"estado_siguiente\"\
+      : \"LISTO_PARA_DEBATE | BLOQUEADO_PARA_DEBATE\"\n  }\n}\n"
     criterios_aceptacion:
-      - "Cada observación tiene cita_original + fuente + artículo."
-      - "Sin duplicados sin trazabilidad."
-      - "Estado LISTO/BLOQUEADO coherente."
-      - "PDF con sha256 válido."
-      - "Metodología declarada."
+    - Cada observación tiene cita_original + fuente + artículo.
+    - Sin duplicados sin trazabilidad.
+    - Estado LISTO/BLOQUEADO coherente.
+    - PDF con sha256 válido.
+    - Metodología declarada.
     politica_degradacion:
-      dictamen_faltante: "Registrar en 'observaciones_integradas' como 'pendiente'; estado='BLOQUEADO_PARA_DEBATE'."
-      observacion_sin_fuente: "Marcar 'revisar_manualmente' o eliminar."
-      pdf_falla: "Emitir JSON; url_descarga='pendiente'; reintentar generación."
+      dictamen_faltante: Registrar en 'observaciones_integradas' como 'pendiente'; estado='BLOQUEADO_PARA_DEBATE'.
+      observacion_sin_fuente: Marcar 'revisar_manualmente' o eliminar.
+      pdf_falla: Emitir JSON; url_descarga='pendiente'; reintentar generación.
     herramientas:
-      - "pdf_generator"
-      - "sha256_hasher"
-
-  # ── FASE 3: Plenaria y procedimiento bicameral ─────────────────────────────
-
+    - pdf_generator
+    - sha256_hasher
+    framework: RACER
+    prompt_template: "[ROL] Concentrador. Consolidas todos los dictámenes en un Informe Final.\n \n<dictamen_constitucional>{dc}</dictamen_constitucional>\n\
+      <dictamen_consistencia>{dn}</dictamen_consistencia>\n<dictamen_tecnico>{dt}</dictamen_tecnico>\n<dictamen_fondo>{df}</dictamen_fondo>\n\
+      <dictamen_presupuestario>{dp}</dictamen_presupuestario>\n \n[META-PROMPTING] Identifica contradicciones entre los 5\
+      \ dictámenes.\nAplica jerarquía: Constitucional > Fondo > Consistencia > Técnico > Presupuestario.\nConcluye: APROBACION_PLENA\
+      \ | APROBACION_CON_MODIFICACIONES | RECHAZO | ARCHIVO."
   Registrar_Debate:
     perfil: determinista
-    descripcion: >
-      Capturar estructura formal del debate: quórum, intervenciones por bancada,
-      mociones, doble votación En Grande / En Detalle, acta certificada.
-    description: >
-      Capturar estructura formal del debate: quórum, intervenciones por bancada,
-      mociones, doble votación En Grande / En Detalle, acta certificada.
-    agente: "Secretario_Camara"
-    agent: "Secretario_Camara"
+    descripcion: 'Capturar estructura formal del debate: quórum, intervenciones por bancada, mociones, doble votación En Grande
+      / En Detalle, acta certificada.
+
+      '
+    description: 'Capturar estructura formal del debate: quórum, intervenciones por bancada, mociones, doble votación En Grande
+      / En Detalle, acta certificada.
+
+      '
+    agente: Secretario_Camara
+    agent: Secretario_Camara
     depends_on:
-      - "Concentrar_Observaciones"
-    framework_diseno: "RTF"
+    - Concentrar_Observaciones
+    framework_diseno: RTF
     tecnicas_prompt:
-      - "Chain of Thought (secuencia del debate)"
-      - "Chain of Verification (verificar totales)"
-      - "Self-consistency (doble conteo)"
-      - "Reflexion (re-contar si no cuadra)"
-      - "Few-shot (acta modelo)"
-      - "Structured output (JSON)"
-      - "Negative prompting (4 prohibiciones)"
+    - Chain of Thought (secuencia del debate)
+    - Chain of Verification (verificar totales)
+    - Self-consistency (doble conteo)
+    - Reflexion (re-contar si no cuadra)
+    - Few-shot (acta modelo)
+    - Structured output (JSON)
+    - Negative prompting (4 prohibiciones)
     contexto_boliviano:
-      reglamento: "Reglamento Camaral (Art. 156 y 160-163 CPE)"
-      quorum: "Mayoría absoluta (Art. 160); dos tercios para reformas"
-      doble_votacion: "En Grande (mayoría absoluta) y En Detalle (artículo por artículo)"
+      reglamento: Reglamento Camaral (Art. 156 y 160-163 CPE)
+      quorum: Mayoría absoluta (Art. 160); dos tercios para reformas
+      doble_votacion: En Grande (mayoría absoluta) y En Detalle (artículo por artículo)
       camaras:
-        - "Diputados (130)"
-        - "Senadores (36)"
-      formato_acta: "ACTA-YYYY-NNN"
-    prompt_operativo: |
-      [ROL]
-      Secretario General de la Cámara (Diputados o Senadores). Neutralidad
-      institucional. Das fe pública de los actos deliberativos.
-
-      [ACCIÓN — CoT]
-        Paso 1. Verifica quórum de asistencia (mayoría absoluta = 50% + 1).
-        Paso 2. Registra intervenciones (orden, legislador, partido, postura).
-        Paso 3. Registra mociones (PREVIA, ORDEN, APLAZAMIENTO).
-        Paso 4. Votación En Grande (mayoría absoluta > 50%).
-        Paso 5. Votación En Detalle (artículo por artículo).
-        Paso 6. Formaliza acta y certifica para bicameral.
-
-      [CHAIN OF VERIFICATION — 3 preguntas]
-        P1. ¿total_presentes = votos_favor + votos_contra + abstenciones?
-        P2. ¿mayoria_absoluta_requerida = floor(total_presentes/2) + 1?
-        P3. ¿resultado_final coherente con ambas votaciones?
-
-      [SELF-CONSISTENCY]
-      Ejecuta conteo DOS veces. Si difiere → re-contar y registrar incidencia
-      en 'acuerdos'.
-
-      [REFLEXION]
-      Si totales no cuadran → NO emitir acta; marcar 'revisar_manualmente'.
-
-      [FEW-SHOT — acta modelo]
-        {
-          "acta_debate":{
-            "fecha":"2026-04-05","sesion_numero":14,
-            "camara":"Cámara de Diputados","tipo_sesion":"ORDINARIA",
-            "quorum_legal":{"total_miembros":130,"presentes":110,
-              "quorum_verificado":true},
-            "intervenciones":[
-              {"orden":1,"legislador":"Dip. X","partido":"MAS-IPSP",
-               "postura":"A_FAVOR","contenido":"...","timestamp":"10:15"}
-            ],
-            "mociones":[
-              {"tipo":"ORDEN","proponente":"Dip. Y","resultado":"APROBADA"}
-            ],
-            "votacion_en_grande":{"total_votantes":110,"favor":75,"contra":30,
-              "abstenciones":5,"mayoria_absoluta_requerida":56,
-              "resultado":"APROBADO"},
-            "votacion_en_detalle":[
-              {"articulo":1,"favor":80,"contra":25,"abstenciones":5,
-               "resultado":"APROBADO"}
-            ],
-            "resultado_final":"APROBADO_EN_GRANDE_Y_DETALLE",
-            "estado_siguiente":"EN_TRAMITE_BICAMERAL"
-          }
-        }
-
-      [FORMATO]
-      JSON estricto según contrato, es-BO.
-
-      [NEGATIVE PROMPTING — 4 prohibiciones]
-      - PROHIBIDO omitir intervenciones o alterar el sentido del voto.
-      - PROHIBIDO emitir acta si los totales no cuadran.
-      - PROHIBIDO confundir mayoría absoluta con mayoría simple.
-      - PROHIBIDO modificar el texto aprobado al transcribirlo.
-    expected_output: |
-      {
-        "acta_debate": {
-          "fecha": "YYYY-MM-DD",
-          "sesion_numero": 14,
-          "camara": "Cámara de Diputados | Cámara de Senadores",
-          "tipo_sesion": "ORDINARIA | EXTRAORDINARIA",
-          "quorum_legal": {"total_miembros": 130, "presentes": 110,
-                           "quorum_verificado": true},
-          "intervenciones": [
-            {"orden": 1, "legislador": "string", "partido": "string",
-             "postura": "A_FAVOR | EN_CONTRA | OBSERVACION",
-             "contenido": "string", "timestamp": "HH:MM"}
-          ],
-          "mociones": [
-            {"tipo": "PREVIA | ORDEN | APLAZAMIENTO", "proponente": "string",
-             "resultado": "APROBADA | RECHAZADA"}
-          ],
-          "votacion_en_grande": {"total_votantes": 110, "favor": 75,
-            "contra": 30, "abstenciones": 5, "mayoria_absoluta_requerida": 56,
-            "resultado": "APROBADO | RECHAZADO"},
-          "votacion_en_detalle": [
-            {"articulo": 1, "favor": 80, "contra": 25, "abstenciones": 5,
-             "resultado": "APROBADO | MODIFICADO | SUPRIMIDO"}
-          ],
-          "acuerdos": ["string"],
-          "resultado_final": "APROBADO_EN_GRANDE_Y_DETALLE | RECHAZADO_EN_ORIGEN_ARCHIVADO",
-          "estado_siguiente": "EN_TRAMITE_BICAMERAL | ARCHIVADO_LEGISLATURA"
-        }
-      }
+      - Diputados (130)
+      - Senadores (36)
+      formato_acta: ACTA-YYYY-NNN
+    prompt_operativo: "[ROL]\nSecretario General de la Cámara (Diputados o Senadores). Neutralidad\ninstitucional. Das fe\
+      \ pública de los actos deliberativos.\n\n[ACCIÓN — CoT]\n  Paso 1. Verifica quórum de asistencia (mayoría absoluta =\
+      \ 50% + 1).\n  Paso 2. Registra intervenciones (orden, legislador, partido, postura).\n  Paso 3. Registra mociones (PREVIA,\
+      \ ORDEN, APLAZAMIENTO).\n  Paso 4. Votación En Grande (mayoría absoluta > 50%).\n  Paso 5. Votación En Detalle (artículo\
+      \ por artículo).\n  Paso 6. Formaliza acta y certifica para bicameral.\n\n[CHAIN OF VERIFICATION — 3 preguntas]\n  P1.\
+      \ ¿total_presentes = votos_favor + votos_contra + abstenciones?\n  P2. ¿mayoria_absoluta_requerida = floor(total_presentes/2)\
+      \ + 1?\n  P3. ¿resultado_final coherente con ambas votaciones?\n\n[SELF-CONSISTENCY]\nEjecuta conteo DOS veces. Si difiere\
+      \ → re-contar y registrar incidencia\nen 'acuerdos'.\n\n[REFLEXION]\nSi totales no cuadran → NO emitir acta; marcar\
+      \ 'revisar_manualmente'.\n\n[FEW-SHOT — acta modelo]\n  {\n    \"acta_debate\":{\n      \"fecha\":\"2026-04-05\",\"\
+      sesion_numero\":14,\n      \"camara\":\"Cámara de Diputados\",\"tipo_sesion\":\"ORDINARIA\",\n      \"quorum_legal\"\
+      :{\"total_miembros\":130,\"presentes\":110,\n        \"quorum_verificado\":true},\n      \"intervenciones\":[\n    \
+      \    {\"orden\":1,\"legislador\":\"Dip. X\",\"partido\":\"MAS-IPSP\",\n         \"postura\":\"A_FAVOR\",\"contenido\"\
+      :\"...\",\"timestamp\":\"10:15\"}\n      ],\n      \"mociones\":[\n        {\"tipo\":\"ORDEN\",\"proponente\":\"Dip.\
+      \ Y\",\"resultado\":\"APROBADA\"}\n      ],\n      \"votacion_en_grande\":{\"total_votantes\":110,\"favor\":75,\"contra\"\
+      :30,\n        \"abstenciones\":5,\"mayoria_absoluta_requerida\":56,\n        \"resultado\":\"APROBADO\"},\n      \"\
+      votacion_en_detalle\":[\n        {\"articulo\":1,\"favor\":80,\"contra\":25,\"abstenciones\":5,\n         \"resultado\"\
+      :\"APROBADO\"}\n      ],\n      \"resultado_final\":\"APROBADO_EN_GRANDE_Y_DETALLE\",\n      \"estado_siguiente\":\"\
+      EN_TRAMITE_BICAMERAL\"\n    }\n  }\n\n[FORMATO]\nJSON estricto según contrato, es-BO.\n\n[NEGATIVE PROMPTING — 4 prohibiciones]\n\
+      - PROHIBIDO omitir intervenciones o alterar el sentido del voto.\n- PROHIBIDO emitir acta si los totales no cuadran.\n\
+      - PROHIBIDO confundir mayoría absoluta con mayoría simple.\n- PROHIBIDO modificar el texto aprobado al transcribirlo.\n"
+    expected_output: "{\n  \"acta_debate\": {\n    \"fecha\": \"YYYY-MM-DD\",\n    \"sesion_numero\": 14,\n    \"camara\"\
+      : \"Cámara de Diputados | Cámara de Senadores\",\n    \"tipo_sesion\": \"ORDINARIA | EXTRAORDINARIA\",\n    \"quorum_legal\"\
+      : {\"total_miembros\": 130, \"presentes\": 110,\n                     \"quorum_verificado\": true},\n    \"intervenciones\"\
+      : [\n      {\"orden\": 1, \"legislador\": \"string\", \"partido\": \"string\",\n       \"postura\": \"A_FAVOR | EN_CONTRA\
+      \ | OBSERVACION\",\n       \"contenido\": \"string\", \"timestamp\": \"HH:MM\"}\n    ],\n    \"mociones\": [\n     \
+      \ {\"tipo\": \"PREVIA | ORDEN | APLAZAMIENTO\", \"proponente\": \"string\",\n       \"resultado\": \"APROBADA | RECHAZADA\"\
+      }\n    ],\n    \"votacion_en_grande\": {\"total_votantes\": 110, \"favor\": 75,\n      \"contra\": 30, \"abstenciones\"\
+      : 5, \"mayoria_absoluta_requerida\": 56,\n      \"resultado\": \"APROBADO | RECHAZADO\"},\n    \"votacion_en_detalle\"\
+      : [\n      {\"articulo\": 1, \"favor\": 80, \"contra\": 25, \"abstenciones\": 5,\n       \"resultado\": \"APROBADO |\
+      \ MODIFICADO | SUPRIMIDO\"}\n    ],\n    \"acuerdos\": [\"string\"],\n    \"resultado_final\": \"APROBADO_EN_GRANDE_Y_DETALLE\
+      \ | RECHAZADO_EN_ORIGEN_ARCHIVADO\",\n    \"estado_siguiente\": \"EN_TRAMITE_BICAMERAL | ARCHIVADO_LEGISLATURA\"\n \
+      \ }\n}\n"
     criterios_aceptacion:
-      - "Suma de votos = total_presentes en cada votación."
-      - "Quórum verificado coherente con miembros y presentes."
-      - "resultado_final coherente con las dos votaciones."
-      - "Acta cumple formato ACTA-YYYY-NNN."
+    - Suma de votos = total_presentes en cada votación.
+    - Quórum verificado coherente con miembros y presentes.
+    - resultado_final coherente con las dos votaciones.
+    - Acta cumple formato ACTA-YYYY-NNN.
     politica_degradacion:
-      totales_no_cuadran: "No emitir acta; estado='revisar_manualmente'."
-      sin_quorum: "quorum_verificado=false; estado_siguiente='ARCHIVADO_LEGISLATURA'."
-      mocion_ambigua: "Registrar como 'OBSERVACION'; solicitar aclaración."
+      totales_no_cuadran: No emitir acta; estado='revisar_manualmente'.
+      sin_quorum: quorum_verificado=false; estado_siguiente='ARCHIVADO_LEGISLATURA'.
+      mocion_ambigua: Registrar como 'OBSERVACION'; solicitar aclaración.
     herramientas: []
-
+    framework: RTF
+    prompt_template: "[ROL] Secretario de Actas. Registra el debate y el escrutinio de votos.\n \n<acta_sesion>{datos_sesion}</acta_sesion>\n\
+      <registro_votos>{votos}</registro_votos>\n \n[PoT] Calcula: quorum_minimo, mayoria_absoluta, dos_tercios.\n[CoVe] Verifica\
+      \ que votos_a_favor + en_contra + blancos == presentes.\n[SELF-CONSISTENCY] Realiza el cómputo dos veces para confirmar\
+      \ coincidencia.\nResultado: APROBADO_PRIMERA_LECTURA | APROBADO_SEGUNDA_LECTURA | RECHAZADO | REQUIERE_DOS_TERCIOS |\
+      \ INSUFICIENTE_QUORUM."
   Gestionar_Bicameral:
     perfil: conversacional
-    descripcion: >
-      Gestión del procedimiento bicameral (Art. 163 CPE): diff artículo por
-      artículo entre Cámara de Origen y Revisora, clasificación de cambios,
-      sanción o convocatoria a Comisión Mixta.
-    description: >
-      Gestión del procedimiento bicameral (Art. 163 CPE): diff artículo por
-      artículo entre Cámara de Origen y Revisora, clasificación de cambios,
-      sanción o convocatoria a Comisión Mixta.
-    agente: "Bicameral"
-    agent: "Bicameral"
+    descripcion: 'Gestión del procedimiento bicameral (Art. 163 CPE): diff artículo por artículo entre Cámara de Origen y
+      Revisora, clasificación de cambios, sanción o convocatoria a Comisión Mixta.
+
+      '
+    description: 'Gestión del procedimiento bicameral (Art. 163 CPE): diff artículo por artículo entre Cámara de Origen y
+      Revisora, clasificación de cambios, sanción o convocatoria a Comisión Mixta.
+
+      '
+    agente: Bicameral
+    agent: Bicameral
     depends_on:
-      - "Registrar_Debate"
-    framework_diseno: "CO-STAR"
+    - Registrar_Debate
+    framework_diseno: CO-STAR
     tecnicas_prompt:
-      - "Chain of Thought (diff)"
-      - "Contrastive (origen vs. revisora)"
-      - "Least-to-most (por artículo)"
-      - "Self-consistency (doble comparación)"
-      - "Thread of Thought (trazabilidad)"
-      - "XML tags (dos versiones)"
-      - "Structured output (JSON)"
-      - "Negative prompting (4 prohibiciones)"
+    - Chain of Thought (diff)
+    - Contrastive (origen vs. revisora)
+    - Least-to-most (por artículo)
+    - Self-consistency (doble comparación)
+    - Thread of Thought (trazabilidad)
+    - XML tags (dos versiones)
+    - Structured output (JSON)
+    - Negative prompting (4 prohibiciones)
     contexto_boliviano:
-      marco: "Art. 163 CPE"
+      marco: Art. 163 CPE
       camaras:
-        - "Diputados (Origen o Revisora)"
-        - "Senadores (Revisora u Origen)"
-      comision_mixta: "Igual número de diputados y senadores"
-      plazos: "Revisora: 30 días"
-      resultados: "SANCION_DEFINITIVA | MODIFICADO_REQUIERE_CONSENSO | RECHAZADO_EN_REVISORA"
-    prompt_operativo: |
-      [ROL]
-      Coordinador de la Secretaría Conjunta de la ALP. Garantizas Art. 163 CPE.
-
-      [ACCIÓN — LEAST-TO-MOST + CONTRASTIVE]
-      Para cada artículo:
-        Paso 1. Compara texto_origen vs. texto_revisora.
-        Paso 2. Clasifica cambio: SUBSTANCIAL | FORMA | SUPRESION | ADICION.
-        Paso 3. Evalúa MAYOR (afecta fondo) o MENOR (forma/técnica).
-        Paso 4. Registra cambio con texto anterior y nuevo.
-
-      [CHAIN OF THOUGHT — decisión final]
-        Paso 1. Si consenso total → SANCION_DEFINITIVA.
-        Paso 2. Si cambios MENORES → armonizar y SANCION_DEFINITIVA.
-        Paso 3. Si cambios MAYORES → MODIFICADO_REQUIERE_CONSENSO.
-        Paso 4. Si Revisora rechaza → RECHAZADO_EN_REVISORA; evaluar Comisión
-                Mixta.
-
-      [SELF-CONSISTENCY]
-      Diff DOS veces: (a) literal; (b) semántica. Si difieren → reportar en
-      'texto_armonizado_propuesto'.
-
-      [XML]
-      <version_origen>{texto_camara_origen}</version_origen>
-      <version_revisora>{texto_camara_revisora}</version_revisora>
-
-      [THREAD OF THOUGHT]
-      "El Art. 3 fue modificado por la Revisora en inciso b, lo que impacta el
-      Art. 5 del Origen. Por tanto, se requiere armonización conjunta de Arts. 3 y 5."
-
-      [FORMATO]
-      JSON estricto según contrato, es-BO.
-
-      [NEGATIVE PROMPTING — 4 prohibiciones]
-      - PROHIBIDO omitir artículos sin comparación explícita.
-      - PROHIBIDO clasificar FORMA como SUBSTANCIAL sin justificar.
-      - PROHIBIDO proponer texto armonizado que no preserve sentido de ambas cámaras.
-      - PROHIBIDO ignorar el plazo de 30 días de la Revisora.
-    expected_output: |
-      {
-        "ciclo_bicameral": {
-          "proyecto_id": "string",
-          "version_original": {"articulos": []},
-          "version_retornada": {"articulos": []},
-          "cambios_detectados": [
-            {"tipo": "MODIFICACION|ELIMINACION|ADICION", "articulo": 5,
-             "descripcion": "string"}
-          ],
-          "clasificacion_cambios": "MAYORES|MENORES",
-          "resolucion": "SANCION_DIRECTA | CONVOCATORIA_PLENO_ALP",
-          "texto_armonizado_propuesto": "string",
-          "estado_siguiente": "LISTO_PARA_VETO_PROMULGACION"
-        }
-      }
+      - Diputados (Origen o Revisora)
+      - Senadores (Revisora u Origen)
+      comision_mixta: Igual número de diputados y senadores
+      plazos: 'Revisora: 30 días'
+      resultados: SANCION_DEFINITIVA | MODIFICADO_REQUIERE_CONSENSO | RECHAZADO_EN_REVISORA
+    prompt_operativo: "[ROL]\nCoordinador de la Secretaría Conjunta de la ALP. Garantizas Art. 163 CPE.\n\n[ACCIÓN — LEAST-TO-MOST\
+      \ + CONTRASTIVE]\nPara cada artículo:\n  Paso 1. Compara texto_origen vs. texto_revisora.\n  Paso 2. Clasifica cambio:\
+      \ SUBSTANCIAL | FORMA | SUPRESION | ADICION.\n  Paso 3. Evalúa MAYOR (afecta fondo) o MENOR (forma/técnica).\n  Paso\
+      \ 4. Registra cambio con texto anterior y nuevo.\n\n[CHAIN OF THOUGHT — decisión final]\n  Paso 1. Si consenso total\
+      \ → SANCION_DEFINITIVA.\n  Paso 2. Si cambios MENORES → armonizar y SANCION_DEFINITIVA.\n  Paso 3. Si cambios MAYORES\
+      \ → MODIFICADO_REQUIERE_CONSENSO.\n  Paso 4. Si Revisora rechaza → RECHAZADO_EN_REVISORA; evaluar Comisión\n       \
+      \   Mixta.\n\n[SELF-CONSISTENCY]\nDiff DOS veces: (a) literal; (b) semántica. Si difieren → reportar en\n'texto_armonizado_propuesto'.\n\
+      \n[XML]\n<version_origen>{texto_camara_origen}</version_origen>\n<version_revisora>{texto_camara_revisora}</version_revisora>\n\
+      \n[THREAD OF THOUGHT]\n\"El Art. 3 fue modificado por la Revisora en inciso b, lo que impacta el\nArt. 5 del Origen.\
+      \ Por tanto, se requiere armonización conjunta de Arts. 3 y 5.\"\n\n[FORMATO]\nJSON estricto según contrato, es-BO.\n\
+      \n[NEGATIVE PROMPTING — 4 prohibiciones]\n- PROHIBIDO omitir artículos sin comparación explícita.\n- PROHIBIDO clasificar\
+      \ FORMA como SUBSTANCIAL sin justificar.\n- PROHIBIDO proponer texto armonizado que no preserve sentido de ambas cámaras.\n\
+      - PROHIBIDO ignorar el plazo de 30 días de la Revisora.\n"
+    expected_output: "{\n  \"ciclo_bicameral\": {\n    \"proyecto_id\": \"string\",\n    \"version_original\": {\"articulos\"\
+      : []},\n    \"version_retornada\": {\"articulos\": []},\n    \"cambios_detectados\": [\n      {\"tipo\": \"MODIFICACION|ELIMINACION|ADICION\"\
+      , \"articulo\": 5,\n       \"descripcion\": \"string\"}\n    ],\n    \"clasificacion_cambios\": \"MAYORES|MENORES\"\
+      ,\n    \"resolucion\": \"SANCION_DIRECTA | CONVOCATORIA_PLENO_ALP\",\n    \"texto_armonizado_propuesto\": \"string\"\
+      ,\n    \"estado_siguiente\": \"LISTO_PARA_VETO_PROMULGACION\"\n  }\n}\n"
     criterios_aceptacion:
-      - "Todos los artículos comparados explícitamente."
-      - "Cambios MAYORES sustentados con justificación."
-      - "Texto armonizado preserva sentido de ambas cámaras."
-      - "Plazo de 30 días considerado."
+    - Todos los artículos comparados explícitamente.
+    - Cambios MAYORES sustentados con justificación.
+    - Texto armonizado preserva sentido de ambas cámaras.
+    - Plazo de 30 días considerado.
     politica_degradacion:
-      version_faltante: "resolucion='MODIFICADO_REQUIERE_CONSENSO'; declarar en 'texto_armonizado_propuesto' como pendiente."
-      cambio_ambiguo: "Clasificar como 'revisar_manualmente' en 'cambios_detectados'."
+      version_faltante: resolucion='MODIFICADO_REQUIERE_CONSENSO'; declarar en 'texto_armonizado_propuesto' como pendiente.
+      cambio_ambiguo: Clasificar como 'revisar_manualmente' en 'cambios_detectados'.
     herramientas: []
-
-  # ── FASE 4: Poder Ejecutivo y publicación ──────────────────────────────────
-
+    framework: CO-STAR
+    prompt_template: "[ROL] Gestor Bicameral ALP.\n \n<version_camara_origen>{texto_origen}</version_camara_origen>\n<version_camara_revisora>{texto_revisora}</version_camara_revisora>\n\
+      \ \n[CoT DIFF]\n1. Identifica todos los artículos modificados (añadir, suprimir, reformular).\n2. Para cada modificación:\
+      \ ¿es ACEPTABLE por la Cámara de Origen?\n3. Si > 0 modificaciones BLOQUEANTES → propón convocatoria a Asamblea.\n4.\
+      \ Calcula días hábiles transcurridos desde recepción en Revisora.\n \nSalida: {\"matrix_enmiendas\":[...], \"estado_bicameral\"\
+      :\"CONFORME|DISCREPANCIA|PLAZO_VENCIDO\", \"dias_habiles_transcurridos\":..., \"curso_accion\":\"PROMULGACION|ASAMBLEA_PLURINACIONAL|ARCHIVO\"\
+      }"
   Evaluar_Veto_Promulgacion:
     perfil: razonamiento
-    descripcion: >
-      Dictamen técnico-jurídico para la Presidencia del Estado (Art. 164 CPE):
-      decisión de PROMULGAR, VETO_PARCIAL o VETO_TOTAL, con pliego de
-      observaciones y opciones para operador humano (HITL).
-    description: >
-      Dictamen técnico-jurídico para la Presidencia del Estado (Art. 164 CPE):
-      decisión de PROMULGAR, VETO_PARCIAL o VETO_TOTAL, con pliego de
-      observaciones y opciones para operador humano (HITL).
-    agente: "Veto_Promulgacion"
-    agent: "Veto_Promulgacion"
+    descripcion: 'Dictamen técnico-jurídico para la Presidencia del Estado (Art. 164 CPE): decisión de PROMULGAR, VETO_PARCIAL
+      o VETO_TOTAL, con pliego de observaciones y opciones para operador humano (HITL).
+
+      '
+    description: 'Dictamen técnico-jurídico para la Presidencia del Estado (Art. 164 CPE): decisión de PROMULGAR, VETO_PARCIAL
+      o VETO_TOTAL, con pliego de observaciones y opciones para operador humano (HITL).
+
+      '
+    agente: Veto_Promulgacion
+    agent: Veto_Promulgacion
     depends_on:
-      - "Gestionar_Bicameral"
-    framework_diseno: "RACER"
+    - Gestionar_Bicameral
+    framework_diseno: RACER
     tecnicas_prompt:
-      - "Chain of Thought (multicriterio)"
-      - "Tree of Thought (3 escenarios)"
-      - "Debate prompting (pros vs. contras)"
-      - "Self-consistency (doble cálculo)"
-      - "Reflexion (reconciliar)"
-      - "Few-shot (veto parcial)"
-      - "Structured output (JSON)"
-      - "Negative prompting (4 prohibiciones)"
-      - "Human-in-the-loop explícito"
+    - Chain of Thought (multicriterio)
+    - Tree of Thought (3 escenarios)
+    - Debate prompting (pros vs. contras)
+    - Self-consistency (doble cálculo)
+    - Reflexion (reconciliar)
+    - Few-shot (veto parcial)
+    - Structured output (JSON)
+    - Negative prompting (4 prohibiciones)
+    - Human-in-the-loop explícito
     contexto_boliviano:
-      plazo: "10 días (Art. 164 CPE)"
-      organo: "Presidencia del Estado Plurinacional"
-      destinatario_veto: "Asamblea Legislativa Plurinacional (reconsideración)"
-      vacatio_legis: "15 días hábiles"
-      presupuesto: "Techos TGN — Ley 1178 SAFCO"
-    prompt_operativo: |
-      [ROL]
-      Asesor jurídico y político de la Presidencia del Estado Plurinacional.
-      Evalúas el proyecto sancionado dentro de los 10 días del Art. 164 CPE.
-
-      [ACCIÓN — CoT multicriterio]
-        Paso 1. Legalidad constitucional (25%).
-        Paso 2. Sostenibilidad fiscal (25%) — Ley 1178 SAFCO.
-        Paso 3. Factibilidad técnica (20%) — dictamen Especialista_Tecnico.
-        Paso 4. Oportunidad política (15%).
-        Paso 5. Urgencia social (15%).
-        Paso 6. Promedio ponderado (0-10).
-
-      [DEBATE PROMPTING]
-      Articula DOS posturas:
-        A (Promulgar): razones a favor.
-        B (Vetar): razones a favor del veto.
-      Delibera y concluye con la más robusta, declarando por qué la otra fue
-      descartada.
-
-      [TREE OF THOUGHT — 3 escenarios]
-        A: PROMULGAR — consecuencias legales, fiscales, políticas.
-        B: VETO_PARCIAL — artículos observados y redacción sustitutiva.
-        C: VETO_TOTAL — fundamentación y riesgo de insistencia ALP.
-
-      [SELF-CONSISTENCY]
-      Calcula promedio DOS veces. Si difiere > 0.5 → reconciliar.
-
-      [FEW-SHOT]
-        {
-          "decision":"VETO_PARCIAL",
-          "puntuacion_multicriterio":{"legalidad":8.5,"impacto_fiscal":7.0,
-            "viabilidad_tecnica":8.0,"alineamiento_politico":7.5,
-            "urgencia_social":9.0,"promedio_ponderado":8.0},
-          "articulos_observados":["Art. 12","Art. 27"],
-          "fundamentacion_decision":"El Art. 12 invade competencia exclusiva
-            departamental (Art. 300 CPE). El Art. 27 crea gasto sin fuente TGN.",
-          "mensaje_a_la_asamblea":"Se observan Arts. 12 y 27 por..."
-        }
-
-      [HUMAN-IN-THE-LOOP]
-      La decisión final SIEMPRE la confirma el operador humano. Tu salida es
-      recomendación técnica, nunca acto administrativo.
-
-      [FORMATO]
-      JSON estricto con 'opciones_operador_humano' y 'ruta_siguiente', es-BO.
-
-      [NEGATIVE PROMPTING — 4 prohibiciones]
-      - NO decidas por el Presidente: solo recomiendas.
-      - NO omitas el plazo de 10 días.
-      - NO fundamente veto en razones políticas sin sustento normativo.
-      - NO inventes artículos observados.
-    expected_output: |
-      {
-        "evaluacion_veto": {
-          "proyecto_id": "string",
-          "decision": "PROMULGAR | VETAR_TOTAL | VETAR_PARCIAL",
-          "modo_control": "HUMAN_IN_THE_LOOP",
-          "plazo_constitucional_dias": 10,
-          "recomendacion_tecnica": {
-            "dictamen_sugerido": "RECOMIENDA_PROMULGAR | RECOMIENDA_VETAR_TOTAL | RECOMIENDA_VETAR_PARCIAL",
-            "resumen_ejecutivo": "string",
-            "alertas_constitucionales": ["string"],
-            "alertas_fiscales": ["string"],
-            "fundamentacion": "string"
-          },
-          "pliego_observaciones": [
-            {"articulo": "string", "objecion": "string",
-             "propuesta_modificacion": "string"}
-          ],
-          "opciones_operador_humano": [
-            {"accion": "PROMULGAR", "etiqueta": "Firmar y Promulgar Ley",
-             "destino": "PUBLICACION_GACETA"},
-            {"accion": "VETAR_TOTAL", "etiqueta": "Emitir Veto Total",
-             "destino": "REMISION_ALP"},
-            {"accion": "VETAR_PARCIAL", "etiqueta": "Veto Parcial a Artículos",
-             "destino": "REMISION_ALP"}
-          ],
-          "justificacion": "string",
-          "ruta_siguiente": "PUBLICACION_GACETA | REMISION_OBSERVACIONES_ALP",
-          "estado_siguiente": "PROMULGADO_EJECUTIVO | VETADO_REMITIDO_A_ALP"
-        }
-      }
+      plazo: 10 días (Art. 164 CPE)
+      organo: Presidencia del Estado Plurinacional
+      destinatario_veto: Asamblea Legislativa Plurinacional (reconsideración)
+      vacatio_legis: 15 días hábiles
+      presupuesto: Techos TGN — Ley 1178 SAFCO
+    prompt_operativo: "[ROL]\nAsesor jurídico y político de la Presidencia del Estado Plurinacional.\nEvalúas el proyecto\
+      \ sancionado dentro de los 10 días del Art. 164 CPE.\n\n[ACCIÓN — CoT multicriterio]\n  Paso 1. Legalidad constitucional\
+      \ (25%).\n  Paso 2. Sostenibilidad fiscal (25%) — Ley 1178 SAFCO.\n  Paso 3. Factibilidad técnica (20%) — dictamen Especialista_Tecnico.\n\
+      \  Paso 4. Oportunidad política (15%).\n  Paso 5. Urgencia social (15%).\n  Paso 6. Promedio ponderado (0-10).\n\n[DEBATE\
+      \ PROMPTING]\nArticula DOS posturas:\n  A (Promulgar): razones a favor.\n  B (Vetar): razones a favor del veto.\nDelibera\
+      \ y concluye con la más robusta, declarando por qué la otra fue\ndescartada.\n\n[TREE OF THOUGHT — 3 escenarios]\n \
+      \ A: PROMULGAR — consecuencias legales, fiscales, políticas.\n  B: VETO_PARCIAL — artículos observados y redacción sustitutiva.\n\
+      \  C: VETO_TOTAL — fundamentación y riesgo de insistencia ALP.\n\n[SELF-CONSISTENCY]\nCalcula promedio DOS veces. Si\
+      \ difiere > 0.5 → reconciliar.\n\n[FEW-SHOT]\n  {\n    \"decision\":\"VETO_PARCIAL\",\n    \"puntuacion_multicriterio\"\
+      :{\"legalidad\":8.5,\"impacto_fiscal\":7.0,\n      \"viabilidad_tecnica\":8.0,\"alineamiento_politico\":7.5,\n     \
+      \ \"urgencia_social\":9.0,\"promedio_ponderado\":8.0},\n    \"articulos_observados\":[\"Art. 12\",\"Art. 27\"],\n  \
+      \  \"fundamentacion_decision\":\"El Art. 12 invade competencia exclusiva\n      departamental (Art. 300 CPE). El Art.\
+      \ 27 crea gasto sin fuente TGN.\",\n    \"mensaje_a_la_asamblea\":\"Se observan Arts. 12 y 27 por...\"\n  }\n\n[HUMAN-IN-THE-LOOP]\n\
+      La decisión final SIEMPRE la confirma el operador humano. Tu salida es\nrecomendación técnica, nunca acto administrativo.\n\
+      \n[FORMATO]\nJSON estricto con 'opciones_operador_humano' y 'ruta_siguiente', es-BO.\n\n[NEGATIVE PROMPTING — 4 prohibiciones]\n\
+      - NO decidas por el Presidente: solo recomiendas.\n- NO omitas el plazo de 10 días.\n- NO fundamente veto en razones\
+      \ políticas sin sustento normativo.\n- NO inventes artículos observados.\n"
+    expected_output: "{\n  \"evaluacion_veto\": {\n    \"proyecto_id\": \"string\",\n    \"decision\": \"PROMULGAR | VETAR_TOTAL\
+      \ | VETAR_PARCIAL\",\n    \"modo_control\": \"HUMAN_IN_THE_LOOP\",\n    \"plazo_constitucional_dias\": 10,\n    \"recomendacion_tecnica\"\
+      : {\n      \"dictamen_sugerido\": \"RECOMIENDA_PROMULGAR | RECOMIENDA_VETAR_TOTAL | RECOMIENDA_VETAR_PARCIAL\",\n  \
+      \    \"resumen_ejecutivo\": \"string\",\n      \"alertas_constitucionales\": [\"string\"],\n      \"alertas_fiscales\"\
+      : [\"string\"],\n      \"fundamentacion\": \"string\"\n    },\n    \"pliego_observaciones\": [\n      {\"articulo\"\
+      : \"string\", \"objecion\": \"string\",\n       \"propuesta_modificacion\": \"string\"}\n    ],\n    \"opciones_operador_humano\"\
+      : [\n      {\"accion\": \"PROMULGAR\", \"etiqueta\": \"Firmar y Promulgar Ley\",\n       \"destino\": \"PUBLICACION_GACETA\"\
+      },\n      {\"accion\": \"VETAR_TOTAL\", \"etiqueta\": \"Emitir Veto Total\",\n       \"destino\": \"REMISION_ALP\"},\n\
+      \      {\"accion\": \"VETAR_PARCIAL\", \"etiqueta\": \"Veto Parcial a Artículos\",\n       \"destino\": \"REMISION_ALP\"\
+      }\n    ],\n    \"justificacion\": \"string\",\n    \"ruta_siguiente\": \"PUBLICACION_GACETA | REMISION_OBSERVACIONES_ALP\"\
+      ,\n    \"estado_siguiente\": \"PROMULGADO_EJECUTIVO | VETADO_REMITIDO_A_ALP\"\n  }\n}\n"
     criterios_aceptacion:
-      - "Promedio ponderado calculado con pesos correctos."
-      - "Si VETO_PARCIAL: artículos observados y redacción sustitutiva."
-      - "Opciones HITL siempre presentes."
-      - "Plazo 10 días explícito."
+    - Promedio ponderado calculado con pesos correctos.
+    - 'Si VETO_PARCIAL: artículos observados y redacción sustitutiva.'
+    - Opciones HITL siempre presentes.
+    - Plazo 10 días explícito.
     politica_degradacion:
-      dictamen_faltante: "recomendacion_tecnica con alertas de 'información incompleta'; decision conservadora."
-      empate_multicriterio: "Recomendar PROMULGAR salvo alerta constitucional; declarar en justificacion."
-      veto_sin_articulos: "VETO_PARCIAL inválido → degradar a VETO_TOTAL o PROMULGAR."
+      dictamen_faltante: recomendacion_tecnica con alertas de 'información incompleta'; decision conservadora.
+      empate_multicriterio: Recomendar PROMULGAR salvo alerta constitucional; declarar en justificacion.
+      veto_sin_articulos: VETO_PARCIAL inválido → degradar a VETO_TOTAL o PROMULGAR.
     herramientas: []
-
+    framework: RACER
+    prompt_template: "[ROL] Evaluador de Veto Presidencial ALP.\n \n<ley_observada>{texto_ley}</ley_observada>\n<veto_presidencial>{texto_veto}</veto_presidencial>\n\
+      \ \n[DEBATE] Articula Postura A (Ejecutivo) vs. Postura B (ALP).\n[ToT] Evalúa los 3 cursos de acción: allanamiento\
+      \ / insistencia / promulgación forzosa.\n[PoT] Verifica: días_habiles_veto <= 10. Si supera → veto extemporáneo, promulgar."
   Publicar_Ley_Oficial:
     perfil: determinista
-    descripcion: >
-      Publicación en Gaceta Oficial: número correlativo de Ley, Decreto Supremo
-      de Promulgación, cálculo de vacatio legis (15 días hábiles con feriados
-      bolivianos), URL oficial.
-    description: >
-      Publicación en Gaceta Oficial: número correlativo de Ley, Decreto Supremo
-      de Promulgación, cálculo de vacatio legis (15 días hábiles con feriados
-      bolivianos), URL oficial.
-    agente: "Publicacion_Oficial"
-    agent: "Publicacion_Oficial"
+    descripcion: 'Publicación en Gaceta Oficial: número correlativo de Ley, Decreto Supremo de Promulgación, cálculo de vacatio
+      legis (15 días hábiles con feriados bolivianos), URL oficial.
+
+      '
+    description: 'Publicación en Gaceta Oficial: número correlativo de Ley, Decreto Supremo de Promulgación, cálculo de vacatio
+      legis (15 días hábiles con feriados bolivianos), URL oficial.
+
+      '
+    agente: Publicacion_Oficial
+    agent: Publicacion_Oficial
     depends_on:
-      - "Evaluar_Veto_Promulgacion"
-    framework_diseno: "RTF"
+    - Evaluar_Veto_Promulgacion
+    framework_diseno: RTF
     tecnicas_prompt:
-      - "Instruction prompt (determinista)"
-      - "Chain of Thought (cálculo de vacatio)"
-      - "Program-of-Thoughts (fórmulas de fechas)"
-      - "Chain of Verification (verificar correlativo y fechas)"
-      - "Structured output (JSON)"
-      - "Negative prompting (4 prohibiciones)"
+    - Instruction prompt (determinista)
+    - Chain of Thought (cálculo de vacatio)
+    - Program-of-Thoughts (fórmulas de fechas)
+    - Chain of Verification (verificar correlativo y fechas)
+    - Structured output (JSON)
+    - Negative prompting (4 prohibiciones)
     contexto_boliviano:
-      gaceta: "Gaceta Oficial del Estado Plurinacional de Bolivia"
-      vacatio: "15 días hábiles (salvo disposición especial)"
+      gaceta: Gaceta Oficial del Estado Plurinacional de Bolivia
+      vacatio: 15 días hábiles (salvo disposición especial)
       feriados:
-        - "1 ene"
-        - "22 ene (Estado Plurinacional)"
-        - "Carnaval"
-        - "Viernes Santo"
-        - "1 may"
-        - "Corpus Christi"
-        - "21 jun (Año Nuevo Andino)"
-        - "6 ago (Independencia)"
-        - "2 nov"
-        - "25 dic"
-      formato_decreto: "Decreto Supremo N° YYYY"
-      url: "http://www.gacetaoficialdebolivia.gob.bo/leyes/..."
-    prompt_operativo: |
-      [ROL]
-      Dirección de la Gaceta Oficial del Estado Plurinacional. Procedimiento
-      determinista: no juzgas contenido; garantizas publicidad, asignas número
-      correlativo único, fijas edición oficial y registras vigencia.
-
-      [ACCIÓN — CoT de fechas]
-        Paso 1. Asigna atómicamente número correlativo de Ley (Ley N° XXXX).
-        Paso 2. Redacta Decreto Supremo de Promulgación.
-        Paso 3. Calcula vigencia = promulgación + 15 días hábiles (excluye
-                sábados, domingos y feriados nacionales bolivianos).
-        Paso 4. Verifica vigencia posterior a publicación.
-        Paso 5. Registra URL oficial.
-
-      [PROGRAM-OF-THOUGHTS]
-        fecha_publicacion = fecha_promulgacion + 1 día hábil
-        fecha_vigencia = fecha_publicacion + 15 días hábiles
-        dias_habiles = días naturales - sábados - domingos - feriados_nacionales
-        feriados_bolivia = [1 ene, 22 ene, Carnaval, Viernes Santo, 1 may,
-          Corpus Christi, 21 jun, 6 ago, 2 nov, 25 dic]
-
-      [CHAIN OF VERIFICATION — 3 preguntas]
-        P1. ¿Número correlativo único y atómico?
-        P2. ¿Vigencia respeta 15 días hábiles (o la especial)?
-        P3. ¿URL válido y accesible?
-
-      [FORMATO]
-      JSON estricto según contrato, es-BO.
-
-      [NEGATIVE PROMPTING — 4 prohibiciones]
-      - NO calcules vigencia con días naturales.
-      - NO omitas feriados nacionales bolivianos.
-      - NO modifiques el texto de la ley al transcribirlo.
-      - NO asignes número correlativo duplicado.
-    expected_output: |
-      {
-        "numero_ley": "Ley N° 1589",
-        "titulo_oficial": "string",
-        "decreto_promulgacion_numero": "Decreto Supremo N° 5120",
-        "edicion_gaceta": "GAC-2026-085",
-        "fecha_promulgacion": "2026-04-05",
-        "fecha_publicacion": "2026-04-06",
-        "fecha_entrada_vigencia": "2026-04-27",
-        "estado_norma": "VIGENTE",
-        "url_publicacion_oficial": "string"
-      }
+      - 1 ene
+      - 22 ene (Estado Plurinacional)
+      - Carnaval
+      - Viernes Santo
+      - 1 may
+      - Corpus Christi
+      - 21 jun (Año Nuevo Andino)
+      - 6 ago (Independencia)
+      - 2 nov
+      - 25 dic
+      formato_decreto: Decreto Supremo N° YYYY
+      url: http://www.gacetaoficialdebolivia.gob.bo/leyes/...
+    prompt_operativo: "[ROL]\nDirección de la Gaceta Oficial del Estado Plurinacional. Procedimiento\ndeterminista: no juzgas\
+      \ contenido; garantizas publicidad, asignas número\ncorrelativo único, fijas edición oficial y registras vigencia.\n\
+      \n[ACCIÓN — CoT de fechas]\n  Paso 1. Asigna atómicamente número correlativo de Ley (Ley N° XXXX).\n  Paso 2. Redacta\
+      \ Decreto Supremo de Promulgación.\n  Paso 3. Calcula vigencia = promulgación + 15 días hábiles (excluye\n         \
+      \ sábados, domingos y feriados nacionales bolivianos).\n  Paso 4. Verifica vigencia posterior a publicación.\n  Paso\
+      \ 5. Registra URL oficial.\n\n[PROGRAM-OF-THOUGHTS]\n  fecha_publicacion = fecha_promulgacion + 1 día hábil\n  fecha_vigencia\
+      \ = fecha_publicacion + 15 días hábiles\n  dias_habiles = días naturales - sábados - domingos - feriados_nacionales\n\
+      \  feriados_bolivia = [1 ene, 22 ene, Carnaval, Viernes Santo, 1 may,\n    Corpus Christi, 21 jun, 6 ago, 2 nov, 25\
+      \ dic]\n\n[CHAIN OF VERIFICATION — 3 preguntas]\n  P1. ¿Número correlativo único y atómico?\n  P2. ¿Vigencia respeta\
+      \ 15 días hábiles (o la especial)?\n  P3. ¿URL válido y accesible?\n\n[FORMATO]\nJSON estricto según contrato, es-BO.\n\
+      \n[NEGATIVE PROMPTING — 4 prohibiciones]\n- NO calcules vigencia con días naturales.\n- NO omitas feriados nacionales\
+      \ bolivianos.\n- NO modifiques el texto de la ley al transcribirlo.\n- NO asignes número correlativo duplicado.\n"
+    expected_output: "{\n  \"numero_ley\": \"Ley N° 1589\",\n  \"titulo_oficial\": \"string\",\n  \"decreto_promulgacion_numero\"\
+      : \"Decreto Supremo N° 5120\",\n  \"edicion_gaceta\": \"GAC-2026-085\",\n  \"fecha_promulgacion\": \"2026-04-05\",\n\
+      \  \"fecha_publicacion\": \"2026-04-06\",\n  \"fecha_entrada_vigencia\": \"2026-04-27\",\n  \"estado_norma\": \"VIGENTE\"\
+      ,\n  \"url_publicacion_oficial\": \"string\"\n}\n"
     criterios_aceptacion:
-      - "Vigencia calculada en días hábiles (no naturales)."
-      - "Feriados bolivianos excluidos."
-      - "Número correlativo único."
-      - "URL válido y verificable."
+    - Vigencia calculada en días hábiles (no naturales).
+    - Feriados bolivianos excluidos.
+    - Número correlativo único.
+    - URL válido y verificable.
     politica_degradacion:
-      correlativo_no_disponible: "estado_norma='PENDIENTE'; reintentar asignación atómica."
-      url_caida: "url_publicacion_oficial='pendiente'; registrar en Gaceta con fecha tentativa."
-      fecha_vigencia_ambigua: "Aplicar 15 días hábiles por defecto y declarar."
+      correlativo_no_disponible: estado_norma='PENDIENTE'; reintentar asignación atómica.
+      url_caida: url_publicacion_oficial='pendiente'; registrar en Gaceta con fecha tentativa.
+      fecha_vigencia_ambigua: Aplicar 15 días hábiles por defecto y declarar.
     herramientas:
-      - "gaceta_correlativo_atomico"
-      - "feriados_bolivia_lookup"
-
-  # ── FASE 5: Difusión y fiscalización ───────────────────────────────────────
-
+    - gaceta_correlativo_atomico
+    - feriados_bolivia_lookup
+    framework: RTF
+    prompt_template: "[ROL] Dirección Gaceta Oficial.\n \n<ley_promulgada>{texto_ley}</ley_promulgada>\n<fecha_promulgacion>{fecha}</fecha_promulgacion>\n\
+      \ \n[PoT] Calcula fecha_publicacion y fecha_vigencia con el calendario de feriados bolivianos. Asigna atómicamente el\
+      \ número de Ley correlativo.\n \nSalida: {\"ley_numero\":\"Ley N°XXXX\",\"fecha_publicacion\":\"...\",\"fecha_vigencia\"\
+      :\"...\",\"url_gaceta\":\"...\",\"hash_documento\":\"sha256:...\"}"
   Generar_Difusion_Ciudadana:
     perfil: conversacional
-    descripcion: >
-      Traducir la ley promulgada a lenguaje claro: propósito, derechos,
-      obligaciones, aplicabilidad, vigencia, FAQ, canales ALP por departamento.
-    description: >
-      Traducir la ley promulgada a lenguaje claro: propósito, derechos,
-      obligaciones, aplicabilidad, vigencia, FAQ, canales ALP por departamento.
-    agente: "Difusion_Ciudadana"
-    agent: "Difusion_Ciudadana"
+    descripcion: 'Traducir la ley promulgada a lenguaje claro: propósito, derechos, obligaciones, aplicabilidad, vigencia,
+      FAQ, canales ALP por departamento.
+
+      '
+    description: 'Traducir la ley promulgada a lenguaje claro: propósito, derechos, obligaciones, aplicabilidad, vigencia,
+      FAQ, canales ALP por departamento.
+
+      '
+    agente: Difusion_Ciudadana
+    agent: Difusion_Ciudadana
     depends_on:
-      - "Publicar_Ley_Oficial"
-    framework_diseno: "CARE"
+    - Publicar_Ley_Oficial
+    framework_diseno: CARE
     tecnicas_prompt:
-      - "Role prompting (comunicador ALP)"
-      - "Few-shot (ley del agua)"
-      - "Skeleton-of-Thought (estructura)"
-      - "Chain of Thought (simplificación)"
-      - "Contrastive (técnico vs. claro)"
-      - "Markdown (FAQ + viñetas)"
-      - "Negative prompting (5 prohibiciones)"
+    - Role prompting (comunicador ALP)
+    - Few-shot (ley del agua)
+    - Skeleton-of-Thought (estructura)
+    - Chain of Thought (simplificación)
+    - Contrastive (técnico vs. claro)
+    - Markdown (FAQ + viñetas)
+    - Negative prompting (5 prohibiciones)
     contexto_boliviano:
-      lema: "Lenguaje Claro — democratizar acceso a la ley"
+      lema: Lenguaje Claro — democratizar acceso a la ley
       publicos:
-        - "ciudadano común"
-        - "gremialista"
-        - "estudiante"
-        - "productor rural"
-        - "pueblo indígena"
-      cobertura: "9 departamentos + áreas rurales + 36 idiomas oficiales"
+      - ciudadano común
+      - gremialista
+      - estudiante
+      - productor rural
+      - pueblo indígena
+      cobertura: 9 departamentos + áreas rurales + 36 idiomas oficiales
       ejemplos:
-        - "mercado Rodríguez (La Paz)"
-        - "Plan 3000 (Santa Cruz)"
-        - "valle alto (Cochabamba)"
-        - "El Alto"
-        - "Potosí"
-    prompt_operativo: |
-      [ROL]
-      Comunicador institucional de la ALP. Democratizas acceso a la ley bajo
-      Lenguaje Claro. Eliminas jerga para que cualquier ciudadano entienda
-      cómo le impacta la ley y qué debe hacer.
-
-      [SKELETON-OF-THOUGHT — estructura]
-        1. Título ciudadano.
-        2. Propósito en palabras simples (2-3 líneas).
-        3. Tus nuevos derechos (viñetas).
-        4. Tus nuevas obligaciones (viñetas).
-        5. ¿A quiénes aplica?
-        6. ¿Desde cuándo rige?
-        7. FAQ.
-        8. Canales ALP por departamento.
-
-      [CONTRASTIVE — técnico vs. claro]
-        Técnico: "El artículo 12 establece la obligación tributaria de los sujetos
-        pasivos..."
-        Claro: "Si vendes productos o servicios, ahora debes pagar un impuesto
-        especial. Aquí te explicamos cuánto y cómo."
-
-      [CHAIN OF THOUGHT — simplificación]
-        Paso 1. Identifica derecho u obligación central.
-        Paso 2. Traduce a lenguaje llano (sin latinismos).
-        Paso 3. Añade ejemplo concreto boliviano.
-        Paso 4. Verifica que no se omitan obligaciones ni sanciones.
-
-      [FEW-SHOT — ley de agua]
-        Entrada: "Ley N° 1589 — Regula uso y aprovechamiento del agua."
-        Salida: {
-          "titulo_ciudadano":"Lo que debes saber sobre la Ley N° 1589 del Agua",
-          "proposito_en_palabras_simples":"Esta ley garantiza que todas las
-            familias bolivianas tengan agua para tomar y para regar sus cultivos,
-            cuidando las fuentes naturales.",
-          "tus_nuevos_derechos":["Acceso prioritario al agua para consumo humano",
-            "Participación en cuidado de cuencas","Denunciar derroche o
-            contaminación"],
-          "tus_nuevas_obligaciones":["Usar el agua de forma responsable",
-            "Pagar la tarifa justa aprobada","Respetar áreas de recarga hídrica"],
-          "a_quienes_aplica":"Familias, productores rurales, empresas y municipios
-            de los 9 departamentos",
-          "desde_cuando_rige":"27 de abril de 2026 (15 días hábiles tras publicación)",
-          "preguntas_frecuentes":[
-            {"pregunta":"¿Sube la tarifa del agua?","respuesta":"No. La ley fija
-              criterios de tarifa justa y prohíbe cobros indebidos."},
-            {"pregunta":"¿Qué pasa si no pago?","respuesta":"Se aplica un
-              procedimiento de cobro con aviso previo y derecho a reclamo."}
-          ]
-        }
-
-      [FORMATO]
-      Markdown en campos del JSON, es-BO.
-
-      [NEGATIVE PROMPTING — 5 prohibiciones]
-      - NO omitas obligaciones ni sanciones que la ley estipule.
-      - NO uses jerga jurídica ni latinismos.
-      - NO prometas beneficios no previstos en el texto.
-      - NO uses lenguaje partidario.
-      - NO presentes la información sin viñetas ni estructura.
-    expected_output: |
-      {
-        "titulo_ciudadano": "string",
-        "proposito_en_palabras_simples": "string",
-        "tus_nuevos_derechos": ["string"],
-        "tus_nuevas_obligaciones": ["string"],
-        "a_quienes_aplica": "string",
-        "desde_cuando_rige": "string",
-        "preguntas_frecuentes": [
-          {"pregunta": "string", "respuesta": "string"}
-        ],
-        "canales_atencion_alp": [
-          {"departamento": "string", "canal": "string"}
-        ]
-      }
+      - mercado Rodríguez (La Paz)
+      - Plan 3000 (Santa Cruz)
+      - valle alto (Cochabamba)
+      - El Alto
+      - Potosí
+    prompt_operativo: "[ROL]\nComunicador institucional de la ALP. Democratizas acceso a la ley bajo\nLenguaje Claro. Eliminas\
+      \ jerga para que cualquier ciudadano entienda\ncómo le impacta la ley y qué debe hacer.\n\n[SKELETON-OF-THOUGHT — estructura]\n\
+      \  1. Título ciudadano.\n  2. Propósito en palabras simples (2-3 líneas).\n  3. Tus nuevos derechos (viñetas).\n  4.\
+      \ Tus nuevas obligaciones (viñetas).\n  5. ¿A quiénes aplica?\n  6. ¿Desde cuándo rige?\n  7. FAQ.\n  8. Canales ALP\
+      \ por departamento.\n\n[CONTRASTIVE — técnico vs. claro]\n  Técnico: \"El artículo 12 establece la obligación tributaria\
+      \ de los sujetos\n  pasivos...\"\n  Claro: \"Si vendes productos o servicios, ahora debes pagar un impuesto\n  especial.\
+      \ Aquí te explicamos cuánto y cómo.\"\n\n[CHAIN OF THOUGHT — simplificación]\n  Paso 1. Identifica derecho u obligación\
+      \ central.\n  Paso 2. Traduce a lenguaje llano (sin latinismos).\n  Paso 3. Añade ejemplo concreto boliviano.\n  Paso\
+      \ 4. Verifica que no se omitan obligaciones ni sanciones.\n\n[FEW-SHOT — ley de agua]\n  Entrada: \"Ley N° 1589 — Regula\
+      \ uso y aprovechamiento del agua.\"\n  Salida: {\n    \"titulo_ciudadano\":\"Lo que debes saber sobre la Ley N° 1589\
+      \ del Agua\",\n    \"proposito_en_palabras_simples\":\"Esta ley garantiza que todas las\n      familias bolivianas tengan\
+      \ agua para tomar y para regar sus cultivos,\n      cuidando las fuentes naturales.\",\n    \"tus_nuevos_derechos\"\
+      :[\"Acceso prioritario al agua para consumo humano\",\n      \"Participación en cuidado de cuencas\",\"Denunciar derroche\
+      \ o\n      contaminación\"],\n    \"tus_nuevas_obligaciones\":[\"Usar el agua de forma responsable\",\n      \"Pagar\
+      \ la tarifa justa aprobada\",\"Respetar áreas de recarga hídrica\"],\n    \"a_quienes_aplica\":\"Familias, productores\
+      \ rurales, empresas y municipios\n      de los 9 departamentos\",\n    \"desde_cuando_rige\":\"27 de abril de 2026 (15\
+      \ días hábiles tras publicación)\",\n    \"preguntas_frecuentes\":[\n      {\"pregunta\":\"¿Sube la tarifa del agua?\"\
+      ,\"respuesta\":\"No. La ley fija\n        criterios de tarifa justa y prohíbe cobros indebidos.\"},\n      {\"pregunta\"\
+      :\"¿Qué pasa si no pago?\",\"respuesta\":\"Se aplica un\n        procedimiento de cobro con aviso previo y derecho a\
+      \ reclamo.\"}\n    ]\n  }\n\n[FORMATO]\nMarkdown en campos del JSON, es-BO.\n\n[NEGATIVE PROMPTING — 5 prohibiciones]\n\
+      - NO omitas obligaciones ni sanciones que la ley estipule.\n- NO uses jerga jurídica ni latinismos.\n- NO prometas beneficios\
+      \ no previstos en el texto.\n- NO uses lenguaje partidario.\n- NO presentes la información sin viñetas ni estructura.\n"
+    expected_output: "{\n  \"titulo_ciudadano\": \"string\",\n  \"proposito_en_palabras_simples\": \"string\",\n  \"tus_nuevos_derechos\"\
+      : [\"string\"],\n  \"tus_nuevas_obligaciones\": [\"string\"],\n  \"a_quienes_aplica\": \"string\",\n  \"desde_cuando_rige\"\
+      : \"string\",\n  \"preguntas_frecuentes\": [\n    {\"pregunta\": \"string\", \"respuesta\": \"string\"}\n  ],\n  \"\
+      canales_atencion_alp\": [\n    {\"departamento\": \"string\", \"canal\": \"string\"}\n  ]\n}\n"
     criterios_aceptacion:
-      - "Lenguaje llano (sin latinismos ni jerga)."
-      - "Obligaciones y sanciones no omitidas."
-      - "FAQ con al menos 2 preguntas."
-      - "Canales por departamento presentes."
-      - "Vigencia coherente con Publicar_Ley_Oficial."
+    - Lenguaje llano (sin latinismos ni jerga).
+    - Obligaciones y sanciones no omitidas.
+    - FAQ con al menos 2 preguntas.
+    - Canales por departamento presentes.
+    - Vigencia coherente con Publicar_Ley_Oficial.
     politica_degradacion:
-      ley_sin_sanciones: "Declarar 'esta ley no establece sanciones' en obligaciones."
-      ley_muy_tecnica: "Dividir en bloques temáticos; ofrecer 'explicación extendida'."
-      canales_no_disponibles: "canales_atencion_alp con web + WhatsApp genéricos."
+      ley_sin_sanciones: Declarar 'esta ley no establece sanciones' en obligaciones.
+      ley_muy_tecnica: Dividir en bloques temáticos; ofrecer 'explicación extendida'.
+      canales_no_disponibles: canales_atencion_alp con web + WhatsApp genéricos.
     herramientas: []
-
   Monitorear_Fiscalizacion:
     perfil: normativo
-    descripcion: >
-      Control posterior (Art. 158 CPE): monitoreo de plazos de reglamentación,
-      auditoría de ejecución presupuestaria vs. programada, alertas a Contraloría.
-    description: >
-      Control posterior (Art. 158 CPE): monitoreo de plazos de reglamentación,
-      auditoría de ejecución presupuestaria vs. programada, alertas a Contraloría.
-    agente: "Fiscalizacion"
-    agent: "Fiscalizacion"
+    descripcion: 'Control posterior (Art. 158 CPE): monitoreo de plazos de reglamentación, auditoría de ejecución presupuestaria
+      vs. programada, alertas a Contraloría.
+
+      '
+    description: 'Control posterior (Art. 158 CPE): monitoreo de plazos de reglamentación, auditoría de ejecución presupuestaria
+      vs. programada, alertas a Contraloría.
+
+      '
+    agente: Fiscalizacion
+    agent: Fiscalizacion
     depends_on:
-      - "Publicar_Ley_Oficial"
-    framework_diseno: "CRAFT"
+    - Publicar_Ley_Oficial
+    framework_diseno: CRAFT
     tecnicas_prompt:
-      - "Chain of Thought (monitoreo)"
-      - "ReAct (tool plazos + presupuesto)"
-      - "Chain of Verification (verificar alertas)"
-      - "Self-consistency (doble verificación)"
-      - "Analogical prompting (casos de desvío)"
-      - "Reflexion (retirar alertas no sustentadas)"
-      - "Structured output (JSON)"
-      - "Negative prompting (4 prohibiciones)"
+    - Chain of Thought (monitoreo)
+    - ReAct (tool plazos + presupuesto)
+    - Chain of Verification (verificar alertas)
+    - Self-consistency (doble verificación)
+    - Analogical prompting (casos de desvío)
+    - Reflexion (retirar alertas no sustentadas)
+    - Structured output (JSON)
+    - Negative prompting (4 prohibiciones)
     contexto_boliviano:
-      marco: "Art. 158 CPE (fiscalización legislativa)"
+      marco: Art. 158 CPE (fiscalización legislativa)
       entidades:
-        - "Contraloría General del Estado"
-        - "Ministerio de Economía y Finanzas Públicas"
-        - "Ministerio cabecera de sector"
-      plazos: "90 días para reglamentación"
+      - Contraloría General del Estado
+      - Ministerio de Economía y Finanzas Públicas
+      - Ministerio cabecera de sector
+      plazos: 90 días para reglamentación
       indicadores:
-        - "Reglamentación del Ejecutivo"
-        - "Ejecución presupuestaria"
-        - "Emisión de decretos"
-        - "Cumplimiento de plazos"
-      alertas: "MEDIA | ALTA | CRÍTICA"
-    prompt_operativo: |
-      [ROL]
-      Auditor parlamentario de control posterior (Art. 158 CPE). Vigilas que
-      ministerios emitan decretos reglamentarios a tiempo y que recursos
-      aprobados no se desvíen ni se congelen.
-
-      [ACCIÓN — CoT]
-        Paso 1. Identifica ley y plazo de reglamentación.
-        Paso 2. Monitorea indicadores (ejecución vs. programado).
-        Paso 3. Detecta desvíos: RETRASO_REGLAMENTACION | DESVIO_PRESUPUESTARIO
-                | CRITICO.
-        Paso 4. Genera alertas a Contraloría.
-        Paso 5. Recomendación parlamentaria.
-
-      [CHAIN OF VERIFICATION — 3 preguntas]
-        P1. ¿Alerta sustentada en indicadores cuantitativos?
-        P2. ¿Plazo cumplido o vencido?
-        P3. ¿Entidad responsable competente?
-
-      [ANALOGICAL]
-      Recupera casos previos de desvío o retraso (leyes con reglamentación
-      tardía) y úsalos como plantilla.
-
-      [SELF-CONSISTENCY]
-      Verifica indicadores DOS veces: (a) datos oficiales; (b) datos prensa /
-      sociedad civil. Si difieren → declarar en 'recomendacion_parlamentaria'.
-
-      [REFLEXION]
-      Si alerta no sustentada → retirarla y registrar como 'alerta_descartada'.
-
-      [FORMATO]
-      JSON estricto según contrato, es-BO.
-
-      [NEGATIVE PROMPTING — 4 prohibiciones]
-      - NO emitas alertas sin indicadores cuantitativos.
-      - NO acuses desvío sin comparar ejecutado vs. programado.
-      - NO notifiques a entidades no competentes.
-      - NO confundas retraso justificado con desvío.
-    expected_output: |
-      {
-        "id_ley": "Ley N° 1589",
-        "estado_implementacion": "EN_PLAZO | RETRASO_REGLAMENTACION | DESVIO_PRESUPUESTARIO | CRITICO",
-        "indicadores_evaluados": [
-          {"indicador": "Reglamentación", "plazo_dias": 90, "estado": "CUMPLIDO"}
-        ],
-        "alertas_auditoria": [
-          {"tipo": "DESVIO_FONDOS | RETRASO_INJUSTIFICADO | OMISION",
-           "severidad": "MEDIA | ALTA | CRITICA", "descripcion": "string",
-           "organismo_a_notificar": "Contraloría General del Estado"}
-        ],
-        "alertas_descartadas": ["string"],
-        "recomendacion_parlamentaria": "string"
-      }
+      - Reglamentación del Ejecutivo
+      - Ejecución presupuestaria
+      - Emisión de decretos
+      - Cumplimiento de plazos
+      alertas: MEDIA | ALTA | CRÍTICA
+    prompt_operativo: "[ROL]\nAuditor parlamentario de control posterior (Art. 158 CPE). Vigilas que\nministerios emitan decretos\
+      \ reglamentarios a tiempo y que recursos\naprobados no se desvíen ni se congelen.\n\n[ACCIÓN — CoT]\n  Paso 1. Identifica\
+      \ ley y plazo de reglamentación.\n  Paso 2. Monitorea indicadores (ejecución vs. programado).\n  Paso 3. Detecta desvíos:\
+      \ RETRASO_REGLAMENTACION | DESVIO_PRESUPUESTARIO\n          | CRITICO.\n  Paso 4. Genera alertas a Contraloría.\n  Paso\
+      \ 5. Recomendación parlamentaria.\n\n[CHAIN OF VERIFICATION — 3 preguntas]\n  P1. ¿Alerta sustentada en indicadores\
+      \ cuantitativos?\n  P2. ¿Plazo cumplido o vencido?\n  P3. ¿Entidad responsable competente?\n\n[ANALOGICAL]\nRecupera\
+      \ casos previos de desvío o retraso (leyes con reglamentación\ntardía) y úsalos como plantilla.\n\n[SELF-CONSISTENCY]\n\
+      Verifica indicadores DOS veces: (a) datos oficiales; (b) datos prensa /\nsociedad civil. Si difieren → declarar en 'recomendacion_parlamentaria'.\n\
+      \n[REFLEXION]\nSi alerta no sustentada → retirarla y registrar como 'alerta_descartada'.\n\n[FORMATO]\nJSON estricto\
+      \ según contrato, es-BO.\n\n[NEGATIVE PROMPTING — 4 prohibiciones]\n- NO emitas alertas sin indicadores cuantitativos.\n\
+      - NO acuses desvío sin comparar ejecutado vs. programado.\n- NO notifiques a entidades no competentes.\n- NO confundas\
+      \ retraso justificado con desvío.\n"
+    expected_output: "{\n  \"id_ley\": \"Ley N° 1589\",\n  \"estado_implementacion\": \"EN_PLAZO | RETRASO_REGLAMENTACION\
+      \ | DESVIO_PRESUPUESTARIO | CRITICO\",\n  \"indicadores_evaluados\": [\n    {\"indicador\": \"Reglamentación\", \"plazo_dias\"\
+      : 90, \"estado\": \"CUMPLIDO\"}\n  ],\n  \"alertas_auditoria\": [\n    {\"tipo\": \"DESVIO_FONDOS | RETRASO_INJUSTIFICADO\
+      \ | OMISION\",\n     \"severidad\": \"MEDIA | ALTA | CRITICA\", \"descripcion\": \"string\",\n     \"organismo_a_notificar\"\
+      : \"Contraloría General del Estado\"}\n  ],\n  \"alertas_descartadas\": [\"string\"],\n  \"recomendacion_parlamentaria\"\
+      : \"string\"\n}\n"
     criterios_aceptacion:
-      - "Alertas sustentadas en indicadores cuantitativos."
-      - "Comparación ejecutado vs. programado presente."
-      - "Entidad notificada competente."
-      - "Alertas no sustentadas retiradas."
+    - Alertas sustentadas en indicadores cuantitativos.
+    - Comparación ejecutado vs. programado presente.
+    - Entidad notificada competente.
+    - Alertas no sustentadas retiradas.
     politica_degradacion:
-      sin_datos_oficiales: "Usar datos de prensa; declarar fuente y discrepancia."
-      plazo_no_vencido: "estado='EN_PLAZO'; no emitir alerta."
-      entidad_no_competente: "Redirigir a Contraloría; registrar en recomendación."
+      sin_datos_oficiales: Usar datos de prensa; declarar fuente y discrepancia.
+      plazo_no_vencido: estado='EN_PLAZO'; no emitir alerta.
+      entidad_no_competente: Redirigir a Contraloría; registrar en recomendación.
     herramientas:
-      - "consulta_plazos_reglamentacion"
-      - "consulta_ejecucion_presupuestaria"
-
+    - consulta_plazos_reglamentacion
+    - consulta_ejecucion_presupuestaria
   Notificar_Comision:
     perfil: determinista
-    descripcion: >
-      Redactar y despachar notificación HTML institucional a legisladores,
-      autoridades del Ejecutivo y proponentes ciudadanos con estado del
-      expediente y dictámenes adjuntos.
-    description: >
-      Redactar y despachar notificación HTML institucional a legisladores,
-      autoridades del Ejecutivo y proponentes ciudadanos con estado del
-      expediente y dictámenes adjuntos.
-    agente: "Notificador_Comision"
-    agent: "Notificador_Comision"
+    descripcion: 'Redactar y despachar notificación HTML institucional a legisladores, autoridades del Ejecutivo y proponentes
+      ciudadanos con estado del expediente y dictámenes adjuntos.
+
+      '
+    description: 'Redactar y despachar notificación HTML institucional a legisladores, autoridades del Ejecutivo y proponentes
+      ciudadanos con estado del expediente y dictámenes adjuntos.
+
+      '
+    agente: Notificador_Comision
+    agent: Notificador_Comision
     depends_on:
-      - "Concentrar_Observaciones"
-    framework_diseno: "RTF"
+    - Concentrar_Observaciones
+    framework_diseno: RTF
     tecnicas_prompt:
-      - "Instruction prompt (determinista)"
-      - "Skeleton-of-Thought (estructura)"
-      - "Few-shot (email HTML modelo)"
-      - "Markdown / HTML"
-      - "Structured output (JSON)"
-      - "Negative prompting (3 prohibiciones)"
+    - Instruction prompt (determinista)
+    - Skeleton-of-Thought (estructura)
+    - Few-shot (email HTML modelo)
+    - Markdown / HTML
+    - Structured output (JSON)
+    - Negative prompting (3 prohibiciones)
     contexto_boliviano:
       destinatarios:
-        - "legisladores"
-        - "autoridades del Ejecutivo"
-        - "ciudadanos proponentes"
-        - "gobernaciones"
-        - "alcaldías"
-      formato: "Email HTML institucional ALP"
+      - legisladores
+      - autoridades del Ejecutivo
+      - ciudadanos proponentes
+      - gobernaciones
+      - alcaldías
+      formato: Email HTML institucional ALP
       canales:
-        - "email"
-        - "WhatsApp"
-        - "notificación física La Paz/Sucre"
-      protocolo: "Publicidad procesal y notificación oportuna"
-    prompt_operativo: |
-      [ROL]
-      Notificador oficial de la ALP. Garantizas publicidad procesal y
-      notificación oportuna de actos parlamentarios.
-
-      [SKELETON-OF-THOUGHT]
-        1. Encabezado institucional (ALP, La Paz / Sucre).
-        2. Datos del destinatario.
-        3. Asunto (claro, específico, ≤ 100 caracteres).
-        4. Cuerpo (2-4 párrafos formales).
-        5. Estado del expediente y adjuntos.
-        6. Firma institucional.
-        7. Pie con canales de contacto.
-
-      [FEW-SHOT — email modelo]
-        {
-          "notificacion_enviada":true,
-          "destinatarios":["diputado.x@asamblea.gob.bo"],
-          "asunto":"Notificación de Dictamen — Expediente N° 042/2026",
-          "contenido_html":"<html><body><header>Asamblea Legislativa Plurinacional de Bolivia</header><h2>Notificación Oficial</h2><p>Estimado/a Diputado/a,</p><p>Se le notifica que el Expediente N° 042/2026 ha sido aprobado en Comisión...</p></body></html>",
-          "fecha_despacho":"2026-04-06T10:00:00Z"
-        }
-
-      [FORMATO]
-      HTML institucional embebido en JSON, es-BO.
-
-      [NEGATIVE PROMPTING — 3 prohibiciones]
-      - NO alteres el estado real del expediente.
-      - NO omitas el pie con canales de contacto.
-      - NO uses lenguaje informal.
-    expected_output: |
-      {
-        "notificacion_enviada": true,
-        "destinatarios": ["string"],
-        "asunto": "string",
-        "contenido_html": "string",
-        "fecha_despacho": "2026-04-06T10:00:00Z"
-      }
+      - email
+      - WhatsApp
+      - notificación física La Paz/Sucre
+      protocolo: Publicidad procesal y notificación oportuna
+    prompt_operativo: "[ROL]\nNotificador oficial de la ALP. Garantizas publicidad procesal y\nnotificación oportuna de actos\
+      \ parlamentarios.\n\n[SKELETON-OF-THOUGHT]\n  1. Encabezado institucional (ALP, La Paz / Sucre).\n  2. Datos del destinatario.\n\
+      \  3. Asunto (claro, específico, ≤ 100 caracteres).\n  4. Cuerpo (2-4 párrafos formales).\n  5. Estado del expediente\
+      \ y adjuntos.\n  6. Firma institucional.\n  7. Pie con canales de contacto.\n\n[FEW-SHOT — email modelo]\n  {\n    \"\
+      notificacion_enviada\":true,\n    \"destinatarios\":[\"diputado.x@asamblea.gob.bo\"],\n    \"asunto\":\"Notificación\
+      \ de Dictamen — Expediente N° 042/2026\",\n    \"contenido_html\":\"<html><body><header>Asamblea Legislativa Plurinacional\
+      \ de Bolivia</header><h2>Notificación Oficial</h2><p>Estimado/a Diputado/a,</p><p>Se le notifica que el Expediente N°\
+      \ 042/2026 ha sido aprobado en Comisión...</p></body></html>\",\n    \"fecha_despacho\":\"2026-04-06T10:00:00Z\"\n \
+      \ }\n\n[FORMATO]\nHTML institucional embebido en JSON, es-BO.\n\n[NEGATIVE PROMPTING — 3 prohibiciones]\n- NO alteres\
+      \ el estado real del expediente.\n- NO omitas el pie con canales de contacto.\n- NO uses lenguaje informal.\n"
+    expected_output: "{\n  \"notificacion_enviada\": true,\n  \"destinatarios\": [\"string\"],\n  \"asunto\": \"string\",\n\
+      \  \"contenido_html\": \"string\",\n  \"fecha_despacho\": \"2026-04-06T10:00:00Z\"\n}\n"
     criterios_aceptacion:
-      - "Asunto <= 100 caracteres."
-      - "HTML con encabezado institucional y pie con canales."
-      - "Estado del expediente refleja Concentrar_Observaciones."
-      - "Destinatarios válidos y verificables."
+    - Asunto <= 100 caracteres.
+    - HTML con encabezado institucional y pie con canales.
+    - Estado del expediente refleja Concentrar_Observaciones.
+    - Destinatarios válidos y verificables.
     politica_degradacion:
-      email_invalido: "Registrar como 'destinatario_pendiente'; reintentar con canal alternativo."
-      expediente_incompleto: "Asunto con 'información incompleta'; declarar en contenido_html."
-      html_mal_formado: "Regenerar con plantilla estándar ALP."
+      email_invalido: Registrar como 'destinatario_pendiente'; reintentar con canal alternativo.
+      expediente_incompleto: Asunto con 'información incompleta'; declarar en contenido_html.
+      html_mal_formado: Regenerar con plantilla estándar ALP.
     herramientas:
-      - "email_sender"
-      - "html_template_engine"
-
-  # ── TAREAS SUPLEMENTARIAS Y DE DISTRIBUCIÓN ────────────────────────────────
-
+    - email_sender
+    - html_template_engine
   Distribuir_Analisis_Especializado:
     perfil: determinista
-    descripcion: >
-      En la segunda fase, enrutar tareas especializadas del expediente admitido a
-      constitucionalidad, consistencia, análisis técnico, comisión y presupuesto;
-      no sustituir dictámenes ni modificar el texto fuente.
-    description: >
-      En la segunda fase, enrutar tareas especializadas del expediente admitido a
-      constitucionalidad, consistencia, análisis técnico, comisión y presupuesto;
-      no sustituir dictámenes ni modificar el texto fuente.
-    agente: "Distribuidor"
-    agent: "Distribuidor"
-    depends_on:
-      - "Clasificar_Documento"
-    framework_diseno: "CO-STAR"
-    tecnicas_prompt:
-      - "Instruction prompting"
-      - "Structured output (JSON)"
-      - "Negative prompting"
-    contexto_boliviano:
-      institucion: "Asamblea Legislativa Plurinacional de Bolivia"
-      sedes: "La Paz / Sucre"
-    prompt_operativo: |
-      [ROL]
-      Distribuidor oficial de la ALP.
-      Enruta el expediente admitido hacia las unidades de análisis especializado:
-      Verificador_Constitucional, Consistencia_Normativa, Especialista_Tecnico,
-      Presidencia_Comision y Planificacion_Presupuesto.
-    expected_output: >
-      JSON con expediente_id, agentes_destino, tareas_asignadas y motivos.
-    criterios_aceptacion:
-      - "Expediente admitido enrutado a todas las comisiones competentes."
-      - "No modifica texto fuente."
-      - "Salida estructurada JSON."
-    politica_degradacion:
-      error_enrutamiento: "Derivar a Mesa de Entradas para revisión presencial."
-    herramientas: []
+    descripcion: 'En la segunda fase, enrutar tareas especializadas del expediente admitido a constitucionalidad, consistencia,
+      análisis técnico, comisión y presupuesto; no sustituir dictámenes ni modificar el texto fuente.
 
+      '
+    description: 'En la segunda fase, enrutar tareas especializadas del expediente admitido a constitucionalidad, consistencia,
+      análisis técnico, comisión y presupuesto; no sustituir dictámenes ni modificar el texto fuente.
+
+      '
+    agente: Distribuidor
+    agent: Distribuidor
+    depends_on:
+    - Clasificar_Documento
+    framework_diseno: CO-STAR
+    tecnicas_prompt:
+    - Instruction prompting
+    - Structured output (JSON)
+    - Negative prompting
+    contexto_boliviano:
+      institucion: Asamblea Legislativa Plurinacional de Bolivia
+      sedes: La Paz / Sucre
+    prompt_operativo: '[ROL]
+
+      Distribuidor oficial de la ALP.
+
+      Enruta el expediente admitido hacia las unidades de análisis especializado:
+
+      Verificador_Constitucional, Consistencia_Normativa, Especialista_Tecnico,
+
+      Presidencia_Comision y Planificacion_Presupuesto.
+
+      '
+    expected_output: 'JSON con expediente_id, agentes_destino, tareas_asignadas y motivos.
+
+      '
+    criterios_aceptacion:
+    - Expediente admitido enrutado a todas las comisiones competentes.
+    - No modifica texto fuente.
+    - Salida estructurada JSON.
+    politica_degradacion:
+      error_enrutamiento: Derivar a Mesa de Entradas para revisión presencial.
+    herramientas: []
+    framework: CO-STAR
+    prompt_template: '[ROL] Distribuidor de Análisis Especializado. El expediente superó admisión.
+
+      [ACCIÓN] Enruta a todas las comisiones competentes según la materia detectada.
+
+      Asigna: comisión_constitucional, comisión_técnica, comisión_presupuesto.
+
+      [NEGATIVE] NO enrutes a una sola comisión si la materia es transversal.
+
+      NO omitas la comisión de constitución en proyectos que afecten derechos.'
   Emitir_Documentos_Oficiales:
     perfil: determinista
-    descripcion: >
-      Preparar borradores de actas, informes y remisiones con datos verificados.
-      Marcar BORRADOR o PENDIENTE_FIRMA; no inventar firmas, sellos, números ni fechas oficiales.
-    description: >
-      Preparar borradores de actas, informes y remisiones con datos verificados.
-      Marcar BORRADOR o PENDIENTE_FIRMA; no inventar firmas, sellos, números ni fechas oficiales.
-    agente: "Secretario_Camara"
-    agent: "Secretario_Camara"
-    depends_on:
-      - "Registrar_Debate"
-    framework_diseno: "RTF"
-    tecnicas_prompt:
-      - "Instruction prompting"
-      - "Decomposición por etapas"
-      - "Structured output (JSON)"
-      - "Negative prompting"
-      - "Verificación de fuentes"
-    contexto_boliviano:
-      institucion: "Asamblea Legislativa Plurinacional de Bolivia"
-      trazabilidad: "Expediente y fuentes verificables"
-    prompt_operativo: |
-      [ROL]
-      Fedatario y redactor oficial de actas y remisiones de la ALP.
-      Genera borradores oficiales marcados como BORRADOR o PENDIENTE_FIRMA.
-    expected_output: >
-      JSON con documentos, fuentes, estado y campos pendientes.
-    criterios_aceptacion:
-      - "Trazabilidad formal de acta y resolución."
-      - "Marcado explícito de estado de firma."
-    politica_degradacion:
-      datos_incompletos: "Marcar campos como PENDIENTE_CONFIRMACION."
-    herramientas: []
+    descripcion: 'Preparar borradores de actas, informes y remisiones con datos verificados. Marcar BORRADOR o PENDIENTE_FIRMA;
+      no inventar firmas, sellos, números ni fechas oficiales.
 
+      '
+    description: 'Preparar borradores de actas, informes y remisiones con datos verificados. Marcar BORRADOR o PENDIENTE_FIRMA;
+      no inventar firmas, sellos, números ni fechas oficiales.
+
+      '
+    agente: Secretario_Camara
+    agent: Secretario_Camara
+    depends_on:
+    - Registrar_Debate
+    framework_diseno: RTF
+    tecnicas_prompt:
+    - Instruction prompting
+    - Decomposición por etapas
+    - Structured output (JSON)
+    - Negative prompting
+    - Verificación de fuentes
+    contexto_boliviano:
+      institucion: Asamblea Legislativa Plurinacional de Bolivia
+      trazabilidad: Expediente y fuentes verificables
+    prompt_operativo: '[ROL]
+
+      Fedatario y redactor oficial de actas y remisiones de la ALP.
+
+      Genera borradores oficiales marcados como BORRADOR o PENDIENTE_FIRMA.
+
+      '
+    expected_output: 'JSON con documentos, fuentes, estado y campos pendientes.
+
+      '
+    criterios_aceptacion:
+    - Trazabilidad formal de acta y resolución.
+    - Marcado explícito de estado de firma.
+    politica_degradacion:
+      datos_incompletos: Marcar campos como PENDIENTE_CONFIRMACION.
+    herramientas: []
+    framework: RTF
+    prompt_template: '[ROL] Fedatario y redactor oficial de actas y remisiones ALP.
+
+      Genera borradores marcados como BORRADOR o PENDIENTE_FIRMA.
+
+      [NEGATIVE] NO inventes firmas, sellos, números ni fechas oficiales.
+
+      NO emitas documentos sin marcar su estado de borrador.'
   Coordinar_Tarea_Comodin:
     perfil: razonamiento
-    descripcion: >
-      Descomponer solicitudes complejas, asignar subtareas a subagentes declarados,
-      consolidar resultados trazables y señalar pendientes humanos.
-    description: >
-      Descomponer solicitudes complejas, asignar subtareas a subagentes declarados,
-      consolidar resultados trazables y señalar pendientes humanos.
-    agente: "Concentrador"
-    agent: "Concentrador"
-    framework_diseno: "RACER"
+    descripcion: 'Descomponer solicitudes complejas, asignar subtareas a subagentes declarados, consolidar resultados trazables
+      y señalar pendientes humanos.
+
+      '
+    description: 'Descomponer solicitudes complejas, asignar subtareas a subagentes declarados, consolidar resultados trazables
+      y señalar pendientes humanos.
+
+      '
+    agente: Concentrador
+    agent: Concentrador
+    framework_diseno: RACER
     tecnicas_prompt:
-      - "Instruction prompting"
-      - "Decomposición por etapas"
-      - "Structured output (JSON)"
-      - "Negative prompting"
-      - "Verificación de fuentes"
+    - Instruction prompting
+    - Decomposición por etapas
+    - Structured output (JSON)
+    - Negative prompting
+    - Verificación de fuentes
     contexto_boliviano:
-      institucion: "Asamblea Legislativa Plurinacional de Bolivia"
-      trazabilidad: "Expediente y fuentes verificables"
-    prompt_operativo: |
-      [ROL]
+      institucion: Asamblea Legislativa Plurinacional de Bolivia
+      trazabilidad: Expediente y fuentes verificables
+    prompt_operativo: '[ROL]
+
       Coordinador técnico analítico para solicitudes complejas no estandarizadas.
+
       Descompone la solicitud en subtareas y consolida resultados.
-    expected_output: >
-      JSON con objetivo, subtareas, asignaciones, resultados, fuentes y pendientes.
+
+      '
+    expected_output: 'JSON con objetivo, subtareas, asignaciones, resultados, fuentes y pendientes.
+
+      '
     criterios_aceptacion:
-      - "Descomposición lógica de la consulta."
-      - "Identificación clara de pendientes humanos."
+    - Descomposición lógica de la consulta.
+    - Identificación clara de pendientes humanos.
     politica_degradacion:
-      solicitud_inviable: "Devolver dictamen de inviabilidad técnica o jurídica."
+      solicitud_inviable: Devolver dictamen de inviabilidad técnica o jurídica.
     herramientas: []
+    framework: RACER
+    prompt_template: '[ROL] Coordinador técnico para solicitudes complejas no estandarizadas.
 
-# ──────────────────────────────────────────────────────────────────────────────
-# TAREAS LEGACY DE COMPATIBILIDAD RUNTIME
-# ──────────────────────────────────────────────────────────────────────────────
+      [ACCIÓN] Descompón la solicitud en subtareas atómicas, asigna cada una al subagente declarado, consolida resultados
+      con trazabilidad completa y señala las pendientes que requieren intervención humana.'
 tarea_atencion_ciudadana:
-  description: |
-    Procesa la solicitud ciudadana:
+  description: 'Procesa la solicitud ciudadana:
+
     {texto_documento}
+
+    '
   expected_output: 'JSON: {"prioridad": "Alta/Media/Baja", "categoria": "...", "resumen": "..."}'
-  agent: "Interaccion_Ciudadana"
-  framework_diseno: "CARE"
-
+  agent: Interaccion_Ciudadana
+  framework_diseno: CARE
 tarea_verificacion_constitucional:
-  description: |
-    Audita cada artículo del proyecto contra todos los artículos CPE relacionados recibidos en {articulos_constitucion_info}.
-    Devuelve para cada artículo del proyecto solo A_FAVOR o EN_CONTRA. Para cada candidato constitucional relacionado
-    incluye clasificación binaria, citas literales, justificación técnica, comentario analítico y sugerencia legislativa.
-    Si no se acredita colisión directa, emite A_FAVOR provisional con evidencia_suficiente=false, confianza baja y
-    limitación explícita; nunca emitas NEUTRAL ni PENDIENTE_REVISION como clasificación.
-    Articulado: {texto_documento}
-  expected_output: 'JSON: {"evaluaciones_por_articulo":[{"articulo_proyecto":"Art. 1","clasificacion":"A_FAVOR|EN_CONTRA","justificacion_tecnica":"...","comentario_analitico":"...","sugerencia":"...","evidencia_suficiente":false,"articulos_relacionados":[]}],"limitaciones_revision":[]}'
-  agent: "Verificador_Constitucional"
-  framework_diseno: "CRAFT"
+  description: 'Audita cada artículo del proyecto contra todos los artículos CPE relacionados recibidos en {articulos_constitucion_info}.
 
+    Devuelve para cada artículo del proyecto solo A_FAVOR o EN_CONTRA. Para cada candidato constitucional relacionado
+
+    incluye clasificación binaria, citas literales, justificación técnica, comentario analítico y sugerencia legislativa.
+
+    Si no se acredita colisión directa, emite A_FAVOR provisional con evidencia_suficiente=false, confianza baja y
+
+    limitación explícita; nunca emitas NEUTRAL ni PENDIENTE_REVISION como clasificación.
+
+    Articulado: {texto_documento}
+
+    '
+  expected_output: 'JSON: {"evaluaciones_por_articulo":[{"articulo_proyecto":"Art. 1","clasificacion":"A_FAVOR|EN_CONTRA","justificacion_tecnica":"...","comentario_analitico":"...","sugerencia":"...","evidencia_suficiente":false,"articulos_relacionados":[]}],"limitaciones_revision":[]}'
+  agent: Verificador_Constitucional
+  framework_diseno: CRAFT
 tarea_clasificacion_comision:
-  description: >
-    Analizar técnica y jurídicamente la iniciativa de ley para determinar con precisión vinculante
-    la Comisión Principal (matriz encargada del dictamen de fondo) y la Comisión Coadyuvante (secundaria
-    encargada del análisis concurrente, presupuestario o constitucional), valorando el núcleo material del proyecto,
-    el impacto fiscal sobre el TGN y las competencias territoriales o sectoriales, conforme al Art. 156 de la CPE
-    y al Reglamento General Camaral de la ALP.
-  agent: "Presidencia_Comision"
-  framework_diseno: "CARE"
+  description: 'Analizar técnica y jurídicamente la iniciativa de ley para determinar con precisión vinculante la Comisión
+    Principal (matriz encargada del dictamen de fondo) y la Comisión Coadyuvante (secundaria encargada del análisis concurrente,
+    presupuestario o constitucional), valorando el núcleo material del proyecto, el impacto fiscal sobre el TGN y las competencias
+    territoriales o sectoriales, conforme al Art. 156 de la CPE y al Reglamento General Camaral de la ALP.
+
+    '
+  agent: Presidencia_Comision
+  framework_diseno: CARE
   tecnicas_prompt:
-    - "Role prompting (Clasificador Oficial de Comisiones ALP)"
-    - "Chain of Thought (evaluación de competencias en 4 pasos)"
-    - "Regla de Dos Comisiones (Comisión Principal + Comisión Coadyuvante)"
-    - "Few-shot canónico (ejemplo con justificación jurídica)"
-    - "Structured output (JSON estricto es-BO)"
-    - "Negative prompting (5 restricciones terminantes)"
+  - Role prompting (Clasificador Oficial de Comisiones ALP)
+  - Chain of Thought (evaluación de competencias en 4 pasos)
+  - Regla de Dos Comisiones (Comisión Principal + Comisión Coadyuvante)
+  - Few-shot canónico (ejemplo con justificación jurídica)
+  - Structured output (JSON estricto es-BO)
+  - Negative prompting (5 restricciones terminantes)
   contexto_boliviano:
     marco_normativo:
-      - "Constitución Política del Estado 2009 (Art. 156)"
-      - "Reglamento General de la Cámara de Diputados y de Senadores (Arts. 115 a 125)"
-      - "Ley 1178 de Administración y Control Gubernamentales (SAFCO)"
-    regla_distribucion_dos_comisiones: >
-      1. Todo proyecto tiene una y solo una Comisión Principal según el objeto sustantivo de la ley.
-      2. Si el proyecto involucra gasto, créditos, deuda o recursos del TGN -> Se asigna obligatoriamente
-         como Comisión Coadyuvante a la Comisión de Planificación, Política Económica y Finanzas.
-      3. Si el proyecto modifica códigos sustantivos, procesales, normas penales o estructura de órganos del Estado
-         -> Se asigna como Comisión Coadyuvante a la Comisión de Constitución, Legislación y Sistema Electoral.
-      4. Si involucra régimen autonómico o límites -> Comisión de Organización Territorial y Autonomías.
-  prompt_operativo: |
-    [ROL Y MISIÓN PARLAMENTARIA]
-    Actúa como la Máxima Autoridad Técnica de Clasificación y Asignación de Comisiones de la Asamblea
-    Legislativa Plurinacional de Bolivia (ALP). Tu deber es examinar el proyecto de ley y determinar sin ambigüedad
-    las comisiones parlamentarias encargadas de su sustanciación legislativa.
+    - Constitución Política del Estado 2009 (Art. 156)
+    - Reglamento General de la Cámara de Diputados y de Senadores (Arts. 115 a 125)
+    - Ley 1178 de Administración y Control Gubernamentales (SAFCO)
+    regla_distribucion_dos_comisiones: "1. Todo proyecto tiene una y solo una Comisión Principal según el objeto sustantivo\
+      \ de la ley. 2. Si el proyecto involucra gasto, créditos, deuda o recursos del TGN -> Se asigna obligatoriamente\n \
+      \  como Comisión Coadyuvante a la Comisión de Planificación, Política Económica y Finanzas.\n3. Si el proyecto modifica\
+      \ códigos sustantivos, procesales, normas penales o estructura de órganos del Estado\n   -> Se asigna como Comisión\
+      \ Coadyuvante a la Comisión de Constitución, Legislación y Sistema Electoral.\n4. Si involucra régimen autonómico o\
+      \ límites -> Comisión de Organización Territorial y Autonomías.\n"
+  prompt_operativo: "[ROL Y MISIÓN PARLAMENTARIA]\nActúa como la Máxima Autoridad Técnica de Clasificación y Asignación de\
+    \ Comisiones de la Asamblea\nLegislativa Plurinacional de Bolivia (ALP). Tu deber es examinar el proyecto de ley y determinar\
+    \ sin ambigüedad\nlas comisiones parlamentarias encargadas de su sustanciación legislativa.\n\n[TEXTO DEL PROYECTO DE\
+    \ LEY EVALUADO]\n<proyecto_ley>\n{texto_documento}\n</proyecto_ley>\n\n[CATÁLOGO OFICIAL DE COMISIONES ACTIVAS EN LA BASE\
+    \ DE DATOS]\n<comisiones_disponibles>\n{comisiones_info}\n</comisiones_disponibles>\n\n[MÉTODO DE EVALUACIÓN JURÍDICA\
+    \ — 4 PASOS OBLIGATORIOS]\n  Paso 1. Identifica el NÚCLEO MATERIAL Y OBJETO SUSTANTIVO: ¿Qué relación jurídica o sector\
+    \ regula?\n          Selecciona exactamente una COMISIÓN PRINCIPAL del catálogo de comisiones activas.\n  Paso 2. Identifica\
+    \ IMPACTOS CONCURRENTES (Regla de Dos Comisiones):\n          - Si compromete fondos públicos, partidas del TGN, exenciones\
+    \ o gasto público → Asigna como COMISIÓN COADYUVANTE a 'Comisión de Planificación, Política Económica y Finanzas'.\n \
+    \         - Si altera normas penales, códigos procesales o garantías constitucionales → Asigna como COMISIÓN COADYUVANTE\
+    \ a 'Comisión de Constitución, Legislación y Sistema Electoral'.\n          - Si no existe conexidad material secundaria\
+    \ → Asigna 'NINGUNA' o la comisión sectorial afín.\n  Paso 3. Califica la COMPLEJIDAD (Baja, Media, Alta), la PRIORIDAD\
+    \ (Normal, Alta, Urgente) y el PLAZO REGLAMENTARIO (15 a 30 días hábiles).\n  Paso 4. Extrae de 4 a 6 PALABRAS CLAVE sustantivas\
+    \ y redacta un RESUMEN EJECUTIVO (2 a 4 líneas) junto con la FUNDAMENTACIÓN DE COMPETENCIA.\n\n[CONTRATO DE SALIDA — JSON\
+    \ ESTRICTO]\nDevuelve ÚNICAMENTE un objeto JSON con este esquema exacto, sin bloques de código markdown ni texto adicional:\n\
+    {\n  \"comision_principal\": \"Nombre exacto de la comisión principal seleccionada\",\n  \"comision_coadyuvante\": \"\
+    Nombre exacto de la comisión coadyuvante o NINGUNA\",\n  \"fundamentacion_competencia\": \"Explicación jurídica de 30-70\
+    \ palabras justificando por qué ambas comisiones son competentes según la CPE y el Reglamento Camaral\",\n  \"palabras_clave\"\
+    : [\"Palabra1\", \"Palabra2\", \"Palabra3\", \"Palabra4\"],\n  \"resumen\": \"Resumen técnico formal de 2-4 oraciones\
+    \ sobre el alcance de la propuesta\",\n  \"complejidad\": \"Baja | Media | Alta\",\n  \"prioridad\": \"Normal | Alta |\
+    \ Urgente\",\n  \"plazo_dias\": 20\n}\n\n[PROHIBICIONES ESTRICTAS]\n- NO asignes comisiones fuera del catálogo disponible\
+    \ suministrado.\n- NO omitas la Comisión de Planificación y Finanzas si el proyecto dispone creación de entidades con\
+    \ presupuesto público o partidas del TGN.\n- NO uses abreviaciones informales para los nombres de las comisiones.\n- NO\
+    \ devuelvas texto introductorio ni explicaciones fuera del JSON.\n"
+  expected_output: 'JSON estricto con: comision_principal, comision_coadyuvante, fundamentacion_competencia, palabras_clave,
+    resumen, complejidad, prioridad y plazo_dias.
 
-    [TEXTO DEL PROYECTO DE LEY EVALUADO]
-    <proyecto_ley>
-    {texto_documento}
-    </proyecto_ley>
-
-    [CATÁLOGO OFICIAL DE COMISIONES ACTIVAS EN LA BASE DE DATOS]
-    <comisiones_disponibles>
-    {comisiones_info}
-    </comisiones_disponibles>
-
-    [MÉTODO DE EVALUACIÓN JURÍDICA — 4 PASOS OBLIGATORIOS]
-      Paso 1. Identifica el NÚCLEO MATERIAL Y OBJETO SUSTANTIVO: ¿Qué relación jurídica o sector regula?
-              Selecciona exactamente una COMISIÓN PRINCIPAL del catálogo de comisiones activas.
-      Paso 2. Identifica IMPACTOS CONCURRENTES (Regla de Dos Comisiones):
-              - Si compromete fondos públicos, partidas del TGN, exenciones o gasto público → Asigna como COMISIÓN COADYUVANTE a 'Comisión de Planificación, Política Económica y Finanzas'.
-              - Si altera normas penales, códigos procesales o garantías constitucionales → Asigna como COMISIÓN COADYUVANTE a 'Comisión de Constitución, Legislación y Sistema Electoral'.
-              - Si no existe conexidad material secundaria → Asigna 'NINGUNA' o la comisión sectorial afín.
-      Paso 3. Califica la COMPLEJIDAD (Baja, Media, Alta), la PRIORIDAD (Normal, Alta, Urgente) y el PLAZO REGLAMENTARIO (15 a 30 días hábiles).
-      Paso 4. Extrae de 4 a 6 PALABRAS CLAVE sustantivas y redacta un RESUMEN EJECUTIVO (2 a 4 líneas) junto con la FUNDAMENTACIÓN DE COMPETENCIA.
-
-    [CONTRATO DE SALIDA — JSON ESTRICTO]
-    Devuelve ÚNICAMENTE un objeto JSON con este esquema exacto, sin bloques de código markdown ni texto adicional:
-    {
-      "comision_principal": "Nombre exacto de la comisión principal seleccionada",
-      "comision_coadyuvante": "Nombre exacto de la comisión coadyuvante o NINGUNA",
-      "fundamentacion_competencia": "Explicación jurídica de 30-70 palabras justificando por qué ambas comisiones son competentes según la CPE y el Reglamento Camaral",
-      "palabras_clave": ["Palabra1", "Palabra2", "Palabra3", "Palabra4"],
-      "resumen": "Resumen técnico formal de 2-4 oraciones sobre el alcance de la propuesta",
-      "complejidad": "Baja | Media | Alta",
-      "prioridad": "Normal | Alta | Urgente",
-      "plazo_dias": 20
-    }
-
-    [PROHIBICIONES ESTRICTAS]
-    - NO asignes comisiones fuera del catálogo disponible suministrado.
-    - NO omitas la Comisión de Planificación y Finanzas si el proyecto dispone creación de entidades con presupuesto público o partidas del TGN.
-    - NO uses abreviaciones informales para los nombres de las comisiones.
-    - NO devuelvas texto introductorio ni explicaciones fuera del JSON.
-  expected_output: >
-    JSON estricto con: comision_principal, comision_coadyuvante, fundamentacion_competencia, palabras_clave, resumen, complejidad, prioridad y plazo_dias.
+    '
   criterios_aceptacion:
-    - "Comisión Principal pertenece exactamente al catálogo de comisiones activas de la ALP."
-    - "Comisión Coadyuvante fundamentada correctamente ante impacto fiscal o constitucional."
-    - "Plazo en días hábiles entre 15 y 30 días reglamentarios."
-    - "Extracción válida de descriptores temáticos."
+  - Comisión Principal pertenece exactamente al catálogo de comisiones activas de la ALP.
+  - Comisión Coadyuvante fundamentada correctamente ante impacto fiscal o constitucional.
+  - Plazo en días hábiles entre 15 y 30 días reglamentarios.
+  - Extracción válida de descriptores temáticos.
   politica_degradacion:
-    comision_no_encontrada: "Asignar por defecto COMISION_DE_CONSTITUCION como principal y COMISION_DE_PLANIFICACION_Y_FINANZAS como coadyuvante."
-
+    comision_no_encontrada: Asignar por defecto COMISION_DE_CONSTITUCION como principal y COMISION_DE_PLANIFICACION_Y_FINANZAS
+      como coadyuvante.
+  framework: CARE
+  prompt_template: "[ROL Y MISIÓN PARLAMENTARIA]\nActúa como la Máxima Autoridad Técnica de Clasificación y Asignación de\
+    \ Comisiones de la ALP.\n \n<proyecto_ley>{texto_documento}</proyecto_ley>\n<comisiones_disponibles>{comisiones_info}</comisiones_disponibles>\n\
+    \ \n[MÉTODO DE EVALUACIÓN JURÍDICA — 4 PASOS OBLIGATORIOS]\nPaso 1. NÚCLEO MATERIAL Y OBJETO SUSTANTIVO → COMISIÓN PRINCIPAL.\n\
+    Paso 2. IMPACTOS CONCURRENTES (Regla de Dos Comisiones) → COADYUVANTE.\nPaso 3. Complejidad, Prioridad y Plazo (15-30\
+    \ días hábiles).\nPaso 4. 4-6 palabras clave + resumen ejecutivo + fundamentación.\n \n[CONTRATO DE SALIDA — JSON ESTRICTO]\n\
+    { \"comision_principal\": ..., \"comision_coadyuvante\": ...,\n  \"fundamentacion_competencia\": ..., \"palabras_clave\"\
+    : [...],\n  \"resumen\": ..., \"complejidad\": ..., \"prioridad\": ...,\n  \"plazo_dias\": ... }\n \n[PROHIBICIONES ESTRICTAS]\n\
+    - NO asignes comisiones fuera del catálogo.\n- NO omitas Planificación y Finanzas si hay gasto o TGN.\n- NO uses abreviaciones\
+    \ informales.\n- NO devuelvas texto introductorio fuera del JSON."
 tarea_gestion_correspondencia:
-  description: |
-    Clasificar y preparar la gestión de correspondencia institucional de la ALP:
+  description: 'Clasificar y preparar la gestión de correspondencia institucional de la ALP:
+
     {texto_documento}
-  expected_output: 'JSON: {"remitente": "...", "tipo_tramite": "...", "unidad_receptora": "...", "instruccion_inicio_tramite": "..."}'
-  agent: "Distribuidor"
-  framework_diseno: "RTF"
+
+    '
+  expected_output: 'JSON: {"remitente": "...", "tipo_tramite": "...", "unidad_receptora": "...", "instruccion_inicio_tramite":
+    "..."}'
+  agent: Distribuidor
+  framework_diseno: RTF

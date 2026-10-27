@@ -473,7 +473,17 @@ def cotejar_lote(texto, articulos, solicitar=None, parsear=None):
 
                 for i, articulo in enumerate(sub_faltantes):
                     clave = _clave(texto, articulo)
+                    num_art = str(articulo.get('numero', '')).strip()
                     coincidencias = [f for f in filas if isinstance(f, dict) and str(f.get('id')) == str(i)]
+                    if not coincidencias and num_art:
+                        coincidencias = [
+                            f for f in filas
+                            if isinstance(f, dict) and (
+                                str(f.get('id', '')).strip() == num_art
+                                or str(f.get('numero', '')).strip() == num_art
+                                or str(f.get('articulo_cpe', '')).strip() == num_art
+                            )
+                        ]
                     try:
                         if len(coincidencias) != 1:
                             if not coincidencias:
