@@ -793,7 +793,7 @@ export default function HorizontalAgentFlow({
     <div className="mesa-horizontal-flow" style={{ width: '100%', marginBottom: '26px' }}>
 
       {/* ── BARRA DE CONTROLES ── */}
-      <div style={{
+      <div className="mesa-flow-controls-bar" style={{
         background: '#ffffff',
         border: '1px solid #d5e3ed',
         borderRadius: '14px',
@@ -826,7 +826,7 @@ export default function HorizontalAgentFlow({
         </div>
 
         {/* Derecha: botón todos los resultados + toggle + progreso + scroll */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+        <div className="mesa-flow-right-controls" style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
           {/* Botón rápido Ver Resultados Ejecutados */}
           {onOpenAllResults && (
             <button

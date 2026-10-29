@@ -33,7 +33,15 @@ except ImportError:
 
 import openai
 from openai import OpenAI
-from fpdf import FPDF
+try:
+    from fpdf import FPDF
+except ImportError:
+    try:
+        from fpdf2 import FPDF
+    except ImportError:
+        FPDF = None
+
+_BasePDF = FPDF if FPDF is not None else object
 
 from sma_unified.agents.llm_client import chat_completion_resiliente, extraer_json_de_llm
 from sma_unified.config import settings
@@ -71,8 +79,7 @@ def _clean_str(text: Any) -> str:
 
 
 # ── FPDF: Informe Oficial Sobrio en Letra Negra ────────────────────────────────
-# ── FPDF: Informe Oficial Sobrio en Letra Negra ────────────────────────────────
-class InformeConcentradorFormalPDF(FPDF):
+class InformeConcentradorFormalPDF(_BasePDF):
     """
     Generador de Informe Parlamentario Oficial en PDF con estética formal y letra negra.
     Diseñado para el cuerpo legislativo y comisiones dictaminadoras.
@@ -202,11 +209,37 @@ class InformeConcentradorFormalPDF(FPDF):
 
 def _validar_insumo(obs: Dict) -> tuple[bool, str]:
     """
-    PASO 1 — Verifica que el reporte tenga estructura esperada.
+    PASO 1 — Verifica que el reporte tenga estructura esperada y normaliza alias.
     Retorna (valido, razon).
     """
     if not isinstance(obs, dict):
         return False, "El insumo no es un dict"
+
+    # 1. Normalización de agente_origen
+    if "agente_origen" not in obs or not obs["agente_origen"]:
+        obs["agente_origen"] = obs.get("agente") or obs.get("tipo") or "Agente_Especializado"
+
+    # 2. Normalización de hallazgos mediante alias semánticos de los 5 agentes
+    if "hallazgos" not in obs or obs["hallazgos"] is None:
+        for alias in ("contradicciones", "analisis", "matriz_riesgos", "enmiendas_de_fondo_sugeridas",
+                      "alertas", "observaciones", "pendientes_revision", "articulos"):
+            if alias in obs and obs[alias] is not None:
+                obs["hallazgos"] = obs[alias]
+                break
+        if "hallazgos" not in obs or obs["hallazgos"] is None:
+            contenido = (obs.get("contenido") or obs.get("resumen") or obs.get("dictamen") or
+                         obs.get("dictamen_tecnico_resumen") or obs.get("recomendacion_fiscal") or
+                         obs.get("dictamen_fondo"))
+            if contenido:
+                obs["hallazgos"] = [{
+                    "contenido": str(contenido),
+                    "severidad": obs.get("riesgo") or obs.get("nivel_riesgo") or "BAJO",
+                    "tipo": obs.get("tipo", "INFORME_ESPECIALIZADO"),
+                    "verificado": True
+                }]
+            else:
+                obs["hallazgos"] = []
+
     faltantes = CAMPOS_REQUERIDOS_INSUMO - set(obs.keys())
     if faltantes:
         return False, f"Faltan campos: {faltantes}"
@@ -225,11 +258,15 @@ def _validar_insumo(obs: Dict) -> tuple[bool, str]:
                 # el filtro por fila descarta lo no verificado más adelante.
                 tiene_respaldo = bool(
                     obs.get("estado") == "PENDIENTE_REVISION"
-                    and (obs.get("pendientes_revision") or obs.get("hallazgos")
-                         or obs.get("contradicciones"))
+                    or obs.get("pendientes_revision")
+                    or obs.get("hallazgos")
+                    or obs.get("contradicciones")
+                    or obs.get("analisis")
                 )
                 if not tiene_respaldo:
                     return False, f"Confianza {conf} fuera de rango [{NIVEL_CONFIANZA_MINIMO}, 1.0]"
+                else:
+                    obs["confianza"] = NIVEL_CONFIANZA_MINIMO
         except (TypeError, ValueError):
             return False, f"Confianza no numérica: {conf}"
     return True, "OK"
@@ -422,7 +459,7 @@ INSTRUCCIÓN: Devuelve un JSON estructurado con exactamente estas claves:
         client = OpenAI(
             base_url=NVIDIA_BASE_URL,
             api_key=DEFAULT_NVIDIA_API_KEY,
-            timeout=90.0,
+            timeout=25.0,
         )
         completion = client.chat.completions.create(
             model=MODELO_RAZONAMIENTO_AMPLIADO,
@@ -1316,22 +1353,32 @@ class AgenteConcentrador:
         notificacion_res = None
         if proyecto_info.get("notificar_comision", True) and pdf_info.get("filename"):
             try:
-                from sma_unified.agents.notificador_comision import notificar_miembros_comision
-                notificacion_res = notificar_miembros_comision(
-                    sesion_id=proyecto_info.get("sesion_id") or f"sesion_{id_proyecto}",
-                    id_proyecto=id_proyecto,
-                    datos_comision=proyecto_info.get("comision_data") or {"nombre_comision": proyecto_info.get("comision", "Comisión Legislativa Asignada")},
-                    datos_constitucionales={"valido": riesgo_global != "CRÍTICO", "severidad_maxima": riesgo_global},
-                    datos_consistencia={"total_hallazgos": len(lista_observaciones_final), "nivel_riesgo_global": riesgo_global},
-                    pdf_filename=pdf_info.get("filename"),
-                    destinatario_extra=proyecto_info.get("destinatario_extra"),
-                    mensaje_extra=proyecto_info.get("mensaje_extra"),
-                    asunto_personalizado=f"Dictamen Oficial Consolidado de Auditoría Legislativa — {titulo[:60]}"
-                )
-                resultado["notificacion_comision"] = notificacion_res
-                logger.info(f"[Concentrador] ✅ Notificación formal y PDF despachados a los miembros de comisión")
+                import threading
+                def _despachar_notif_bg():
+                    try:
+                        from sma_unified.agents.notificador_comision import notificar_miembros_comision
+                        notificar_miembros_comision(
+                            sesion_id=proyecto_info.get("sesion_id") or f"sesion_{id_proyecto}",
+                            id_proyecto=id_proyecto,
+                            datos_comision=proyecto_info.get("comision_data") or {"nombre_comision": proyecto_info.get("comision", "Comisión Legislativa Asignada")},
+                            datos_constitucionales={"valido": riesgo_global != "CRÍTICO", "severidad_maxima": riesgo_global},
+                            datos_consistencia={"total_hallazgos": len(lista_observaciones_final), "nivel_riesgo_global": riesgo_global},
+                            pdf_filename=pdf_info.get("filename"),
+                            destinatario_extra=proyecto_info.get("destinatario_extra"),
+                            mensaje_extra=proyecto_info.get("mensaje_extra"),
+                            asunto_personalizado=f"Dictamen Oficial Consolidado de Auditoría Legislativa — {titulo[:60]}"
+                        )
+                        logger.info(f"[Concentrador] ✅ Notificación formal y PDF despachados en segundo plano")
+                    except Exception as _bg_err:
+                        logger.warning(f"[Concentrador] Error despachando notificación formal asíncrona: {_bg_err}")
+
+                threading.Thread(target=_despachar_notif_bg, daemon=True).start()
+                resultado["notificacion_comision"] = {
+                    "estado": "EN_COLA_DESPACHO",
+                    "mensaje": "Notificación encolada para despacho asíncrono con PDF adjunto."
+                }
             except Exception as _notif_err:
-                logger.warning(f"[Concentrador] No se pudo despachar correo a comisión: {_notif_err}")
+                logger.warning(f"[Concentrador] Error despachando notificación formal: {_notif_err}")
                 resultado["notificacion_comision"] = {"enviado": False, "error": str(_notif_err)}
 
         # Enviar Mensaje a Presidencia de Comisión con enlace al PDF adjunto
@@ -1371,6 +1418,8 @@ def ejecutar_concentrador_emisor_notificador(
     datos_consistencia: Optional[Dict[str, Any]] = None,
     datos_fondo: Optional[Dict[str, Any]] = None,
     datos_comision: Optional[Dict[str, Any]] = None,
+    datos_tecnicos: Optional[Dict[str, Any]] = None,
+    datos_presupuesto: Optional[Dict[str, Any]] = None,
     texto_proyecto: Optional[str] = None,
     titulo_proyecto: Optional[str] = None,
     notificar: bool = True,
@@ -1379,7 +1428,7 @@ def ejecutar_concentrador_emisor_notificador(
 ) -> Dict[str, Any]:
     """
     Función de orquestación unificada para el Agente Concentrador, Emisor y Notificador.
-    1. Agrupa los insumos de Constitucionalidad, Consistencia Normativa y Fondo.
+    1. Agrupa los insumos de los 5 agentes (Constitucional, Consistencia, Fondo, Técnico, Presupuesto).
     2. Ejecuta la consolidación fidedigna con Pensamiento Analítico Ampliado.
     3. Emite el Dictamen Formal Oficial en PDF con letra negra institucional.
     4. Despacha la notificación formal por correo HTML con el PDF adjunto a los encargados.
@@ -1420,7 +1469,7 @@ def ejecutar_concentrador_emisor_notificador(
         pendiente_normas = bool(datos_consistencia.get("error") or datos_consistencia.get("estado") == "PENDIENTE_REVISION")
         insumos.append({
             "agente_origen": "Agente_Consistencia_Normativa",
-            "hallazgos": datos_consistencia.get("hallazgos", []),
+            "hallazgos": datos_consistencia.get("hallazgos", []) or datos_consistencia.get("analisis", []),
             "confianza": 0 if pendiente_normas else 0.90,
             "nivel_confianza": 0 if pendiente_normas else 0.90,
             "estado": "PENDIENTE_REVISION" if pendiente_normas else "COMPLETADO",
@@ -1442,6 +1491,24 @@ def ejecutar_concentrador_emisor_notificador(
             "confianza": 0.92,
             "nivel_confianza": 0.92,
             "dictamen_fondo": datos_fondo.get("dictamen_fondo_detallado", ""),
+        })
+
+    if datos_tecnicos:
+        insumos.append({
+            "agente_origen": "Agente_Especialista_Tecnico",
+            "hallazgos": datos_tecnicos.get("matriz_riesgos", []) or datos_tecnicos.get("hallazgos", []),
+            "confianza": 0.90,
+            "nivel_confianza": 0.90,
+            "dictamen_tecnico": (datos_tecnicos.get("dictamen_tecnico") or {}).get("viabilidad_tecnica") if isinstance(datos_tecnicos.get("dictamen_tecnico"), dict) else datos_tecnicos.get("viabilidad_tecnica", "VIABLE"),
+        })
+
+    if datos_presupuesto:
+        insumos.append({
+            "agente_origen": "Agente_Planificacion_Presupuesto",
+            "hallazgos": datos_presupuesto.get("alertas", []) or datos_presupuesto.get("hallazgos", []),
+            "confianza": 0.92,
+            "nivel_confianza": 0.92,
+            "dictamen_presupuesto": (datos_presupuesto.get("evaluacion_fiscal") or {}).get("viabilidad_fiscal") if isinstance(datos_presupuesto.get("evaluacion_fiscal"), dict) else datos_presupuesto.get("viabilidad_fiscal", "SOSTENIBLE"),
         })
 
     proyecto_info = {

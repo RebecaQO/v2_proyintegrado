@@ -1,37 +1,55 @@
+# ── Core Multi-Agente & LLM ───────────────────────────────────────────────────
 crewai>=0.30.0
 langchain-openai>=0.1.0
+langchain-core>=0.1.0
+openai>=1.30.0
+PyYAML>=6.0.1
+
+# ── API REST Backend & WebSockets ─────────────────────────────────────────────
+fastapi>=0.110.0
+uvicorn>=0.28.0
+python-multipart>=0.0.9
+pydantic>=2.7.0
+pydantic-settings>=2.2.0
+python-dotenv>=1.0.1
+
+# ── Base de Datos & Persistencia Híbrida (Neon + Mongo Atlas) ──────────────────
+psycopg2-binary>=2.9.9
+sqlalchemy>=2.0.0
 pymongo>=4.7.0
 motor>=3.4.0
-pydantic-settings>=2.2.0
-pydantic>=2.7.0
-loguru>=0.7.2
-sqlalchemy>=2.0.0
-psycopg2-binary>=2.9.9
+dnspython>=2.6.0
+
+# ── Cliente HTTP & Red ────────────────────────────────────────────────────────
+requests>=2.31.0
+httpx>=0.27.0
+
+# ── Procesamiento de Documentos Legislativos & RAG ─────────────────────────────
+PyMuPDF>=1.24.0
+pypdf>=4.0.0
 PyPDF2>=3.0.1
 pdfplumber>=0.11.0
 python-docx>=1.1.0
 striprtf>=0.0.26
 odfpy>=1.4.1
 chardet>=5.2.0
+docling>=2.0.0
+# Restricción de Pillow requerida para compatibilidad estricta con docling
+pillow>=10.0.0,<13.0.0
+
+# ── Integración Google Workspace / Drive ───────────────────────────────────────
 google-api-python-client>=2.120.0
 google-auth-oauthlib>=1.2.0
 google-auth-httplib2>=0.2.0
-python-dotenv>=1.0.1
-httpx>=0.27.0
-dnspython>=2.6.0
-docling>=2.0.0
 
-# ── Agente de Consistencia Normativa (embeddings + pgvector) ───────────────
-PyMuPDF>=1.24.0
-requests>=2.31.0
+# ── Emisión Documental Oficial (PDF), Logging & Notificaciones ────────────────
+loguru>=0.7.2
+# fpdf2 es la librería moderna para generar PDFs (reemplaza al obsoleto 'fpdf')
+fpdf2>=2.8.0
+sendgrid>=6.11.0
 
-# ── API REST Backend ────────────────────────────────────────────────────────
-fastapi>=0.110.0
-uvicorn>=0.28.0
-
-# ── Voz / PDF / Correo (importados opcionalmente por el código) ─────────────
+# ── Módulos Opcionales: Voz y Diagramas ────────────────────────────────────────
 gTTS>=2.5.0
 pyttsx3>=2.90
 SpeechRecognition>=3.10.0
-fpdf2>=2.7.0
-sendgrid>=6.11.0
+matplotlib>=3.8.0

@@ -16,7 +16,7 @@ import threading
 import mimetypes
 import hashlib
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Literal
+from typing import Any, Dict, List, Optional, Literal, Union
 from datetime import datetime, timezone
 
 from dotenv import load_dotenv
@@ -45,12 +45,21 @@ BASE_DIR = Path(__file__).resolve().parent
 sys.path.insert(0, str(BASE_DIR))
 load_dotenv(BASE_DIR / ".env")
 
+# Asegurar almacenamiento local seguro para CrewAI sin fallos de permisos en Windows
+_crewai_storage = os.path.join(str(BASE_DIR), ".temp_localappdata")
+os.makedirs(_crewai_storage, exist_ok=True)
+if "LOCALAPPDATA" not in os.environ or "crewai" not in os.environ.get("LOCALAPPDATA", ""):
+    os.environ["LOCALAPPDATA"] = _crewai_storage
+os.environ["CREWAI_STORAGE_DIR"] = _crewai_storage
+
 try:
     from loguru import logger
 except ImportError:
     import logging
 
     logger = logging.getLogger("sma_server")
+
+from sma_unified.config import settings
 
 # Imports de servicios SMA
 from sma_unified.utils.doc_extractor import extraer_texto_archivo
@@ -184,12 +193,12 @@ class Phase1Request(BaseModel):
 
 
 class Phase2Request(BaseModel):
-    sesion_id: str
-    task_id_inicial: str
-    task_id_distribuidor: str
-    categoria: str
-    agente_destino_nombre: str
-    texto_documento: str
+    sesion_id: str = ""
+    task_id_inicial: Optional[str] = "task_init"
+    task_id_distribuidor: Optional[str] = "task_dist"
+    categoria: Optional[str] = "AGENTE_REGISTRO_LEGISLATIVO"
+    agente_destino_nombre: Optional[str] = "Agente_Comision_Legislativa"
+    texto_documento: str = "" 
     nombre_archivo: Optional[str] = None
     tipo_entrada: Optional[str] = "Texto"
     id_proyecto: Optional[int] = None
@@ -326,17 +335,21 @@ class MiembroComisionRequest(BaseModel):
 
 
 class ConcentradorRequest(BaseModel):
-    sesion_id: str
+    sesion_id: Optional[str] = None
     id_proyecto: Optional[int] = None
+    proyecto_id: Optional[int] = None
     datos_constitucionales: Optional[Dict[str, Any]] = None
     datos_consistencia: Optional[Dict[str, Any]] = None
     datos_fondo: Optional[Dict[str, Any]] = None
     datos_comision: Optional[Dict[str, Any]] = None
+    datos_tecnicos: Optional[Dict[str, Any]] = None
+    datos_presupuesto: Optional[Dict[str, Any]] = None
     texto_proyecto: Optional[str] = None
     titulo_proyecto: Optional[str] = None
     notificar: Optional[bool] = True
     destinatario_extra: Optional[str] = None
     mensaje_extra: Optional[str] = None
+    esperar_todos_dictamenes: Optional[bool] = False
 
 
 # ── Auto-migración: tabla sistema.miembro_comision ──────────────────────────
@@ -578,16 +591,20 @@ class PresentacionCiudadanaRequest(BaseModel):
 def listar_casos_compartidos(offset: int = Query(0, ge=0), limit: int = Query(50, ge=1, le=200),
                             usuario=Depends(usuario_revision)):
     from sma_unified.db.casos_compartidos import coleccion, publico
-    filtro = {"autor_id": usuario["usuario_id"]} if usuario.get("rol") == "Ciudadano" else {}
-    docs = list(
-        coleccion()
-        .find(filtro, allow_disk_use=True)
-        .sort("actualizado", -1)
-        .skip(offset)
-        .limit(limit + 1)
-    )
-    return {"success": True, "data": [publico(d) for d in docs[:limit]],
-            "next_offset": offset + limit if len(docs) > limit else None}
+    try:
+        filtro = {"autor_id": usuario["usuario_id"]} if usuario.get("rol") == "Ciudadano" else {}
+        docs = list(
+            coleccion()
+            .find(filtro, allow_disk_use=True)
+            .sort("actualizado", -1)
+            .skip(offset)
+            .limit(limit + 1)
+        )
+        return {"success": True, "data": [publico(d) for d in docs[:limit]],
+                "next_offset": offset + limit if len(docs) > limit else None}
+    except Exception as e:
+        logger.warning(f"[Casos] MongoDB no disponible temporalmente ({e}); retornando lista vacía resiliente.")
+        return {"success": True, "data": [], "next_offset": None, "aviso": "MongoDB no disponible"}
 
 
 @app.get("/api/casos/{caso_id}/documento")
@@ -1397,7 +1414,7 @@ def run_agent_comision(req: Phase2Request):
         # ── 3. LLM NVIDIA NIM (modelo configurado en el entorno) ─────────────
         data = None
         modelo_usado = "heuristica"
-        nvidia_api_key = os.getenv("NVIDIA_API_KEY") or settings.NVIDIA_API_KEY
+        nvidia_api_key = os.getenv("NVIDIA_API_KEY") or getattr(settings, "NVIDIA_API_KEY", "")
 
         system_prompt_comision = (
             "Eres el Asignador Oficial de Comisiones de la Asamblea Legislativa Plurinacional de Bolivia. "
@@ -1444,7 +1461,7 @@ Responde con este JSON exacto:
             client_nim = OpenAI(
                 base_url=getattr(settings, "NVIDIA_BASE_URL", "https://integrate.api.nvidia.com/v1"),
                 api_key=nvidia_api_key,
-                timeout=90.0,
+                timeout=8.0,
             )
             completion = client_nim.chat.completions.create(
                 model=modelo_principal,
@@ -1490,7 +1507,7 @@ Responde con este JSON exacto:
                     ],
                     temperature=0.1,
                     max_tokens=500,
-                    timeout=20,
+                    timeout=8,
                 )
                 data = extraer_json_de_llm(raw_out)
                 if isinstance(data, dict) and data.get("comision_principal"):
@@ -1739,7 +1756,12 @@ def run_agent_consistencia(req: Phase2Request):
             req.sesion_id, req.id_proyecto, req.texto_documento, req.nombre_archivo
         )
 
-        with limite_tiempo_auditoria(req.presupuesto_segundos):
+        from sma_unified.utils.parser_normativa import parsear_articulos
+        articulos_doc = parsear_articulos(req.texto_documento) or []
+        num_arts = len(articulos_doc)
+        presupuesto_efectivo = max(int(req.presupuesto_segundos or 90), num_arts * 12, 90)
+
+        with limite_tiempo_auditoria(presupuesto_efectivo):
             resultado = verificar_consistencia_normativa(
                 texto_documento=req.texto_documento,
                 sesion_id=req.sesion_id,
@@ -1885,30 +1907,81 @@ def run_agent_notificador(req: NotificadorComisionRequest):
 
 
 @app.post("/api/pipeline/agent_concentrador")
-def run_agent_concentrador(req: ConcentradorRequest):
+async def run_agent_concentrador(payload: Union[ConcentradorRequest, Dict[str, Any]] = Body(...)):
     """
     Agente Concentrador, Emisor y Notificador de Dictamen:
-    1. Concentra y sintetiza observaciones de Constitucionalidad, Consistencia Normativa y Fondo.
-    2. Emite el Dictamen Oficial en PDF (letra negra formal, alta solidez institucional).
+    1. Concentra y sintetiza observaciones de los 5 agentes (Constitucional, Consistencia, Fondo, Técnico, Presupuesto).
+    2. Emite el Dictamen Oficial en PDF (letra negra formal, alta solidez institucional con firma SHA-256).
     3. Despacha la notificación formal por correo HTML con el PDF adjunto a los miembros de comisión.
     """
     from sma_unified.agents.concentrador import ejecutar_concentrador_emisor_notificador
+    from sma_unified.db.neon_postgres import registrar_bitacora
 
     try:
-        id_proyecto = _resolve_id_proyecto(req.sesion_id, req.id_proyecto)
-        resultado = ejecutar_concentrador_emisor_notificador(
-            sesion_id=req.sesion_id,
-            id_proyecto=id_proyecto,
-            datos_constitucionales=req.datos_constitucionales,
-            datos_consistencia=req.datos_consistencia,
-            datos_fondo=req.datos_fondo,
-            datos_comision=req.datos_comision,
-            texto_proyecto=req.texto_proyecto,
-            titulo_proyecto=req.titulo_proyecto,
-            notificar=bool(req.notificar),
-            destinatario_extra=req.destinatario_extra,
-            mensaje_extra=req.mensaje_extra,
+        if isinstance(payload, ConcentradorRequest):
+            p = payload.dict()
+        else:
+            p = dict(payload)
+
+        sesion_id = p.get("sesion_id") or str(uuid.uuid4())
+        id_proyecto = _resolve_id_proyecto(
+            sesion_id,
+            p.get("id_proyecto") or p.get("proyecto_id") or (p.get("proyecto_info", {}) or {}).get("id_proyecto") or (p.get("proyecto_info", {}) or {}).get("id")
         )
+
+        datos_constitucionales = p.get("datos_constitucionales")
+        datos_consistencia = p.get("datos_consistencia")
+        datos_fondo = p.get("datos_fondo")
+        datos_comision = p.get("datos_comision")
+        datos_tecnicos = p.get("datos_tecnicos")
+        datos_presupuesto = p.get("datos_presupuesto")
+        texto_proyecto = p.get("texto_proyecto")
+        titulo_proyecto = p.get("titulo_proyecto") or (p.get("proyecto_info", {}) or {}).get("titulo")
+        notificar = bool(p.get("notificar", True))
+        destinatario_extra = p.get("destinatario_extra")
+        mensaje_extra = p.get("mensaje_extra")
+
+        # Registro informativo de concurrencia de insumos en la barrera
+        dictamenes_presentes = [
+            bool(datos_constitucionales),
+            bool(datos_consistencia),
+            bool(datos_fondo),
+            bool(datos_tecnicos),
+            bool(datos_presupuesto),
+        ]
+        total_presentes = sum(dictamenes_presentes)
+        logger.info(f"[Concentrador] Invocación recibida: {total_presentes}/5 dictámenes suministrados en memoria para proyecto {id_proyecto}.")
+
+        resultado = ejecutar_concentrador_emisor_notificador(
+            sesion_id=sesion_id,
+            id_proyecto=id_proyecto,
+            datos_constitucionales=datos_constitucionales,
+            datos_consistencia=datos_consistencia,
+            datos_fondo=datos_fondo,
+            datos_comision=datos_comision,
+            datos_tecnicos=datos_tecnicos,
+            datos_presupuesto=datos_presupuesto,
+            texto_proyecto=texto_proyecto,
+            titulo_proyecto=titulo_proyecto,
+            notificar=notificar,
+            destinatario_extra=destinatario_extra,
+            mensaje_extra=mensaje_extra,
+        )
+
+        if id_proyecto:
+            try:
+                exp = resultado.get("expediente_consolidado", {})
+                pdf_info = resultado.get("pdf", {})
+                registrar_bitacora(
+                    id_proyecto=int(id_proyecto),
+                    agente_accion="Agente_Concentrador_Emisor_Notificador",
+                    accion_realizada="Dictamen Consolidado, PDF Formal Emitido y Notificación Despachada",
+                    descripcion=f"Riesgo: {exp.get('nivel_riesgo_general', 'MEDIO')} | PDF: {pdf_info.get('filename', 'N/A')}",
+                    tiempo_segundos=2,
+                )
+            except Exception as be:
+                logger.warning(f"Error registrando bitácora Concentrador: {be}")
+
         return {"success": True, "data": resultado}
     except Exception as e:
         logger.error(f"Error en Agente Concentrador y Emisor: {e}")
@@ -2153,71 +2226,6 @@ async def run_agent_constitucion_fondo_endpoint(payload: Dict[str, Any]):
         return {"success": True, "data": resultado}
     except Exception as e:
         logger.error(f"Error en endpoint Constitucion Fondo: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@app.post("/api/pipeline/agent_concentrador")
-async def run_agent_concentrador_endpoint(payload: Dict[str, Any]):
-    """
-    Etapa 5: Agente Concentrador, Emisor y Notificador FUSIONADO
-    Consolidación, emisión del PDF institucional formal y despacho a la comisión.
-    """
-    try:
-        from sma_unified.agents.concentrador import (
-            ejecutar_concentrador_emisor_notificador,
-        )
-        from sma_unified.db.neon_postgres import registrar_bitacora
-
-        sesion_id = payload.get("sesion_id") or str(uuid.uuid4())
-        id_proyecto = (
-            payload.get("id_proyecto")
-            or payload.get("proyecto_info", {}).get("id_proyecto")
-            or payload.get("proyecto_info", {}).get("id")
-        )
-
-        datos_constitucionales = payload.get("datos_constitucionales")
-        datos_consistencia = payload.get("datos_consistencia")
-        datos_fondo = payload.get("datos_fondo")
-        datos_comision = payload.get("datos_comision")
-        texto_proyecto = payload.get("texto_proyecto")
-        titulo_proyecto = payload.get("titulo_proyecto") or payload.get(
-            "proyecto_info", {}
-        ).get("titulo")
-        notificar = payload.get("notificar", True)
-        destinatario_extra = payload.get("destinatario_extra")
-        mensaje_extra = payload.get("mensaje_extra")
-
-        resultado = ejecutar_concentrador_emisor_notificador(
-            sesion_id=sesion_id,
-            id_proyecto=int(id_proyecto) if id_proyecto else None,
-            datos_constitucionales=datos_constitucionales,
-            datos_consistencia=datos_consistencia,
-            datos_fondo=datos_fondo,
-            datos_comision=datos_comision,
-            texto_proyecto=texto_proyecto,
-            titulo_proyecto=titulo_proyecto,
-            notificar=notificar,
-            destinatario_extra=destinatario_extra,
-            mensaje_extra=mensaje_extra,
-        )
-
-        if id_proyecto:
-            try:
-                exp = resultado.get("expediente_consolidado", {})
-                pdf_info = resultado.get("pdf", {})
-                registrar_bitacora(
-                    id_proyecto=int(id_proyecto),
-                    agente_accion="Agente_Concentrador_Emisor_Notificador",
-                    accion_realizada="Dictamen Consolidado, PDF Formal Emitido y Notificación Despachada",
-                    descripcion=f"Riesgo: {exp.get('nivel_riesgo_general', 'MEDIO')} | PDF: {pdf_info.get('filename', 'N/A')}",
-                    tiempo_segundos=2,
-                )
-            except Exception as be:
-                logger.warning(f"Error registrando bitácora Concentrador: {be}")
-
-        return {"success": True, "data": resultado}
-    except Exception as e:
-        logger.error(f"Error en endpoint Concentrador: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -4271,4 +4279,11 @@ def api_drive_subir_ley(id_proyecto: int):
 if __name__ == "__main__":
     port = int(os.getenv("PORT", 8085))
     print(f"🚀 Iniciando Servidor FastAPI SMA Congreso en http://localhost:{port}")
-    uvicorn.run("server:app", host="0.0.0.0", port=port, reload=True)
+    uvicorn.run(
+        "server:app",
+        host="0.0.0.0",
+        port=port,
+        reload=True,
+        timeout_graceful_shutdown=2,
+        timeout_keep_alive=5,
+    )

@@ -658,19 +658,28 @@ h1, h2, h3, h4, h5, h6 {
 /* ── Mesa layout: agent banner (left) + content (right) ── */
 .mesa-layout-grid {
   display: grid;
-  grid-template-columns: clamp(260px, 28%, 360px) 1fr;
+  grid-template-columns: clamp(250px, 22vw, 320px) 1fr;
   gap: var(--section-gap);
   align-items: start;
+  width: 100%;
 }
 
-@media (max-width: 860px) {
+@media (max-width: 1280px) {
   .mesa-layout-grid {
     grid-template-columns: 1fr;
   }
   .mesa-layout-grid > .mesa-banner-col {
-    max-height: 200px;
-    overflow: hidden;
     position: static !important;
+    max-width: 380px;
+    margin: 0 auto 16px;
+  }
+}
+
+@media (max-width: 680px) {
+  .mesa-layout-grid > .mesa-banner-col {
+    max-width: 100%;
+    max-height: 240px;
+    overflow: hidden;
   }
 }
 
@@ -802,14 +811,6 @@ h1, h2, h3, h4, h5, h6 {
   min-width: 0;
 }
 
-.mesa-layout-grid {
-  display: grid;
-  grid-template-columns: clamp(280px, 24%, 350px) 1fr;
-  gap: var(--section-gap);
-  align-items: start;
-  width: 100%;
-}
-
 /* Compact operational workspace: horizontal agent flow with a persistent case card. */
 .mesa-process-selector {
   display: flex;
@@ -892,17 +893,6 @@ details[aria-label="Solicitudes entrantes"] > summary { list-style-position: ins
   .mesa-project-summary { position: static; max-height: 250px; }
   .mesa-process-selector select { min-width: 0; width: 100%; max-width: 100%; }
   .mesa-process-selector { align-items: stretch; }
-}
-
-@media (max-width: 900px) {
-  .mesa-layout-grid {
-    grid-template-columns: 1fr;
-  }
-  .mesa-layout-grid > .mesa-banner-col {
-    position: static !important;
-    max-height: 220px;
-    overflow: hidden;
-  }
 }
 
 /* ── Tarjetas y paneles sin distorsión ── */
@@ -1384,4 +1374,131 @@ select option { color: #183650; background: #fff; }
 .citizen-chat-composer-footer button:hover:not(:disabled) { background:#0369a1; }
 .citizen-chat-composer-footer button:disabled { border-color:#cbd5e1; background:#e2e8f0; color:#64748b; cursor:not-allowed; }
 @media(max-width:620px) { .citizen-chat-welcome { align-items:flex-start; padding:14px; } .citizen-chat-avatar { flex-basis:48px; width:48px; height:48px; } .citizen-chat-avatar img { width:42px; height:42px; } .citizen-chat-sparkle { display:none; } .citizen-chat-dropzone { align-items:flex-start; flex-wrap:wrap; } .citizen-drop-copy { flex-basis:calc(100% - 55px); } .citizen-drop-button { margin-left:50px; } .citizen-chat-case { flex-wrap:wrap; } .citizen-chat-case .citizen-expert-button { margin-left:auto; } }
+
+/* ══════════════════════════════════════════════════════════════
+   DISEÑO RESPONSIVO — SECRETARIO DE CÁMARA Y MESA DE PARTES
+   ══════════════════════════════════════════════════════════════ */
+
+/* ── Acciones de Secretario de Cámara ── */
+.secretario-actions-row {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  width: 100%;
+  margin-top: 14px;
+}
+
+.secretario-actions-row .btn-action-secretario {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 0.95rem;
+  padding: 12px 22px;
+  min-height: 48px;
+  border-radius: 10px;
+  font-weight: 700;
+  text-align: center;
+  white-space: normal;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.secretario-actions-row .btn-action-primary {
+  font-size: 1.02rem;
+  padding: 13px 28px;
+}
+
+@media (max-width: 768px) {
+  .secretario-actions-row {
+    flex-direction: column-reverse;
+    align-items: stretch;
+    gap: 10px;
+  }
+  .secretario-actions-row .btn-action-secretario {
+    width: 100%;
+    padding: 14px 18px;
+    font-size: 0.92rem;
+  }
+}
+
+/* ── Barra de Navegación (Navbar) Responsiva ── */
+.navbar-nav-strip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  max-width: 100%;
+  padding: 4px 2px;
+}
+
+.navbar-nav-strip::-webkit-scrollbar {
+  display: none;
+}
+
+@media (max-width: 1180px) {
+  .navbar-nav-strip button {
+    padding: 6px 10px !important;
+    font-size: 0.8rem !important;
+  }
+}
+
+@media (max-width: 900px) {
+  .navbar-brand-subtitle {
+    display: none !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .navbar-status-label {
+    display: none !important;
+  }
+  .navbar-user-badge span:first-child {
+    max-width: 75px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+/* ── Barra de Controles de Flujo Horizontal ── */
+.mesa-flow-controls-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+@media (max-width: 720px) {
+  .mesa-flow-controls-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .mesa-flow-right-controls {
+    justify-content: space-between;
+    width: 100%;
+  }
+}
+
+/* ── Botones Flotantes (FABs) de Soporte ── */
+@media (max-width: 640px) {
+  .fab-results-btn {
+    bottom: 14px !important;
+    right: 12px !important;
+    padding: 9px 14px !important;
+    font-size: 0.78rem !important;
+  }
+  .fab-chat-btn {
+    bottom: 14px !important;
+    left: 12px !important;
+    padding: 9px 14px !important;
+    font-size: 0.78rem !important;
+  }
+}
+
 

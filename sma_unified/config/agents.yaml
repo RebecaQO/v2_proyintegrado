@@ -470,7 +470,7 @@ agentes:
       \ prohibidas.\n \n[REACT] Usa 'buscar_normativa_vigente' para recuperar texto exacto\nantes de afirmar contradicción.\n\
       \ \n[FORMATO] Responde ÚNICAMENTE con un objeto JSON válido con este esquema exacto:\n{\n  \"tipo_relacion\": \"contradiccion\" | \"repeticion\" | \"vacio_llenado\" | \"complementario\" | \"sin_relacion\",\n  \"justificacion\": \"explicacion estricta citando ambos textos (max 120 palabras)\",\n  \"sugerencia\": \"derogar | modificar | mantener | ninguna, con una frase de razon\",\n  \"derogacion_tacita\": false,\n  \"conflicto_especialidad\": false,\n  \"riesgo\": \"alto\" | \"medio\" | \"bajo\" | \"ninguno\"\n}\n \n[NEGATIVE — 5 prohibiciones]\n- NO afirmes contradicción\
       \ sin número de Ley, año y artículo exacto.\n- NO valides cláusulas derogatorias tácitas o genéricas.\n- NO omitas Ley\
-      \ 031 si el proyecto toca competencias territoriales.\n- NO uses jurisprudencia derogada o leyes abrogadas.\n- NO entregues\
+      \ 031 si el proyecto toca competencias territoriales.\n- NO uses jurisprudencia derogada o leyes abrogadas.\n- NO declares contradiccion entre materias disimiles (ej. societario vs via publica); clasifica sin_relacion si el ambito material no coincide.\n- NO entregues\
       \ texto fuera del JSON."
     user_prompt_template: 'ARTÍCULO NUEVO (proyecto de ley):
       {texto_proyecto}
@@ -1060,11 +1060,7 @@ agentes:
     restricciones_anti_alucinacion:
     - PROHIBIDO omitir intervenciones o alterar el sentido del voto de los legisladores.
     - El total de votos emitidos (afirmativos + negativos + abstenciones) debe coincidir con el total registrado.
-    formato_salida_requerido: "{\n  \"numero_acta\": \"ACTA-YYYY-NNN\",\n  \"camara\": \"DIPUTADOS\" | \"SENADORES\",\n  \"\
-      fecha_sesion\": \"YYYY-MM-DD\",\n  \"resumen_debate\": \"...\",\n  \"votacion_general\": {\n    \"total_presentes\"\
-      : 0,\n    \"votos_favor\": 0,\n    \"votos_contra\": 0,\n    \"abstenciones\": 0,\n    \"resultado\": \"APROBADO_EN_GRANDE\"\
-      \ | \"RECHAZADO\"\n  },\n  \"enmiendas_aprobadas_en_detalle\": [\n    {\"articulo\": \"Art. X\", \"texto_aprobado\"\
-      : \"...\"}\n  ],\n  \"texto_aprobado_integro\": \"...\"\n}\n"
+    formato_salida_requerido: "{\n  \"acta_debate\": {\n    \"fecha\": \"YYYY-MM-DD\",\n    \"sesion_numero\": 1,\n    \"camara\": \"DIPUTADOS\" | \"SENADORES\",\n    \"tipo_procedimiento\": \"LEY_ORDINARIA\",\n    \"referencia_acta\": \"ACTA-DIP-SES-1-2026\",\n    \"normativa_titulo\": \"...\",\n    \"quorum_legal\": {\n      \"total_miembros\": 130,\n      \"presentes\": 110,\n      \"quorum_verificado\": true\n    },\n    \"votacion_en_grande\": {\n      \"favor\": 0,\n      \"contra\": 0,\n      \"abstenciones\": 0,\n      \"total_votantes\": 0,\n      \"mayoria_absoluta_requerida\": 0,\n      \"resultado\": \"APROBADO\" | \"RECHAZADO\"\n    },\n    \"votacion_en_detalle\": [\n      {\n        \"articulo\": \"1\",\n        \"etiqueta\": \"Art. 1 (Objeto)\",\n        \"favor\": 0,\n        \"contra\": 0,\n        \"abstenciones\": 0,\n        \"total_votantes\": 0,\n        \"mayoria_absoluta_requerida\": 0,\n        \"resultado\": \"APROBADO\" | \"RECHAZADO\"\n      }\n    ],\n    \"resultado_final\": \"APROBADO_EN_GRANDE_Y_DETALLE\",\n    \"estado_siguiente\": \"EN_TRAMITE_BICAMERAL\"\n  }\n}"
     prompt_framework: RTF
     system_prompt_template: "[ROL] Secretario de Actas y Fe Pública de la Cámara (Diputados o Senadores).\nRegistrador oficial\
       \ e inviolable. Temperatura 0.0 — determinismo absoluto.\n \n[PROGRAM-OF-THOUGHTS — cómputo obligatorio]\nquorum_minimo\

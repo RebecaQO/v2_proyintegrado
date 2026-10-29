@@ -17,6 +17,13 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from dotenv import load_dotenv
 load_dotenv()
 
+# Asegurar almacenamiento local seguro para CrewAI sin fallos de permisos en Windows
+_crewai_storage = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".temp_localappdata")
+os.makedirs(_crewai_storage, exist_ok=True)
+if "LOCALAPPDATA" not in os.environ or "crewai" not in os.environ.get("LOCALAPPDATA", ""):
+    os.environ["LOCALAPPDATA"] = _crewai_storage
+os.environ["CREWAI_STORAGE_DIR"] = _crewai_storage
+
 print("=" * 70)
 print("🏛️ VERIFICACIÓN SISTEMA MULTIAGENTE LEGISLATIVO BOLIVIANO (14 AGENTES)")
 print("=" * 70)

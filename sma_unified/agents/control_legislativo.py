@@ -92,7 +92,17 @@ def validar_acta(datos):
 
     def computar(votos, etiqueta):
         votos = copy.deepcopy(votos) if isinstance(votos, dict) else {}
-        conteos = [_entero(votos.get(c)) for c in ("favor", "contra", "abstenciones")]
+        favor_val = votos.get("favor")
+        if favor_val is None:
+            favor_val = votos.get("votos_favor", votos.get("afirmativos"))
+        contra_val = votos.get("contra")
+        if contra_val is None:
+            contra_val = votos.get("votos_contra", votos.get("negativos"))
+        abst_val = votos.get("abstenciones")
+        if abst_val is None:
+            abst_val = votos.get("abstencion", votos.get("votos_abstencion", votos.get("blancos")))
+
+        conteos = [_entero(favor_val), _entero(contra_val), _entero(abst_val)]
         coherente = presentes is not None and all(n is not None for n in conteos)
         if coherente:
             emitidos = sum(conteos)
@@ -103,11 +113,18 @@ def validar_acta(datos):
         votos.update({"mayoria_absoluta_requerida": presentes // 2 + 1 if presentes is not None else None,
                       "resultado": "NO_VERIFICABLE"})
         if coherente and quorum_valido:
+            if "favor" in votos or favor_val is not None:
+                votos["favor"] = conteos[0]
+                votos["contra"] = conteos[1]
+                votos["abstenciones"] = conteos[2]
             votos["total_votantes"] = sum(conteos)
             votos["resultado"] = "APROBADO" if conteos[0] > presentes / 2 else "RECHAZADO"
         return votos
 
-    acta["votacion_en_grande"] = computar(acta.get("votacion_en_grande"), "la votación en grande")
+    v_grande_raw = acta.get("votacion_en_grande")
+    if not v_grande_raw and isinstance(acta.get("votacion_general"), dict):
+        v_grande_raw = acta.get("votacion_general")
+    acta["votacion_en_grande"] = computar(v_grande_raw, "la votación en grande")
     detalle = acta.get("votacion_en_detalle", acta.get("votaciones_detalle", []))
     if not isinstance(detalle, list):
         detalle = []
@@ -126,7 +143,11 @@ def validar_acta(datos):
         faltantes.append("Votación en detalle de todos los artículos del texto, sin duplicados")
     tipo_proc = str(acta.get("tipo_procedimiento") or "LEY_ORDINARIA").upper()
     acta["tipo_procedimiento"] = tipo_proc
-    if tipo_proc not in ("LEY_ORDINARIA", "ORDINARIA", "LEY"):
+    es_proc_ordinario = tipo_proc in ("LEY_ORDINARIA", "ORDINARIA", "LEY") or (
+        any(t in tipo_proc for t in ("ORDINARIA", "LEY", "MUNICIPAL", "AUTONOMICA", "DEPARTAMENTAL", "REGIONAL"))
+        and "REFORMA" not in tipo_proc and "CONSTITUCIONAL" not in tipo_proc
+    )
+    if not es_proc_ordinario:
         faltantes.append("Confirmar el procedimiento ordinario; los procedimientos especiales requieren reglas específicas")
         for votos in [acta["votacion_en_grande"], *acta["votacion_en_detalle"]]:
             votos["resultado"] = "NO_VERIFICABLE"

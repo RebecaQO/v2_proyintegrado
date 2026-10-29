@@ -3,7 +3,16 @@ import re
 import hashlib
 from datetime import datetime
 from typing import Dict, Any, List, Optional, Tuple
-from fpdf import FPDF
+try:
+    from fpdf import FPDF
+except ImportError:
+    try:
+        from fpdf2 import FPDF
+    except ImportError:
+        FPDF = None
+
+
+_BasePDF = FPDF if FPDF is not None else object
 
 MESES_ES = {
     1: "enero", 2: "febrero", 3: "marzo", 4: "abril",
@@ -67,7 +76,7 @@ def normalizar_caracteres(texto: str) -> str:
     return texto
 
 
-class GacetaOficialPDF(FPDF):
+class GacetaOficialPDF(_BasePDF):
     def __init__(self, numero_ley: str = "1548", edicion: str = "EDICIÓN OFICIAL"):
         super().__init__(orientation='P', unit='mm', format='A4')
         self.numero_ley = numero_ley

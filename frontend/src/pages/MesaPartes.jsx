@@ -677,21 +677,21 @@ export default function MesaPartes({ onNavigateExpedientes, onNavigateEjecutivo,
   };
 
   const buildPayload = () => ({
-    sesion_id: fase1Data.sesion_id,
-    task_id_inicial: fase1Data.task_id_inicial,
-    task_id_distribuidor: fase1Data.task_id_distribuidor,
-    categoria: selectedCategory,
-    agente_destino_nombre: selectedCategory === 'AGENTE_REGISTRO_LEGISLATIVO'
+    sesion_id: fase1Data?.sesion_id || '',
+    task_id_inicial: fase1Data?.task_id_inicial || 'task_init',
+    task_id_distribuidor: fase1Data?.task_id_distribuidor || 'task_dist',
+    categoria: selectedCategory || fase1Data?.categoria || 'AGENTE_REGISTRO_LEGISLATIVO',
+    agente_destino_nombre: (selectedCategory || fase1Data?.categoria) === 'AGENTE_REGISTRO_LEGISLATIVO'
       ? 'Agente_Comision_Legislativa'
-      : selectedCategory === 'AGENTE_ATENCION_CIUDADANA'
+      : (selectedCategory || fase1Data?.categoria) === 'AGENTE_ATENCION_CIUDADANA'
         ? 'Agente_Atencion_Ciudadana'
         : 'Agente_Gestion_Correspondencia',
-    texto_documento: documentText,
-    nombre_archivo: fase1Data.nombre_archivo,
-    tipo_entrada: fase1Data.tipo_entrada,
-    id_proyecto: fase1Data.id_proyecto,
-    solicitud_id: fase1Data.solicitud_id,
-    t_inicio_fase1: fase1Data.t_inicio_fase1,
+    texto_documento: documentText || '',
+    nombre_archivo: fase1Data?.nombre_archivo || documentName || 'documento.pdf',
+    tipo_entrada: fase1Data?.tipo_entrada || 'Texto Directo',
+    id_proyecto: fase1Data?.id_proyecto || null,
+    solicitud_id: fase1Data?.solicitud_id || null,
+    t_inicio_fase1: fase1Data?.t_inicio_fase1 || null,
     local_filepath: uploadStats?.local_path || null,
   });
 
@@ -734,14 +734,14 @@ export default function MesaPartes({ onNavigateExpedientes, onNavigateEjecutivo,
     });
     try {
       const res = await api.runAgentConstitucional(buildPayload());
-      if (res.data?.estado === 'PENDIENTE_REVISION') {
-        updateActiveSession({ dictamenData: res.data });
-        throw new Error(`Constitucional: ${res.data.total_pendientes} cotejos pendientes de revisión. Reintenta la auditoría.`);
-      }
+      const totalPendientes = res.data?.total_pendientes || res.data?.pendientes_revision?.length || 0;
       updateActiveSession({
         dictamenData: res.data,
         pipelineStep: 5,
-        isProcessing: false
+        isProcessing: false,
+        errorMessage: res.data?.estado === 'PENDIENTE_REVISION'
+          ? `Constitucional completado con ${totalPendientes} observaciones sujetas a revisión humana.`
+          : ''
       });
     } catch (err) {
       updateActiveSession({
@@ -906,7 +906,7 @@ export default function MesaPartes({ onNavigateExpedientes, onNavigateEjecutivo,
     const tieneCpe = Boolean(
       dictamenData &&
       !dictamenData.error &&
-      (dictamenData.analisis || dictamenData.articulos_consultados || dictamenData.estado === 'COMPLETADO' || dictamenData.valido !== undefined)
+      (dictamenData.analisis || dictamenData.articulos_consultados || dictamenData.estado === 'COMPLETADO' || dictamenData.estado === 'PENDIENTE_REVISION' || dictamenData.dictamen_global || dictamenData.valido !== undefined)
     );
     const tieneNormas = Boolean(
       consistenciaData &&
@@ -930,6 +930,8 @@ export default function MesaPartes({ onNavigateExpedientes, onNavigateEjecutivo,
         datos_consistencia: consistenciaData || {},
         datos_fondo: constitucionFondoData || {},
         datos_comision: comisionData || {},
+        datos_tecnicos: activeSession?.tecnicoData || activeSession?.especialistaTecnicoData || null,
+        datos_presupuesto: activeSession?.presupuestoData || activeSession?.planificacionPresupuestoData || null,
         texto_proyecto: documentText,
         titulo_proyecto: documentName,
         notificar: true,
@@ -1399,14 +1401,14 @@ export default function MesaPartes({ onNavigateExpedientes, onNavigateEjecutivo,
         background: 'linear-gradient(135deg, #ffffff 0%, #f2f8fc 58%, #eaf4fa 100%)',
         border: `1.5px solid ${isAgentDone ? '#8AC92688' : `${activeAccent}66`}`,
         borderRadius: '20px',
-        padding: '20px 28px',
+        padding: 'clamp(14px, 2.5vw, 22px) clamp(16px, 3vw, 28px)',
         boxShadow: isAgentDone
           ? `0 8px 24px rgba(24,58,86,0.08), 0 0 20px rgba(138,201,38,0.16)`
           : `0 8px 24px rgba(24,58,86,0.08), 0 0 20px ${activeAccent}22`,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        gap: '24px',
+        gap: '20px',
         position: 'relative',
         overflow: 'hidden',
         backdropFilter: 'blur(16px)',
@@ -1425,7 +1427,7 @@ export default function MesaPartes({ onNavigateExpedientes, onNavigateEjecutivo,
         }} />
 
         {/* Lado izquierdo: Fase, Nombre en grande, Rol */}
-        <div style={{ flex: 1, minWidth: '240px' }}>
+        <div style={{ flex: 1, minWidth: 'min(100%, 260px)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', marginBottom: '8px' }}>
             <div style={{
               display: 'inline-flex',
@@ -1467,7 +1469,7 @@ export default function MesaPartes({ onNavigateExpedientes, onNavigateEjecutivo,
           </div>
 
           <h2 style={{
-            fontSize: '2.1rem',
+            fontSize: 'clamp(1.3rem, 3.2vw, 2.1rem)',
             fontWeight: 900,
             color: '#123B60',
             fontFamily: 'Outfit, sans-serif',
@@ -1492,12 +1494,12 @@ export default function MesaPartes({ onNavigateExpedientes, onNavigateEjecutivo,
           </div>
         </div>
 
-        {/* Lado derecho: Logo circular MÁS GRANDE (104px) con aro institucional */}
+        {/* Lado derecho: Logo circular adaptativo con aro institucional */}
         <div style={{ position: 'relative', flexShrink: 0 }}>
           {/* Anillo de resplandor orbital */}
           <div style={{
             position: 'absolute',
-            inset: '-7px',
+            inset: '-6px',
             borderRadius: '50%',
             border: `2px dashed ${isAgentDone ? '#8AC92677' : `${activeAccent}77`}`,
             animation: isProcessing ? 'spin 4s linear infinite' : 'none',
@@ -1505,8 +1507,8 @@ export default function MesaPartes({ onNavigateExpedientes, onNavigateEjecutivo,
           }} />
 
           <div style={{
-            width: '104px',
-            height: '104px',
+            width: 'clamp(68px, 9vw, 104px)',
+            height: 'clamp(68px, 9vw, 104px)',
             borderRadius: '50%',
             border: `3.5px solid ${isAgentDone ? '#8AC926' : activeAccent}`,
             boxShadow: isAgentDone
@@ -4315,7 +4317,7 @@ export default function MesaPartes({ onNavigateExpedientes, onNavigateEjecutivo,
                         <h4 style={{ color: '#00B4D8', fontSize: '0.95rem', margin: '0 0 12px 0', display: 'flex', alignItems: 'center', gap: '8px' }}>
                           🟦 Resultados del análisis en grande (Votación General)
                         </h4>
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '10px' }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(clamp(110px, 20vw, 150px), 1fr))', gap: '10px' }}>
                           <div style={{ background: 'rgba(30,41,59,0.7)', padding: '10px', borderRadius: '8px', textAlign: 'center' }}>
                             <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>A Favor</span>
                             <div style={{ color: '#8AC926', fontSize: '1.25rem', fontWeight: 800 }}>{acta.votacion_en_grande.favor ?? 0}</div>
@@ -4343,7 +4345,7 @@ export default function MesaPartes({ onNavigateExpedientes, onNavigateEjecutivo,
                       <h4 style={{ color: '#86efac', fontSize: '0.95rem', margin: '0 0 12px 0', display: 'flex', alignItems: 'center', gap: '8px' }}>
                         🟩 Resultados del análisis en detalle (artículo por artículo)
                       </h4>
-                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '12px' }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(clamp(200px, 28vw, 280px), 1fr))', gap: '12px' }}>
                         {(acta.votacion_en_detalle && acta.votacion_en_detalle.length > 0 ? acta.votacion_en_detalle : votaciones).map((v, idx) => (
                           <div key={idx} style={{
                             background: 'rgba(30,41,59,0.7)',
@@ -4355,14 +4357,14 @@ export default function MesaPartes({ onNavigateExpedientes, onNavigateEjecutivo,
                               <span style={{ color: '#ffffff', fontWeight: 700, fontSize: '0.9rem' }}>
                                 {v.etiqueta || (v.articulo ? (String(v.articulo).toLowerCase().startsWith('disposicion') ? v.articulo : `Art. ${v.articulo}`) : `Art. ${idx + 1}`)}
                               </span>
-                              <span className="badge badge-green">{v.resultado || v.votacion || 'APROBADO'}</span>
+                              <span className={v.resultado === 'APROBADO' ? 'badge badge-green' : v.resultado === 'RECHAZADO' ? 'badge badge-red' : 'badge badge-yellow'}>{v.resultado || v.votacion || 'APROBADO'}</span>
                             </div>
                             {v.epigrafe && !(v.etiqueta && v.etiqueta.includes(v.epigrafe)) && (
                               <div style={{ fontSize: '0.78rem', color: '#94a3b8', marginBottom: '6px' }}>
                                 {v.epigrafe}
                               </div>
                             )}
-                            <div style={{ display: 'flex', gap: '12px', fontSize: '0.82rem', color: '#cbd5e1' }}>
+                            <div style={{ display: 'flex', gap: '12px', fontSize: '0.82rem', color: '#cbd5e1', flexWrap: 'wrap' }}>
                               <span>A favor: <strong style={{ color: '#8AC926' }}>{v.favor ?? 0}</strong></span>
                               <span>En contra: <strong style={{ color: '#f87171' }}>{v.contra ?? 0}</strong></span>
                               <span>Abstención: <strong style={{ color: '#F4A261' }}>{v.abstenciones ?? 0}</strong></span>
@@ -4394,42 +4396,30 @@ export default function MesaPartes({ onNavigateExpedientes, onNavigateEjecutivo,
                       </div>
                     )}
 
-                    {/* Acción Siguiente */}
-                    <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '14px' }}>
-                      {/* Módulo de voz: Secretario de Cámara (Lectura de Acta y Subir Correcciones) */}
-
-                      <div style={{ marginBottom: '24px', width: '100%' }}>
-
-                        {!readOnly && (<AgentVoiceModule
-
+                    {/* Módulo de voz independiente: Secretario de Cámara */}
+                    {!readOnly && (
+                      <div style={{ marginBottom: '20px', width: '100%' }}>
+                        <AgentVoiceModule
                           agentId="secretario"
-
                           agentLabel="Agente Secretario de Cámara"
-
                           primaryColor="#1E40AF"
-
                           sesionId={fase1Data?.sesion_id || null}
-
                           resultData={secretarioData}
-
                           speechHook={speechHook}
-
                           onAgregarCorreccion={(corr) => {
-
                             appendLog('secretario', 'CORRECCION', `Corrección registrada para ${corr.articulo}: ${corr.texto}`);
-
                           }}
-
-                        />)}
-
+                        />
                       </div>
+                    )}
 
+                    {/* Acción Siguiente: Botonera con clase responsiva dedicada */}
+                    <div className="secretario-actions-row">
                       <button
                         type="button"
                         onClick={handleSecretario}
                         disabled={isProcessing}
-                        className="btn-secondary"
-                        style={{ fontSize: '0.95rem', padding: '12px 20px', display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}
+                        className="btn-secondary btn-action-secretario"
                         title="Re-ejecutar Secretario para recargar todos los artículos extraídos del documento"
                       >
                         <RotateCcw size={18} />
@@ -4439,8 +4429,7 @@ export default function MesaPartes({ onNavigateExpedientes, onNavigateEjecutivo,
                       <button
                         onClick={handleBicameral}
                         disabled={readOnly || isProcessing}
-                        className="btn-primary"
-                        style={{ fontSize: '1.05rem', padding: '14px 30px' }}
+                        className="btn-primary btn-action-secretario btn-action-primary"
                       >
                         {isProcessing ? (
                           <><Cpu size={20} className="pulse-active" /><span>Comparando cámaras...</span></>
@@ -4945,6 +4934,7 @@ export default function MesaPartes({ onNavigateExpedientes, onNavigateEjecutivo,
       {/* ── BOTÓN FLOTANTE PERMANENTE: VER RESULTADOS DE AGENTES (ACCESIBLE EN TODO MOMENTO) ── */}
       <button
         onClick={() => setShowAllResultsModal(true)}
+        className="fab-results-btn"
         style={{
           position: 'fixed',
           bottom: '24px',
@@ -4992,6 +4982,7 @@ export default function MesaPartes({ onNavigateExpedientes, onNavigateEjecutivo,
       {/* ── BOTÓN FLOTANTE: CHAT EMERGENTE (audio ↔ texto, abre y cierra) ── */}
       <button
         onClick={() => setShowChat(v => !v)}
+        className="fab-chat-btn"
         style={{
           position: 'fixed',
           bottom: '24px',

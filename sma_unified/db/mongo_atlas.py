@@ -6,6 +6,7 @@ con todos los detalles: tarea, agente origen, destino, payload, estado y resulta
 """
 import os
 import uuid
+import time
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
@@ -22,13 +23,17 @@ except ImportError:
 # ── Lazy singleton para la conexión ─────────────────────────────────────────
 _client = None
 _db = None
+_last_mongo_fail_time = 0.0
 
 
 def get_db():
-    """Retorna la instancia de base de datos MongoDB Atlas (singleton síncrono)."""
-    global _client, _db
+    """Retorna la instancia de base de datos MongoDB Atlas (singleton síncrono con circuit-breaker)."""
+    global _client, _db, _last_mongo_fail_time
     if _db is not None:
         return _db
+    now = time.monotonic()
+    if now - _last_mongo_fail_time < 15.0:
+        raise ConnectionError("MongoDB Atlas no disponible temporalmente (cooldown activo)")
     try:
         from pymongo import MongoClient
         from pymongo.server_api import ServerApi
@@ -41,13 +46,21 @@ def get_db():
                 "MONGO_URI no configurada. Edita .env con tu cadena de conexión de MongoDB Atlas."
             )
 
-        _client = MongoClient(uri, server_api=ServerApi("1"), serverSelectionTimeoutMS=5000)
+        _client = MongoClient(
+            uri,
+            server_api=ServerApi("1"),
+            serverSelectionTimeoutMS=3000,
+            connectTimeoutMS=5000,
+            socketTimeoutMS=15000,
+            retryWrites=True,
+        )
         _client.admin.command("ping")  # Verifica conectividad
         _db = _client[db_name]
         logger.info(f"✅ MongoDB Atlas conectado → base de datos: {db_name}")
         _ensure_indexes(_db)
         return _db
     except Exception as e:
+        _last_mongo_fail_time = time.monotonic()
         logger.error(f"❌ No se pudo conectar a MongoDB Atlas: {e}")
         raise
 
@@ -267,26 +280,28 @@ def publicar_mensaje(
     }
     """
     task_id = str(uuid.uuid4())
-    db = get_db()
-
-    doc = {
-        "task_id": task_id,
-        "sesion_id": sesion_id or str(uuid.uuid4()),
-        "timestamp": datetime.now(timezone.utc),
-        "agente_origen": agente_origen,
-        "agente_destino": agente_destino,
-        "tipo_tarea": tipo_tarea,
-        "estado": "pendiente",
-        "payload": payload,
-        "resultado": None,
-        "metadata": metadata or {},
-        "duracion_ms": None,
-        "error_detalle": None,
-    }
-    db["agent_messages"].insert_one(doc)
-    logger.info(
-        f"📨 [{agente_origen}] → [{agente_destino}] | Tarea: {tipo_tarea} | ID: {task_id[:8]}..."
-    )
+    try:
+        db = get_db()
+        doc = {
+            "task_id": task_id,
+            "sesion_id": sesion_id or str(uuid.uuid4()),
+            "timestamp": datetime.now(timezone.utc),
+            "agente_origen": agente_origen,
+            "agente_destino": agente_destino,
+            "tipo_tarea": tipo_tarea,
+            "estado": "pendiente",
+            "payload": payload,
+            "resultado": None,
+            "metadata": metadata or {},
+            "duracion_ms": None,
+            "error_detalle": None,
+        }
+        db["agent_messages"].insert_one(doc)
+        logger.info(
+            f"📨 [{agente_origen}] → [{agente_destino}] | Tarea: {tipo_tarea} | ID: {task_id[:8]}..."
+        )
+    except Exception as e:
+        logger.warning(f"No se pudo registrar mensaje en MongoDB: {e}")
     return task_id
 
 
@@ -302,17 +317,20 @@ def actualizar_estado(
 
     estados posibles: 'pendiente', 'en_proceso', 'completado', 'error'
     """
-    db = get_db()
-    update = {"$set": {"estado": estado, "fecha_actualizacion": datetime.now(timezone.utc)}}
-    if resultado is not None:
-        update["$set"]["resultado"] = resultado
-    if duracion_ms is not None:
-        update["$set"]["duracion_ms"] = duracion_ms
-    if error_detalle is not None:
-        update["$set"]["error_detalle"] = error_detalle
+    try:
+        db = get_db()
+        update = {"$set": {"estado": estado, "fecha_actualizacion": datetime.now(timezone.utc)}}
+        if resultado is not None:
+            update["$set"]["resultado"] = resultado
+        if duracion_ms is not None:
+            update["$set"]["duracion_ms"] = duracion_ms
+        if error_detalle is not None:
+            update["$set"]["error_detalle"] = error_detalle
 
-    db["agent_messages"].update_one({"task_id": task_id}, update)
-    logger.info(f"🔄 Tarea {task_id[:8]}... → estado: {estado}")
+        db["agent_messages"].update_one({"task_id": task_id}, update)
+        logger.info(f"🔄 Tarea {task_id[:8]}... → estado: {estado}")
+    except Exception as e:
+        logger.warning(f"No se pudo actualizar estado en MongoDB: {e}")
 
 
 def marcar_en_proceso(task_id: str) -> None:

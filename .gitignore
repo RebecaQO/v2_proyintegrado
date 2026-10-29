@@ -47,3 +47,5 @@ test_flujo_cadena_agentes.py
 .agents/
 .Documeno/
 Documeno/
+
+.temp_localappdata/

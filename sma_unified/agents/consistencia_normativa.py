@@ -249,7 +249,10 @@ class AgenteConsistenciaNormativa:
                 "- complementario: misma materia, sin conflicto.\n"
                 "- sin_relacion: similitud superficial, sin relación jurídica real.\n"
                 "- derogacion_tacita: el artículo nuevo regula la misma materia sin indicar que deroga al anterior.\n"
-                "- conflicto_especialidad: la norma especial debería prevalecer sobre la general."
+                "- conflicto_especialidad: la norma especial debería prevalecer sobre la general.\n\n"
+                "REGLA CRÍTICA DE ÁMBITO MATERIAL (ANTI-FALSOS POSITIVOS):\n"
+                "- Para declarar 'contradiccion' o 'repeticion', ambas normas DEBEN regular exactamente el mismo objeto fáctico y materia jurídica (ej. ambas derecho societario, o ambas uso de vía pública, o ambas tributario).\n"
+                "- NUNCA declares contradicción entre normas de materias distintas (ej. derecho societario/acciones vs. comercio en vía pública, o regulación financiera vs. puestos municipales) aunque compartan términos genéricos como 'emisión', 'registro' o 'autorización'. Si los ámbitos difieren o regulan materias distintas, clasifica estrictamente como 'sin_relacion'."
             )
             prompt_usuario = (
                 f"ARTÍCULO NUEVO (proyecto):\n{texto_nuevo[:800]}\n\n"
@@ -325,6 +328,26 @@ class AgenteConsistenciaNormativa:
             if _clave_tipo(crudo) != tipo:
                 logger.info(f"[Consistencia] tipo_relacion normalizado: {crudo!r} -> {tipo!r}")
             data["tipo_relacion"] = tipo
+
+            # Salvaguarda anti-falsos positivos: si el modelo indica contradicción pero la
+            # justificación o similitud demuestran que pertenecen a materias distintas
+            similitud_cand = float(candidato.get("similitud") or 0.0)
+            just_lower = str(data.get("justificacion") or "").lower()
+            if tipo == "contradiccion":
+                descarte_materia = any(
+                    frase in just_lower for frase in (
+                        "materias distintas", "distinto ambito", "no existe conflicto",
+                        "supuesto distinto", "materias diferentes", "ambitos distintos"
+                    )
+                )
+                if descarte_materia or similitud_cand < 0.22:
+                    logger.info(
+                        f"[Consistencia] Reclasificado falso positivo de contradicción a sin_relacion por materia disímil: "
+                        f"{candidato.get('documento')} Art. {candidato.get('numero')}"
+                    )
+                    tipo = "sin_relacion"
+                    data["tipo_relacion"] = "sin_relacion"
+                    data["riesgo"] = "ninguno"
 
             # Normalizar nivel de riesgo
             riesgo_crudo = str(
@@ -406,20 +429,22 @@ class AgenteConsistenciaNormativa:
                 candidatos = obtener_articulos_normativos(
                     texto_query=texto_nuevo, limit=self.top_k
                 )
-                for candidato in candidatos:
-                    candidato.setdefault("similitud", 0.0)
+                # Filtrar solo candidatos con coincidencia léxica mínima verificable
+                candidatos = [c for c in candidatos if float(c.get("similitud", 0.0)) >= 0.25]
                 if candidatos:
-                    logger.info(f"[Consistencia] Recuperados {len(candidatos)} candidatos por palabras clave")
+                    logger.info(f"[Consistencia] Recuperados {len(candidatos)} candidatos por palabras clave relevantes")
 
-        # Deduplicación de candidatos por (documento, numero) y límite a top 4
+        # Deduplicación de candidatos por (documento, numero), ordenados por similitud y límite a top 3
         vistos_cand = set()
         candidatos_unicos = []
-        for c in (candidatos or []):
+        candidatos_ordenados = sorted(candidatos or [], key=lambda c: float(c.get("similitud", 0.0)), reverse=True)
+        for c in candidatos_ordenados:
             clave = (str(c.get("documento", "")).strip(), str(c.get("numero", "")).strip())
-            if clave not in vistos_cand:
+            sim = float(c.get("similitud", 0.0))
+            if clave not in vistos_cand and sim >= 0.25:
                 vistos_cand.add(clave)
                 candidatos_unicos.append(c)
-        candidatos_unicos = candidatos_unicos[:4]
+        candidatos_unicos = candidatos_unicos[:3]
 
         if not candidatos_unicos:
             return []
@@ -627,7 +652,10 @@ def verificar_consistencia_normativa(
             estado="PENDIENTE_REVISION" if pendientes else "COMPLETADO",
         )
         if pendientes:
-            resumen["nivel_riesgo_global"] = "DESCONOCIDO"
+            # Si existen pendientes, preservar el nivel calculado sobre los hallazgos validados.
+            # Solo marcar DESCONOCIDO si no se pudo validar ningún hallazgo.
+            if not hallazgos:
+                resumen["nivel_riesgo_global"] = "DESCONOCIDO"
 
     except Exception as e:
         duracion_ms = int((time.time() - t0) * 1000)

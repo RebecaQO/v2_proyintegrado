@@ -28,7 +28,7 @@ export default function Navbar({ activeTab, setActiveTab, healthStatus, user, on
   ];
 
   return (
-    <header style={{
+    <header className="navbar-header" style={{
       position: 'sticky',
       top: 0,
       zIndex: 50,
@@ -36,13 +36,14 @@ export default function Navbar({ activeTab, setActiveTab, healthStatus, user, on
       backdropFilter: 'blur(16px)',
       borderBottom: simplified ? '1px solid #0d3152' : '1px solid #d5e3ed',
       boxShadow: simplified ? '0 5px 18px rgba(18,59,96,.22)' : '0 4px 20px rgba(24, 58, 86, 0.08)',
-      padding: '0 28px',
+      padding: '0 clamp(10px, 2vw, 24px)',
     }}>
       <div style={{
         maxWidth: '1720px',
         width: '96%',
         margin: '0 auto',
-        height: simplified ? '82px' : '72px',
+        minHeight: simplified ? '76px' : '68px',
+        gap: 'clamp(8px, 1.5vw, 18px)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
@@ -75,14 +76,14 @@ export default function Navbar({ activeTab, setActiveTab, healthStatus, user, on
                 v2.0
               </span>
             </div>
-            <span style={{ fontSize: '0.73rem', color: simplified ? '#d2e6f3' : '#627d92', fontWeight: 500 }}>
+            <span className="navbar-brand-subtitle" style={{ fontSize: '0.73rem', color: simplified ? '#d2e6f3' : '#627d92', fontWeight: 500 }}>
               Sistema Multi-Agente de Registro y Auditoria Legislativa
             </span>
           </div>
         </div>
 
         {/* Navigation Tabs */}
-        <nav style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+        <nav className="navbar-nav-strip" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
           {!simplified && navItems.map((item) => {
             const Icon = item.icon;
             const isActive = activeTab === item.id;
@@ -127,7 +128,7 @@ export default function Navbar({ activeTab, setActiveTab, healthStatus, user, on
         </nav>
 
         {/* Estado del sistema + Usuario */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+        <div className="navbar-user-actions" style={{ display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0 }}>
           <div style={{
             display: 'flex', alignItems: 'center', gap: '7px',
             background: simplified ? 'rgba(255,255,255,.12)' : 'rgba(11, 37, 69, 0.7)',
@@ -136,7 +137,7 @@ export default function Navbar({ activeTab, setActiveTab, healthStatus, user, on
             fontSize: '0.78rem',
           }}>
             <ShieldCheck size={14} color={isHealthy ? '#6ee7b7' : '#F4A261'} />
-            <span style={{ color: '#e2edf5', fontWeight: 600 }}>Sistema</span>
+            <span className="navbar-status-label" style={{ color: '#e2edf5', fontWeight: 600 }}>Sistema</span>
             {isHealthy ? (
               <CheckCircle2 size={14} color="#6ee7b7" />
             ) : (

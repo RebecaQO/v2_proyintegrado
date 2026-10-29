@@ -14,6 +14,8 @@ except ImportError:
     except ImportError:
         FPDF = None
 
+_BasePDF = FPDF if FPDF is not None else object
+
 
 def generar_ficha_seguimiento_texto(ciclo: Dict[str, Any]) -> str:
     """Genera la Ficha de Seguimiento y Certificación Bicameral en texto plano estructurado."""
@@ -83,7 +85,7 @@ def generar_ficha_seguimiento_texto(ciclo: Dict[str, Any]) -> str:
     return "\n".join(lineas)
 
 
-class SancionBicameralFPDF(FPDF):
+class SancionBicameralFPDF(_BasePDF):
     """Clase generadora de PDF con franja tricolor boliviana y estilo parlamentario."""
 
     def header(self):

@@ -116,6 +116,19 @@ def _fragmentos_cita(cita: str) -> list:
                 and any(ch.isdigit() for ch in cabecera)):
             salida.append(resto.strip())
 
+    # 2c) quitar prefijos estructurados de salida JSON como 'id" numero" 315.' o 'id: 315.'
+    sin_prefijo_json = re.sub(
+        r'^\s*(?:id["\s:]*|numero["\s:]*|num["\s:]*|\d+[\s.:]*)+',
+        '', cita, flags=re.I
+    ).strip()
+    if sin_prefijo_json and sin_prefijo_json != cita:
+        salida.append(sin_prefijo_json)
+        for apertura, cierre in (('"', '"'), ('“', '”'), ("'", "'")):
+            for m in re.finditer(re.escape(apertura) + r'(.*?)' + re.escape(cierre), sin_prefijo_json, re.S):
+                t = _normalizar(m.group(1))
+                if t:
+                    salida.append(t)
+
     # 3) segmentos de una cita elidida: cada tramo debe ser literal por su cuenta
     if '...' in cita or '…' in cita:
         salida.extend(t for t in re.split(r'\s*(?:\.\.\.|…)\s*', cita) if t.strip())
@@ -226,19 +239,27 @@ def _validar(data, texto, articulo):
     # nadie había citado y que el frontend presentaba como verificada.
     texto_cpe = articulo.get('texto', '') or ''
     raw_cita_cpe = data.get('cita_constitucional')
-    cita_cpe = (
-        _verificar_cita(raw_cita_cpe, texto_cpe, 'cita_constitucional')
-        if isinstance(raw_cita_cpe, str) and raw_cita_cpe.strip()
-        else ''
-    )
+    cita_cpe = ''
+    if isinstance(raw_cita_cpe, str) and raw_cita_cpe.strip():
+        try:
+            cita_cpe = _verificar_cita(raw_cita_cpe, texto_cpe, 'cita_constitucional')
+        except ValueError as ve:
+            if clase == 'A_FAVOR':
+                cita_cpe = ''
+            else:
+                raise ve
     data['cita_constitucional'] = cita_cpe
 
     raw_cita_proy = data.get('cita_proyecto')
-    cita_proy = (
-        _verificar_cita(raw_cita_proy, texto, 'cita_proyecto')
-        if isinstance(raw_cita_proy, str) and raw_cita_proy.strip()
-        else ''
-    )
+    cita_proy = ''
+    if isinstance(raw_cita_proy, str) and raw_cita_proy.strip():
+        try:
+            cita_proy = _verificar_cita(raw_cita_proy, texto, 'cita_proyecto')
+        except ValueError as ve:
+            if clase == 'A_FAVOR':
+                cita_proy = ''
+            else:
+                raise ve
     data['cita_proyecto'] = cita_proy
     # Sin AMBAS citas no hay evidencia: la afirmación del modelo no basta.
     # Para A_FAVOR: aceptamos la clasificación del modelo si al menos una cita tiene superposición con la fuente.

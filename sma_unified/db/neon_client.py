@@ -21,7 +21,7 @@ class NeonDBClient:
         self._crear_pool(min_conn, max_conn)
     
     def _crear_pool(self, min_conn: int, max_conn: int):
-        """Crear pool de conexiones"""
+        """Crear pool de conexiones con resiliencia ante caídas de red"""
         try:
             self.pool = ThreadedConnectionPool(
                 min_conn,
@@ -29,11 +29,13 @@ class NeonDBClient:
                 self.database_url
             )
         except Exception as e:
-            print(f"Error creando pool Neon: {e}")
-            raise
+            print(f"Aviso Neon pool (modo desconectado/resiliente): {e}")
+            self.pool = None
     
     def get_connection(self):
         """Obtener conexión del pool"""
+        if self.pool is None:
+            raise ConnectionError("Pool de conexiones Neon no disponible")
         return self.pool.getconn()
     
     def return_connection(self, conn):

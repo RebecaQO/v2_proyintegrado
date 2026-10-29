@@ -14,7 +14,15 @@ import os
 import time
 from datetime import datetime
 from typing import Dict, Any, Optional, List
-from fpdf import FPDF
+try:
+    from fpdf import FPDF
+except ImportError:
+    try:
+        from fpdf2 import FPDF
+    except ImportError:
+        FPDF = None
+
+_BasePDF = FPDF if FPDF is not None else object
 
 try:
     from loguru import logger
@@ -26,7 +34,7 @@ from sma_unified.config import settings
 from sma_unified.db.mongo_atlas import publicar_mensaje, marcar_en_proceso, marcar_completado, marcar_error
 
 
-class PDFReportTricolor(FPDF):
+class PDFReportTricolor(_BasePDF):
     def __init__(self, expediente_id: str = "EXP-2026-SMA"):
         super().__init__(orientation='P', unit='mm', format='A4')
         self.expediente_id = expediente_id
@@ -102,6 +110,12 @@ def emitir_informe_pdf(
     Genera un dictamen formal técnico-jurídico con diseño institucional tricolor,
     análisis de constitucionalidad, consistencia normativa y opiniones fundadas.
     """
+    if FPDF is None:
+        raise ImportError(
+            "La librería 'fpdf2' no está instalada en el entorno virtual. "
+            "Por favor instálela ejecutando: pip install fpdf2"
+        )
+
     task_id = publicar_mensaje(
         agente_origen="AGENTE_SISTEMA",
         agente_destino="AGENTE_EMISOR_RESULTADOS",

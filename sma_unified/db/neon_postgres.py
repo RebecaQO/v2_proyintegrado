@@ -1635,7 +1635,7 @@ def obtener_articulos_normativos(texto_query: str, limit: int = 15, documento: O
                 cur.execute(
                     f"""SELECT COALESCE(articulos_principales[1], 'Norma completa'),
                                COALESCE(titulo_norma, ''), COALESCE(contenido, ''),
-                               '', '', titulo_norma, COALESCE(tipo_norma, 'norma')
+                               '', '', titulo_norma, COALESCE(tipo_norma, 'norma'), 1 AS relevancia
                         FROM public.normativas_vigentes
                         WHERE ({like_public}) AND (fecha_derogacion IS NULL OR fecha_derogacion > CURRENT_DATE)
                         LIMIT %s""",
@@ -1643,11 +1643,26 @@ def obtener_articulos_normativos(texto_query: str, limit: int = 15, documento: O
                 )
                 rows = cur.fetchall()
         cur.close()
-        return [
-            {"numero": r[0], "titulo": r[1], "texto": r[2], "capitulo": r[3], "seccion": r[4],
-             "documento": r[5], "tipo_documento": r[6]}
-            for r in rows
-        ]
+        min_relevancia = 2 if len(palabras) > 1 else 1
+        num_palabras = max(len(palabras), 1)
+        resultados_norm = []
+        for r in rows:
+            relev = float(r[7]) if len(r) > 7 and r[7] is not None else 1.0
+            if relev < min_relevancia:
+                continue
+            similitud = round(min(1.0, relev / num_palabras), 4)
+            resultados_norm.append({
+                "numero": r[0],
+                "titulo": r[1],
+                "texto": r[2],
+                "capitulo": r[3],
+                "seccion": r[4],
+                "documento": r[5],
+                "tipo_documento": r[6],
+                "similitud": similitud,
+                "relevancia": relev,
+            })
+        return resultados_norm
     except Exception as e:
         try:
             get_conn().rollback()
